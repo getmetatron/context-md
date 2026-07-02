@@ -4,9 +4,9 @@
 
 **Pavel Kerbel** — Independent Researcher
 
-> **Abstract.** Repositories version source code, tests, documentation, and configuration. None of these gives an agent a standardized, evolving operating context. The decisions, the rejected alternatives, the constraint discovered at two in the morning: that knowledge lives in chat scrollback and in people's heads, and every agent session starts without it. This note proposes the *Repository Context Layer*, a version-controlled, human-readable store that agents consult before planning and update after executing, under human review. The proposed default implementation is a single file, `context.md`. Git stores what changed; Repository Context stores what the project knows. Everything else is decoration.
+> **Abstract.** Repositories version source code, tests, documentation, and configuration. None of these gives an agent a standardized, evolving operating context. The decisions, the rejected alternatives, the constraint discovered at two in the morning: that knowledge lives in chat scrollback and in people's heads, and every agent session starts without it. This note proposes the *Repository Context Layer*, a version-controlled, human-readable store that agents consult before planning and update after executing, under human review. Git stores what changed; Repository Context stores what the project knows. Everything else is decoration.
 
-📄 [One-page PDF](whitepaper/context-md-manifesto.pdf) · 📋 [Minimal spec](SPEC.md) · 📝 [Example](context.md.example)
+📄 [PDF](whitepaper/context-md-manifesto.pdf) · 📋 [Minimal spec](SPEC.md) · 📝 [Example](context.md.example)
 
 ---
 
@@ -14,7 +14,7 @@
 
 An agent session begins with a strong model and an empty head. It can read every file in the repository and still not know why any of them look the way they do. Code records outcomes; the reasons were deleted somewhere between the whiteboard and the merge.
 
-So the agent re-litigates settled arguments. It proposes the ORM you removed in March. It reintroduces the abstraction that failed in production. None of this is a model problem. The knowledge it needs exists, just nowhere a model can reach, because the most expensive knowledge in a repository is negative: what was tried and rejected. No standard artifact holds it. The bill arrives as repeated mistakes, architectural drift, and a permanent tax of re-explaining the same project to the same model.
+So the agent re-litigates settled arguments. It proposes the ORM you removed in March. It reintroduces the abstraction that failed in production. None of this is a model problem. The knowledge it needs exists, just nowhere a model can reach, because the most expensive knowledge in a repository is negative: what was tried and rejected. No standard artifact is versioned with the code, required reading for agents, and continuously updated through execution. The bill arrives as repeated mistakes, architectural drift, and a permanent tax of re-explaining the same project to the same model.
 
 ## II. Why Existing Artifacts Are Not Enough
 
@@ -34,12 +34,18 @@ Call it context, not memory. Memory is personal, fuzzy, optional; it evaporates 
 ```
         consult → execute → update → commit
 
-today:      agent ──▶ code
+   traditional          with the context layer
 
-with RCL:   agent ──▶ context ──▶ code
-                         ▲          │
-                         └──────────┘
-                  writes back what it learned
+     agent                      agent
+       │                          │
+       ▼                          ▼
+   repository             repository context
+                                  │
+                                  ▼
+                              repository
+                                  │
+                                  ▼
+                           updated context
 ```
 
 Before planning, the agent reads the context layer; a plan made without priors is a guess with good formatting. After executing comes the step almost every system skips: the agent writes back what the work taught it, whether that is a package that breaks the ARM64 build or a proxy timeout nothing documents.
@@ -48,7 +54,7 @@ The commit carries both the code and the sharpened context. No external store ca
 
 ## V. Design Principles
 
-**Git-native.** Versioned by the tool that already solved provenance, review, rollback, and blame. If you cannot `git log` your agent's beliefs, you cannot debug them.
+One choice does most of the work: the layer lives in Git. Git already solved provenance, review, branching, merging, distributed synchronization, and audit. Rather than inventing a new persistence layer for agent knowledge, the Repository Context Layer reuses the machinery engineers already trust, and inherits its guarantees for free. If you cannot `git log` your agent's beliefs, you cannot debug them. The remaining principles follow from that choice.
 
 **Human-readable.** Plain Markdown. Readable in review, editable in any editor.
 
@@ -64,7 +70,7 @@ The commit carries both the code and the sharpened context. No external store ca
 
 ## VI. Minimal Specification
 
-The default implementation should be the dullest thing possible: one Markdown file. Discovery order is `.repo/context.md`, then `context.md` at the repository root; first hit wins. Three sections are required:
+The proposed default implementation is the dullest thing possible: a single Markdown file, `context.md`. Discovery order is `.repo/context.md`, then `context.md` at the repository root; first hit wins. Three sections are required:
 
 **Intent**: what this project is, and the design philosophy everything else must serve. **Constraints**: the non-negotiable rules, each with its reason. A rule without a reason is a superstition; the agent will comply but can never generalize. Record the rejection, not just the rule. **Evolved Context**: an append-only ledger of what agents and humans learned while working here. Entries that prove out graduate into Constraints, and that reviewed promotion is the self-improvement loop made tangible.
 
@@ -104,4 +110,4 @@ Repositories learned to version code decades ago, then tests, then documentation
 2. Tell your agent to read it before planning and append to **Evolved Context** before committing.
 3. Review context diffs like code diffs. Promote proven ledger entries into **Constraints**.
 
-*© 2026 P. Kerbel. Freely available. This repository is the canonical home of the Repository Context Layer ([one-page PDF](whitepaper/context-md-manifesto.pdf)).*
+*© 2026 P. Kerbel. Freely available. This repository is the canonical home of the Repository Context Layer ([PDF](whitepaper/context-md-manifesto.pdf)).*
