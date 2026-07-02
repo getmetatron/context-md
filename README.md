@@ -18,7 +18,7 @@ So the agent re-litigates settled arguments. It proposes the ORM you removed in 
 
 ## II. Why Existing Artifacts Are Not Enough
 
-The obvious rebuttals deserve answers. READMEs describe how to use a project, not how to change it, and nobody updates them when a decision is reversed. ADRs are the closest ancestor, but they are write-once essays for humans; no agent is required to read them and none is expected to append to them. RAG retrieves by similarity, which is precisely wrong for constraints: a rule matters most when nothing in the prompt resembles it. IDE memories are private to one tool and one machine, invisible to review. Agent instruction files carry orders from the human downward but have no defined way to absorb what the agent itself learns. Each solves a slice. None is versioned with the code, consulted by contract, and writable by the agent under human review. That combination is the missing layer.
+The obvious rebuttals deserve answers. READMEs describe how to use a project, not how to change it, and nobody updates them when a decision is reversed. ADRs are the closest ancestor, but they are write-once essays for humans; no agent is required to read them and none is expected to append to them. RAG retrieves by similarity, which is precisely wrong for constraints: a rule matters most when nothing in the prompt resembles it. IDE memories are private to one tool and one machine, invisible to review. Agent instruction files carry orders from the human downward but have no defined way to absorb what the agent itself learns; they are static and unidirectional where the context layer is dynamic and bidirectional. Each solves a slice. None is versioned with the code, consulted by contract, and writable by the agent under human review. That combination is the missing layer.
 
 ## III. The Repository Context Layer
 
@@ -48,9 +48,14 @@ Call it context, not memory. Memory is personal, fuzzy, optional; it evaporates 
                            updated context
 ```
 
-Before planning, the agent reads the context layer; a plan made without priors is a guess with good formatting. After executing comes the step almost every system skips: the agent writes back what the work taught it, whether that is a package that breaks the ARM64 build or a proxy timeout nothing documents.
+The contract has four steps:
 
-The commit carries both the code and the sharpened context. No external store can offer this. Context evolves with the repository because it travels with it, branching when the code branches, merging when it merges, rolling back when it rolls back.
+1. **Consult.** Read the context before planning. A plan made without priors is a guess with good formatting.
+2. **Execute.** Treat Constraints as binding and Intent as the tiebreaker for open design choices.
+3. **Update.** Append what the work taught, the step almost every system skips: the package that breaks the ARM64 build, the proxy timeout nothing documents.
+4. **Commit.** Code and sharpened context travel in one reviewed change.
+
+No external store can offer the rest: context evolves with the repository because it travels with it, branching when the code branches, merging when it merges, rolling back when it rolls back. When two branches learn different things, the conflict is resolved like every other merge conflict: by a human, in review.
 
 ## V. Design Principles
 
@@ -86,7 +91,7 @@ truth; SQLite is a rebuildable index.
   broke the offline repair path.
 
 ## Evolved Context
-- [2026-06-29] pkg X >=3.0 breaks ARM64
+- [2026-06-29] pkg x >= 3.0 breaks ARM64
   builds. Pin to 2.3.x until fixed.
 ```
 
