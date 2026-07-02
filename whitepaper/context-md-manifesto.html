@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>CONTEXT.md: The Missing Layer of the Repository</title>
+<title>The Repository Context Layer</title>
 <style>
   @page {
     size: letter;
@@ -20,10 +20,10 @@
   }
   .titleblock { text-align: center; margin-bottom: 9pt; }
   h1 {
-    font-size: 16pt;
+    font-size: 17pt;
     font-weight: 700;
     line-height: 1.16;
-    margin-bottom: 7pt;
+    margin-bottom: 6pt;
     letter-spacing: 0.01em;
   }
   .subtitle {
@@ -38,7 +38,7 @@
     column-count: 2;
     column-gap: 0.28in;
     column-fill: auto;
-    height: 8.95in;
+    height: 8.98in;
   }
   p { margin-bottom: 3pt; }
   .abstract .lead, .terms .lead { font-weight: 700; }
@@ -78,6 +78,14 @@
     break-inside: avoid;
   }
   pre code { background: none; padding: 0; font-size: inherit; white-space: pre; }
+  pre.diagram {
+    background: none;
+    border: none;
+    font-size: 6.8pt;
+    line-height: 1.3;
+    text-align: center;
+    margin: 3pt 0 5pt 0;
+  }
   .defn {
     font-style: italic;
     margin: 1pt 8pt 4pt 8pt;
@@ -89,8 +97,9 @@
   .lifecycle {
     text-align: center;
     font-family: "SF Mono", Menlo, Consolas, monospace;
-    font-size: 7.4pt;
-    margin: 1pt 0 5pt 0;
+    font-size: 9pt;
+    font-weight: 700;
+    margin: 3pt 0 5pt 0;
     break-inside: avoid;
   }
   footer {
@@ -116,45 +125,53 @@
 <body>
 
 <div class="titleblock">
-  <h1>CONTEXT.md: The Missing Layer of the Repository</h1>
-  <div class="subtitle">A Manifesto for Agents That Consult Before They Code</div>
+  <h1>The Repository Context Layer</h1>
+  <div class="subtitle">The Missing Layer of Agentic Software Development</div>
   <div class="author">Pavel Kerbel</div>
   <div class="affil">Independent Researcher</div>
 </div>
 
 <div class="columns">
 
-<p class="abstract"><span class="lead">Abstract.</span> Repositories version source code, tests, documentation, and configuration. None of them versions what the project <em>knows</em>. The decisions, the rejected alternatives, the constraint discovered at two in the morning &mdash; the context that makes a senior engineer senior &mdash; lives in chat scrollback and in people&rsquo;s heads, and every agent session starts without it. This note proposes a new repository primitive: the <em>Repository Context Layer</em>, a version-controlled, human-readable store that acts as the authoritative operating context for AI agents. The lifecycle: consult before planning, execute, update the context, commit both together. Git stores what changed; Repository Context stores what the project knows. Everything else is decoration.</p>
+<p class="abstract"><span class="lead">Abstract.</span> Repositories version source code, tests, documentation, and configuration. None of these gives an agent a standardized, evolving operating context. The decisions, the rejected alternatives, the constraint discovered at two in the morning: that knowledge lives in chat scrollback and in people&rsquo;s heads, and every agent session starts without it. This note proposes the <em>Repository Context Layer</em>, a version-controlled, human-readable store that agents consult before planning and update after executing, under human review. The proposed default implementation is a single file, <code>context.md</code>. Git stores what changed; Repository Context stores what the project knows. Everything else is decoration.</p>
 
-<p class="terms"><span class="lead">Index Terms.</span> repository context layer, context.md, agentic software development, institutional knowledge, decision records, invariant constraints, self-improving repositories, consult-before-plan.</p>
+<p class="terms"><span class="lead">Index Terms.</span> repository context layer, context.md, agentic software development, institutional knowledge, decision records, self-improving repositories, consult-before-plan.</p>
 
 <h2>I. Agents With Amnesia</h2>
-<p>An agent session begins with a strong model and an empty head. It can read every file in the repository and still not know why any of them look the way they do. Code records outcomes with the reasons deleted: a set of answers, the questions thrown away.</p>
-<p>So the agent re-litigates every settled argument. It proposes the ORM you removed in March. It reintroduces the abstraction that failed in production. None of this is a model problem: the knowledge it needed exists, just nowhere a model can reach. The most expensive knowledge in a repository is negative knowledge &mdash; what was tried and rejected &mdash; and no standard artifact holds it. The result: repeated mistakes, architectural drift, and a permanent prompt-engineering tax &mdash; re-explaining the same project to the same model, forever.</p>
+<p>An agent session begins with a strong model and an empty head. It can read every file in the repository and still not know why any of them look the way they do. Code records outcomes; the reasons were deleted somewhere between the whiteboard and the merge.</p>
+<p>So the agent re-litigates settled arguments. It proposes the ORM you removed in March. It reintroduces the abstraction that failed in production. None of this is a model problem. The knowledge it needs exists, just nowhere a model can reach, because the most expensive knowledge in a repository is negative: what was tried and rejected. No standard artifact holds it. The bill arrives as repeated mistakes, architectural drift, and a permanent tax of re-explaining the same project to the same model.</p>
 
-<h2>II. The Missing Layer</h2>
-<p>The fix is not a better prompt or a bigger context window. It is a missing layer of the repository itself.</p>
-<p class="defn">A Repository Context Layer is a version-controlled, human-readable context store that lives alongside the codebase and acts as the authoritative operating context for AI agents working in it.</p>
+<h2>II. Why Existing Artifacts Are Not Enough</h2>
+<p>The obvious rebuttals deserve answers. READMEs describe how to use a project, not how to change it, and nobody updates them when a decision is reversed. ADRs are the closest ancestor, but they are write-once essays for humans; no agent is required to read them and none is expected to append to them. RAG retrieves by similarity, which is precisely wrong for constraints: a rule matters most when nothing in the prompt resembles it. IDE memories are private to one tool and one machine, invisible to review. Agent instruction files carry orders from the human downward but have no defined way to absorb what the agent itself learns. Each solves a slice. None is versioned with the code, consulted by contract, and writable by the agent under human review. That combination is the missing layer.</p>
+
+<h2>III. The Repository Context Layer</h2>
+<p class="defn">A Repository Context Layer is a version-controlled, human-readable context store that lives alongside the codebase and serves as the authoritative operating context for AI agents working in it.</p>
 <p class="oneliner">Git stores what changed.<br>Repository Context stores what the project knows.</p>
 <p>Call it context, not memory. Memory is personal, fuzzy, optional; it evaporates with the session that formed it. Context is the deterministic control plane for the model&rsquo;s runtime behavior: on disk, versioned with the code, at a known address. It stops being a pile of notes the moment the agent is <em>required</em> to consult it and <em>expected</em> to maintain it.</p>
 
-<h2>III. The Lifecycle</h2>
-<div class="lifecycle">consult &rarr; execute &rarr; update context &rarr; commit</div>
-<p>Before planning, the agent reads the context layer. A plan made without priors is a guess with good formatting. Then it executes. Then, the step almost every system skips: before committing, the agent writes back what execution taught it &mdash; the package that breaks the ARM64 build, the timeout a downstream proxy silently enforces.</p>
-<p>The commit carries both the code and the sharpened context. No external store can offer this: context evolves with the repository because it travels with it &mdash; branching when the code branches, merging when it merges, rolling back when it rolls back.</p>
+<h2>IV. The Lifecycle</h2>
+<div class="lifecycle">consult &rarr; execute &rarr; update &rarr; commit</div>
+<pre class="diagram">today:      agent ──▶ code
 
-<h2>IV. Design Principles</h2>
+with RCL:   agent ──▶ context ──▶ code
+                         ▲          │
+                         └──────────┘
+                  writes back what it learned</pre>
+<p>Before planning, the agent reads the context layer; a plan made without priors is a guess with good formatting. After executing comes the step almost every system skips: the agent writes back what the work taught it, whether that is a package that breaks the ARM64 build or a proxy timeout nothing documents.</p>
+<p>The commit carries both the code and the sharpened context. No external store can offer this. Context evolves with the repository because it travels with it, branching when the code branches, merging when it merges, rolling back when it rolls back.</p>
+
+<h2>V. Design Principles</h2>
 <p><em>Git-native.</em> Versioned by the tool that already solved provenance, review, rollback, and blame. If you cannot <code>git log</code> your agent&rsquo;s beliefs, you cannot debug them.</p>
-<p><em>Human-readable.</em> Plain Markdown, readable in review, editable in any editor.</p>
-<p><em>Reviewable.</em> When an agent changes its own operating rules, the change appears in the diff next to the code that motivated it, and the human approves both in one gesture &mdash; self-modification with a human veto. An agent that edits its context in the open is safer than one that remembers in the dark.</p>
+<p><em>Human-readable.</em> Plain Markdown. Readable in review, editable in any editor.</p>
+<p><em>Reviewable.</em> When an agent changes its own operating rules, the change appears in the diff next to the code that motivated it, and a human approves both at once. Self-modification with a human veto: an agent that edits its context in the open is safer than one that remembers in the dark.</p>
 <p><em>Branch-aware.</em> Context follows the branching model for free; no second source of truth to reconcile.</p>
-<p><em>Tool-independent.</em> No SDK, no server, no vendor: any agent that can read a file participates, and any human with a text editor is a first-class writer.</p>
+<p><em>Tool-independent.</em> No SDK, no server, no vendor. Any agent that can read a file participates, and any human with a text editor is a first-class writer.</p>
 <p><em>Incrementally evolving.</em> Start with three sections and one honest sentence in each; the layer grows when the project learns, not when a template demands it.</p>
 <p><em>Deterministic discovery.</em> The agent must find the context without searching for it. A fixed path is an API.</p>
 
-<h2>V. Minimal Specification</h2>
-<p>Discovery order: <code>.repo/context.md</code>, then <code>context.md</code> at the repository root. First hit wins. Three sections are required:</p>
-<p><em>Intent</em> &mdash; what this project is, and the design philosophy everything else must serve. <em>Constraints</em> &mdash; the non-negotiable rules, each with its reason. A rule without a reason is a superstition: the agent will comply but can never generalize. Record the rejection, not just the rule. <em>Evolved Context</em> &mdash; an append-only ledger of what agents and humans learned while working here. Entries that prove out graduate into Constraints; that reviewed promotion is the self-improvement loop made tangible.</p>
+<h2>VI. Minimal Specification</h2>
+<p>The default implementation should be the dullest thing possible: one Markdown file. Discovery order is <code>.repo/context.md</code>, then <code>context.md</code> at the repository root; first hit wins. Three sections are required:</p>
+<p><em>Intent</em>: what this project is, and the design philosophy everything else must serve. <em>Constraints</em>: the non-negotiable rules, each with its reason. A rule without a reason is a superstition; the agent will comply but can never generalize. Record the rejection, not just the rule. <em>Evolved Context</em>: an append-only ledger of what agents and humans learned while working here. Entries that prove out graduate into Constraints, and that reviewed promotion is the self-improvement loop made tangible.</p>
 <pre><code># Repository Context
 
 ## Intent
@@ -168,18 +185,18 @@ truth; SQLite is a rebuildable index.
 ## Evolved Context
 - [2026-06-29] pkg X &gt;=3.0 breaks ARM64
   builds. Pin to 2.3.x until fixed.</code></pre>
-<p>That is the whole specification: three headers and a discovery path. Everything beyond it &mdash; decision logs, pattern catalogs, per-directory context &mdash; is convention layered on top. Do not over-specify. Under-specified and adopted beats complete and ignored.</p>
-
-<h2>VI. Why This Matters</h2>
-<p>Repositories are about to change population: soon most readers and writers of a codebase will not be human. The repository of the next decade contains source code, tests, documentation, and context &mdash; a first-class artifact, reviewed, versioned, and trusted like code.</p>
-<p>The deeper shift is where improvement accumulates. Model weights are frozen between releases; repositories do not have to be. With a context layer, every session ends with sharper priors than it started, compounding at merge speed rather than training speed. The repository gets smarter, not the model. Self-improvement, done this way, is a merge, not a fine-tune &mdash; and the unit of learning is a reviewed line in <code>context.md</code>.</p>
+<p>Note what is standardized here: discovery and lifecycle, not content. Repositories will evolve different context structures, but every agent should know where to look and how the context changes. Everything beyond the three headers (decision logs, pattern catalogs, per-directory context) is convention layered on top. Do not over-specify. Under-specified and adopted beats complete and ignored.</p>
 
 <h2>VII. A Reference Implementation</h2>
-<p>Metatron is one implementation of this layer: decisions and project facts kept as git-backed Markdown, served to agents at consult time, feedback routed into the evolved-context ledger; an optional index accelerates retrieval, but files remain the truth. It is an implementation, not the architecture &mdash; any tool, or none at all, can implement the layer. The abstraction should outlive every product built on it, including this one.</p>
+<p>Metatron is one implementation of the layer: decisions and project facts kept as git-backed Markdown, served to agents at consult time, feedback routed into the evolved-context ledger. An optional index accelerates retrieval; the files remain the truth. It is an implementation, not the architecture. Any tool, or none at all, can implement the layer, and the abstraction should outlive every product built on it, including this one.</p>
+
+<h2>VIII. Version the Context</h2>
+<p>Repositories are about to change population: soon most readers and writers of a codebase will not be human. Model weights are frozen between releases; repositories do not have to be. With a context layer, every session ends with sharper priors than the last, compounding at merge speed rather than training speed. The repository gets smarter, not the model, and self-improvement becomes a merge instead of a fine-tune. The unit of learning is a reviewed line in <code>context.md</code>.</p>
+<p>Repositories learned to version code decades ago, then tests, then documentation, then infrastructure. The next step is to version context.</p>
 
 </div>
 
-<footer>&copy; 2026 P. Kerbel. Personal use of this material is permitted. This is an independent formatting of working notes on the Repository Context Layer (context.md, v070226) into a conference-style document. Freely available; ideas subject to revision as the models change.<span class="initials">PK</span></footer>
+<footer>&copy; 2026 P. Kerbel. Personal use of this material is permitted. This is an independent formatting of working notes on the Repository Context Layer (v070226) into a conference-style document. Freely available.<span class="initials">PK</span></footer>
 
 </body>
 </html>

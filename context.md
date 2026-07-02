@@ -19,3 +19,8 @@ to adopt in an afternoon.
 
 ## Evolved Context
 - [2026-07-02] Initial publication: manifesto, spec v0.1, example.
+- [2026-07-02] Reframed after external review: the abstraction
+  (Repository Context Layer) is the star; context.md is the proposed
+  default implementation, not the name of the idea. Added the
+  "why existing artifacts are not enough" section to preempt the
+  "isn't this just ADRs/RAG?" objection.
