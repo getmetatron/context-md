@@ -2,7 +2,7 @@
 
 **Version 0.1** · Status: draft
 
-This document specifies the smallest possible contract for a Repository Context Layer. It is intentionally minimal; see the [manifesto](README.md) for rationale. The key words MUST, SHOULD, and MAY are to be interpreted as described in RFC 2119.
+This document specifies the smallest possible contract for a Repository Context Layer. It is intentionally minimal; see the [whitepaper](whitepaper/context-md-manifesto.pdf) for rationale. The key words MUST, SHOULD, and MAY are to be interpreted as described in RFC 2119.
 
 ## 1. Discovery
 
