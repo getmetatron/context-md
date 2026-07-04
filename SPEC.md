@@ -13,6 +13,8 @@ A conforming agent MUST look for the context file in this order and use the firs
 
 Discovery is deterministic: agents MUST NOT rely on search or inference to locate the file.
 
+The directories `.repo/context/` and `context/` (repository root) are RESERVED for sharding large contexts — the dotted and visible forms, mirroring the two file paths above. A repository that shards SHOULD keep a root context file as the discoverable index into the shards; agents that do not support sharding MUST still honor the file rule.
+
 ## 2. Format
 
 The context file is plain Markdown (CommonMark). It MUST contain a top-level `# Repository Context` heading and the following three `##` sections, in any order:

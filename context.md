@@ -24,3 +24,8 @@ to adopt in an afternoon.
   default implementation, not the name of the idea. Added the
   "why existing artifacts are not enough" section to preempt the
   "isn't this just ADRs/RAG?" objection.
+- [2026-07-04] Published the companion paper (preprint v0.1) alongside
+  the manifesto: formal properties (P1-P6), lifecycle invariants
+  (I1-I4), design analysis, and the Metatron reference implementation.
+  The spec now reserves both sharding forms (.repo/context/ and root
+  context/), a change driven by the reference implementation's layout.

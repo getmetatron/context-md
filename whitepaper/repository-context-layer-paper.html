@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Repository Context Layer: A Git-Native Architecture for Persistent Agent Context</title>
+<style>
+  @page {
+    size: letter;
+    margin: 0.6in 0.75in 0.65in 0.75in;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: "Charter", "Iowan Old Style", "Palatino", Georgia, serif;
+    font-size: 9.2pt;
+    line-height: 1.36;
+    color: #111;
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+  }
+  .titleblock { text-align: center; margin-bottom: 14pt; }
+  h1 {
+    font-size: 18pt;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 7pt;
+    letter-spacing: 0.01em;
+  }
+  .subtitle {
+    font-size: 11pt;
+    font-style: italic;
+    margin-bottom: 9pt;
+  }
+  .author { font-size: 10.5pt; margin-bottom: 1pt; }
+  .affil { font-size: 9pt; font-style: italic; color: #333; margin-bottom: 2pt; }
+  .date { font-size: 8.5pt; color: #444; }
+
+  .columns {
+    column-count: 2;
+    column-gap: 0.3in;
+    column-fill: balance;
+  }
+  p { margin-bottom: 5pt; }
+  .abstract .lead, .terms .lead { font-weight: 700; }
+  .terms .lead { font-style: italic; }
+  .terms { margin-bottom: 9pt; }
+
+  h2 {
+    font-size: 9.4pt;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 10pt 0 5pt 0;
+    break-after: avoid;
+  }
+  h3 {
+    font-size: 9.2pt;
+    font-weight: 700;
+    font-style: italic;
+    margin: 7pt 0 3.5pt 0;
+    break-after: avoid;
+    text-align: left;
+  }
+  code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 8pt;
+    background: #f1f1f1;
+    padding: 0.5px 3px;
+    border-radius: 2px;
+    hyphens: none;
+    -webkit-hyphens: none;
+    white-space: nowrap;
+  }
+  pre {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 7.6pt;
+    line-height: 1.34;
+    background: #f5f5f4;
+    border: 0.5pt solid #e2e2e0;
+    border-radius: 3px;
+    padding: 6pt 8pt;
+    margin: 3pt 0 7pt 0;
+    white-space: pre;
+    text-align: left;
+    break-inside: avoid;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; white-space: pre; }
+  pre.diagram {
+    background: none;
+    border: none;
+    font-size: 7.8pt;
+    line-height: 1.32;
+    text-align: center;
+    margin: 4pt 0 7pt 0;
+  }
+  .defn {
+    font-style: italic;
+    margin: 2pt 10pt 6pt 10pt;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 7.9pt;
+    margin: 4pt 0 8pt 0;
+    break-inside: avoid;
+    line-height: 1.3;
+  }
+  th, td {
+    border-top: 0.5pt solid #999;
+    border-bottom: 0.5pt solid #999;
+    padding: 2.5pt 4pt;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { font-weight: 700; border-top: 1pt solid #333; background: #f7f7f6; }
+  tr:last-child td { border-bottom: 1pt solid #333; }
+  td.c, th.c { text-align: center; }
+  .caption {
+    font-size: 7.8pt;
+    text-align: center;
+    font-style: italic;
+    margin: -4pt 0 8pt 0;
+  }
+  ol, ul { margin: 0 0 5pt 0; padding-left: 16pt; }
+  li { margin-bottom: 2pt; }
+  .refs { font-size: 8pt; line-height: 1.32; }
+  .refs p { margin-bottom: 2.5pt; text-align: left; }
+  footer {
+    margin-top: 10pt;
+    border-top: 0.5pt solid #999;
+    padding-top: 4pt;
+    font-size: 7.8pt;
+    font-style: italic;
+    text-align: center;
+    color: #222;
+    line-height: 1.3;
+  }
+  footer .initials {
+    font-style: normal;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 6.8pt;
+    border: 0.5pt solid #555;
+    padding: 0 2.5px;
+    margin-left: 3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="titleblock">
+  <h1>The Repository Context Layer:<br>A Git-Native Architecture for Persistent Agent Context</h1>
+  <div class="author">Pavel Kerbel</div>
+  <div class="affil">Independent Researcher</div>
+  <div class="date">Preprint &middot; v0.1 &middot; July 2026</div>
+</div>
+
+<div class="columns">
+
+<p class="abstract"><span class="lead">Abstract.</span> AI coding agents now perform multi-step engineering work, yet every session begins without the operating knowledge that shapes a codebase: the decisions taken, the alternatives rejected, the constraints discovered during execution. Existing mechanisms (documentation, architecture decision records, retrieval-augmented generation, IDE memories, agent instruction files) each address a fragment of the problem; none provides a store that is versioned with the code, consulted by contract, and writable by agents under human review. This paper formalizes the <em>Repository Context Layer</em> (RCL), an architecture pattern in which a repository carries its own agent-facing context through a defined consult&ndash;execute&ndash;update&ndash;commit lifecycle. We separate the pattern into four independent layers: the architecture, a deterministic discovery specification, a minimal file format (<code>context.md</code>), and implementations. We give branch, merge, and rollback semantics inherited from Git, analyze the contested design choices (single file versus many, append-only semantics, conflict handling, hierarchy, and the limits of agent self-modification), and report on Metatron, a reference implementation. We argue that repository context should be treated as a first-class, versioned artifact of software projects, alongside code, tests, and documentation.</p>
+
+<p class="terms"><span class="lead">Index Terms.</span> repository context layer, agentic software development, context.md, architecture decision records, agent memory, human-in-the-loop review, self-improving repositories.</p>
+
+<h2>1. Introduction</h2>
+<p>Coding agents crossed a practical threshold in 2024&ndash;2026: given a task, a modern agent can plan, edit, run tests, and iterate over hours with little supervision. What has not kept pace is the substrate those agents work on. A repository exposes its code, but not the reasoning that produced the code. The result is a familiar failure mode: an agent that writes competent code while re-proposing the library the team removed, violating an unwritten layering rule, or re-discovering, at some cost, a constraint a previous session had already found.</p>
+<p>Practitioners mitigate this with a patchwork of mechanisms. Instruction files such as <code>CLAUDE.md</code>, <code>AGENTS.md</code>, and <code>.cursorrules</code> inject standing guidance into the prompt. IDE-level memories persist preferences per tool and per machine. Retrieval-augmented generation (RAG) [2] recalls similar text from an external index. Protocols such as MCP [3] standardize how agents reach external stores. Each helps; none yields a durable, reviewable, project-owned operating context that improves as work happens. Section 2 examines why.</p>
+<p>This paper formalizes an alternative that requires no new infrastructure: the repository itself carries its agents&rsquo; operating context, versioned by Git, gated by code review, and updated as a routine part of every change. We call the pattern the <em>Repository Context Layer</em> (RCL). A companion manifesto [1] argues for the abstraction; this paper specifies it.</p>
+<p>The contributions are:</p>
+<ol>
+<li>a definition of the Repository Context Layer and its required properties (Section 3);</li>
+<li>a lifecycle with explicit branch, merge, and rollback semantics inherited from Git (Section 4);</li>
+<li>a deterministic context discovery specification (Section 5) and a minimal file format, <code>context.md</code> (Section 6);</li>
+<li>a design analysis of the contested choices: file granularity, append-only semantics, merge conflicts, hierarchy, and agent write authority, including the associated threat model (Section 7);</li>
+<li>a report on Metatron, a reference implementation, and integration patterns for current agents (Sections 9&ndash;10).</li>
+</ol>
+<p>Throughout, we keep four concerns separate, because they can be adopted independently: the <em>architecture</em> (what the layer is), the <em>discovery specification</em> (how agents find it), the <em>file format</em> (the default representation), and <em>implementations</em> (tools that automate it). A team can conform to the architecture with nothing but a Markdown file and a code-review habit.</p>
+
+<h2>2. Background</h2>
+<p>We survey the mechanisms teams currently use to convey project knowledge to agents, against five properties the problem demands: persistence across sessions, co-versioning with the code, agent writability, human review of changes, and consultation by contract (the agent is required to read it, rather than hoping retrieval surfaces it).</p>
+<p><em>READMEs and documentation.</em> Durable and versioned, but usage-oriented: they explain how to build and run, rarely why the architecture is shaped as it is, and almost never what was rejected. Documentation also drifts, because nothing in the workflow forces an update when a decision is reversed.</p>
+<p><em>Architecture decision records.</em> ADRs [4] are the closest ancestor of this work. They capture context, decision, and consequences, and they live in the repository. But ADRs are write-once records addressed to future humans. There is no contract obliging an agent to read them, no convention for machine consumption, and no channel for an agent to contribute what execution taught it. In practice ADR directories are archives, not operating context.</p>
+<p><em>Wikis and design documents.</em> Detached from the repository, unversioned with the code, and notorious for rot. A wiki page cannot branch with an experiment or roll back with a revert.</p>
+<p><em>RAG over project artifacts.</em> Retrieval by embedding similarity [2] answers &ldquo;what text resembles this query,&rdquo; which is the wrong question for constraints. A prohibition matters most precisely when nothing in the current prompt resembles it; an agent adding a dependency will not emit a query similar to the paragraph explaining why dependencies are frozen. RAG also adds infrastructure (an index to build, refresh, and host) and its store is not reviewable by diff.</p>
+<p><em>IDE and platform memories.</em> Convenient and automatic, but scoped to one tool and often one machine, invisible to teammates, and unreviewed. Two agents working the same repository through different tools share nothing.</p>
+<p><em>Agent instruction files.</em> <code>CLAUDE.md</code>, <code>AGENTS.md</code>, <code>.cursorrules</code>, and similar files are versioned, reviewed, and consulted by contract, which is why they spread quickly. Their limitation is directionality: they carry orders from the human downward, with no defined way to absorb what the agent itself learns. They are static configuration, not evolving context.</p>
+<p><em>Protocols.</em> MCP [3] and similar protocols standardize transport between agents and external systems. Transport is orthogonal to persistence: a protocol can serve a context layer (Section 9), but does not itself provide one.</p>
+<table>
+<tr><th>Mechanism</th><th class="c">Versioned w/ code</th><th class="c">Agent-writable</th><th class="c">Human-reviewed</th><th class="c">Consulted by contract</th></tr>
+<tr><td>README / docs</td><td class="c">&#10003;</td><td class="c">&mdash;</td><td class="c">&#10003;</td><td class="c">&mdash;</td></tr>
+<tr><td>ADRs</td><td class="c">&#10003;</td><td class="c">&mdash;</td><td class="c">&#10003;</td><td class="c">&mdash;</td></tr>
+<tr><td>Wiki / design docs</td><td class="c">&mdash;</td><td class="c">&mdash;</td><td class="c">&mdash;</td><td class="c">&mdash;</td></tr>
+<tr><td>RAG store</td><td class="c">&mdash;</td><td class="c">partial</td><td class="c">&mdash;</td><td class="c">&mdash;</td></tr>
+<tr><td>IDE memories</td><td class="c">&mdash;</td><td class="c">&#10003;</td><td class="c">&mdash;</td><td class="c">&mdash;</td></tr>
+<tr><td>Instruction files</td><td class="c">&#10003;</td><td class="c">&mdash;</td><td class="c">&#10003;</td><td class="c">&#10003;</td></tr>
+<tr><td><strong>Context layer</strong></td><td class="c">&#10003;</td><td class="c">&#10003;</td><td class="c">&#10003;</td><td class="c">&#10003;</td></tr>
+</table>
+<p class="caption">Table 1. Project-knowledge mechanisms against the properties persistent agent context requires.</p>
+<p>The pattern in Table 1 is the thesis of this paper: each mechanism solves a slice, and the missing artifact is the one with all four properties at once.</p>
+
+<h2>3. The Repository Context Layer</h2>
+<p class="defn">A Repository Context Layer is a version-controlled, human-readable context store that lives alongside the codebase and serves as the authoritative operating context for AI agents working in it.</p>
+
+<h3>3.1 Required properties</h3>
+<p>An implementation conforms to the architecture if it satisfies six properties. <strong>P1 Co-versioned:</strong> the context is stored in the repository and follows its branching model. <strong>P2 Human-readable:</strong> the representation is plain text a maintainer can read and edit without tooling. <strong>P3 Deterministically discoverable:</strong> an agent locates the context by a fixed rule, not by search (Section 5). <strong>P4 Bidirectional:</strong> agents both consume the context and propose additions to it. <strong>P5 Review-gated:</strong> no change to the context takes effect without passing the project&rsquo;s normal review process. <strong>P6 Tool-independent:</strong> participation requires only the ability to read and write files.</p>
+
+<h3>3.2 Goals and non-goals</h3>
+<p>The layer aims to hold the <em>operating</em> knowledge of a project: intent, binding constraints with their reasons, and validated lessons from execution. It is deliberately not a knowledge base of the code itself (the code is present and searchable), not a replacement for retrieval over large corpora, not a record of conversations, and not a configuration system. A useful test: an entry belongs in the layer if a competent new engineer would need to be told it, and would not discover it by reading the code.</p>
+
+<h3>3.3 Relationship to Git</h3>
+<p>The architecture makes one load-bearing choice: it defines conventions over plain files in Git rather than a new store. This buys provenance (<code>git blame</code> answers who believed what, and when), review (the pull request is the approval mechanism), branching and rollback (Section 4), distributed synchronization, and audit, all without new infrastructure. The cost is Git&rsquo;s limitations, notably textual rather than semantic merging; Section 7.3 discusses the consequences.</p>
+
+<h3>3.4 Four layers</h3>
+<p>We separate the pattern into independently adoptable layers: <strong>L1</strong>, the architecture of Section 3; <strong>L2</strong>, the discovery specification of Section 5; <strong>L3</strong>, the <code>context.md</code> file format of Section 6; and <strong>L4</strong>, implementations that automate consultation, capture, and retrieval (Section 9). A team may adopt L1&ndash;L3 with no tooling at all; a vendor may implement L1&ndash;L2 with a different representation than L3. Conformance claims should name the layers they cover.</p>
+
+<h2>4. The Context Lifecycle</h2>
+<p>The lifecycle is the behavioral half of the architecture: it defines when the context is read and when it is written.</p>
+<pre class="diagram">consult ──▶ plan ──▶ execute ──▶ observe
+                                    │
+   commit ◀── review ◀── update ◀───┘</pre>
+<p><strong>Consult.</strong> Before planning, the agent reads the context in full. Constraints bind the plan; intent breaks ties among admissible designs. <strong>Plan / Execute.</strong> Ordinary agent operation. <strong>Observe.</strong> On completion, the agent asks what the work taught that a future session would otherwise re-learn: an incompatibility, an undocumented environmental constraint, a pattern that failed. Most observations are discarded; durability is the filter. <strong>Update.</strong> Surviving observations are appended to the context&rsquo;s ledger. <strong>Review.</strong> The context diff rides in the same change set as the code, and a human approves both together. <strong>Commit.</strong> The repository&rsquo;s knowledge and behavior advance atomically.</p>
+<p>Four invariants summarize the contract. <strong>I1:</strong> consultation precedes planning. <strong>I2:</strong> ledger writes are appends. <strong>I3:</strong> no context change takes effect without review. <strong>I4:</strong> context changes travel with the code changes that motivated them.</p>
+
+<h3>4.1 Branch behavior</h3>
+<p>Because the context is a file, it branches when the code branches. A learning made on an experimental branch is visible only there, which is correct: it may be true only there. Deleting an abandoned branch deletes beliefs that were never validated. Long-lived branches accumulate divergent context exactly as they accumulate divergent code, and the same social mechanisms (small branches, frequent integration) keep divergence manageable.</p>
+
+<h3>4.2 Merge behavior</h3>
+<p>Merging a branch merges its context. Appends to a ledger from different branches usually touch different lines and merge cleanly; a union merge strategy makes this explicit (Section 7.3). Conflicting edits to a constraint are semantic conflicts, and the architecture deliberately routes them to a human: two branches that learned incompatible things have surfaced a real disagreement, and the merge is the right moment to resolve it.</p>
+
+<h3>4.3 Rollback</h3>
+<p>Reverting a commit reverts the beliefs recorded in it. This is a feature: if the change that motivated a learning is withdrawn, the learning&rsquo;s justification is withdrawn with it. When a reverted learning remains true, re-adding it in the reverting change is a one-line diff, and the history preserves both events.</p>
+
+<h2>5. Context Discovery Specification</h2>
+<p>Discovery must be deterministic (P3): a fixed path is an API, and an agent must not depend on search or inference to find its own operating contract. The key words MUST, SHOULD, and MAY follow RFC 2119 [5].</p>
+<ol>
+<li>An agent MUST check <code>.repo/context.md</code>, then <code>context.md</code> at the repository root, and use the first file found.</li>
+<li>The paths <code>.repo/context/</code> and <code>context/</code> (repository root) are RESERVED for sharding of large contexts (Section 7.1) &mdash; the dotted and visible forms, mirroring the two discovery forms of rule 1. Agents encountering either before they support sharding MUST still honor rule 1; a repository that shards SHOULD keep a root context file as the discoverable index into the shards.</li>
+<li>Agents MUST ignore sections they do not understand (forward compatibility) and MUST NOT fail on additional files or metadata.</li>
+<li>The specification is versioned with its host repository [1]. Files carry no version marker in v0.x; implementations SHOULD tolerate any 0.x file.</li>
+</ol>
+<p>The dotted directory form exists for repositories that prefer meta-artifacts out of the root listing; the root form exists because visibility aids adoption. Projects SHOULD choose one and not maintain both.</p>
+
+<h2>6. The Context File Format</h2>
+<p>The default representation (L3) is a single CommonMark file with a top-level <code>#&nbsp;Repository Context</code> heading and three required sections, in any order.</p>
+<p><strong>Intent</strong> states what the project is and the design philosophy subordinate decisions must serve. It is the tiebreaker: when a plan faces options the constraints do not decide, the option most aligned with intent wins.</p>
+<p><strong>Constraints</strong> are the binding rules. Each entry SHOULD carry its reason, including what was rejected and why; a rule without a reason can be obeyed but not generalized from. Constraints are edited, not appended: changing one is an ordinary reviewed change.</p>
+<p><strong>Evolved Context</strong> is an append-only ledger of dated entries (<code>[YYYY-MM-DD]</code>) recording what agents and humans learned during execution. Entries are never rewritten; corrections are recorded as superseding entries (Section 7.2). Entries that prove durable are <em>promoted</em>: moved into Constraints in a reviewed change, usually leaving a brief pointer behind.</p>
+<pre><code># Repository Context
+
+## Intent
+Local-first task CLI. Files are the source
+of truth; SQLite is a rebuildable index.
+Optimize for offline use over feature breadth.
+
+## Constraints
+- No ORM. Rejected 2026-03: query opacity
+  broke the offline repair path. Raw SQL
+  through the storage module only.
+- No network calls on the hot path; sync is
+  a separate, explicitly invoked command.
+
+## Evolved Context
+- [2026-06-14] Staging proxy silently drops
+  connections at 45 s; set client timeouts
+  explicitly below that.
+- [2026-06-29] pkg x >= 3.0 breaks ARM64
+  builds. Pin to 2.3.x until upstream fix.</code></pre>
+<p>Optional sections are conventions, not spec: teams commonly add <code>##&nbsp;Decisions</code> (an ADR-style log), <code>##&nbsp;Patterns</code> and <code>##&nbsp;Anti-patterns</code> (worked examples of preferred and forbidden implementations), and <code>##&nbsp;Glossary</code>. Per rule 3 of Section 5, agents that do not understand a section skip it.</p>
+<p><em>Migration.</em> Existing projects rarely start empty. A practical seeding procedure: distill each ADR&rsquo;s decision and consequences into one Constraints entry with a date and a pointer to the full record; move durable guidance out of instruction files, leaving the instruction file to hold the bootstrap contract (Section 10); and start the ledger empty. Seeding is a single reviewed commit.</p>
+
+<h2>7. Design Discussion</h2>
+<p>Five design choices attract consistent pushback. We record the reasoning, since the objections are legitimate.</p>
+
+<h3>7.1 One file or many?</h3>
+<p>One file is the default because the context is a working set, not an archive: its purpose is to be read, in full, at the start of every session, so its natural size limit is a fraction of a model&rsquo;s context budget. A single file also makes the review diff legible and the mental model trivial. When a context genuinely outgrows one file, the reserved directories (<code>.repo/context/</code>, or the visible <code>context/</code> at the repository root) admit sharding by topic &mdash; one entry per file, or any finer organization &mdash; with the root file retained as the discoverable index. The failure mode to resist is archival creep: a context file that tries to be documentation stops being read. Periodic distillation (compressing the ledger, pruning stale entries) is ordinary maintenance, performed as a reviewed change like any refactor.</p>
+
+<h3>7.2 Is append-only always right?</h3>
+<p>Append-only applies to the ledger, not the layer. The ledger is an evidence log; rewriting evidence destroys the provenance that makes it trustworthy, so corrections are superseding entries (&ldquo;[2026-07-02] supersedes 2026-06-29: fixed upstream in 3.1&rdquo;). Constraints, by contrast, are current law and are edited in place, with Git history preserving every prior state. The two sections have different mutability because they answer different questions: <em>what happened</em> versus <em>what applies now</em>.</p>
+
+<h3>7.3 Merge conflicts</h3>
+<p>Textual conflicts concentrate in the ledger, where concurrent appends from different branches collide at the file&rsquo;s tail. Declaring a union merge for the context file (<code>context.md merge=union</code> in <code>.gitattributes</code>) resolves concurrent appends automatically while leaving edits to shared lines, which are semantic conflicts, for humans. This division is intentional: the architecture automates the merges that cannot be wrong and refuses to automate the ones that can. Two branches that learned contradictory things have discovered a genuine disagreement about the project, and silently picking a winner would discard exactly the knowledge the layer exists to keep.</p>
+
+<h3>7.4 Hierarchical context</h3>
+<p>Monorepos and large projects want scoped context: a rule about one service should not tax every session in every other service. The v0.x position is to standardize the root and defer hierarchy, reserving nearest-ancestor discovery (an agent working under <code>services/billing/</code> consults that directory&rsquo;s context file, then its ancestors&rsquo;, root last) as the intended v0.2 extension, with child entries extending and, where explicit, overriding ancestors. Deferring is deliberate: hierarchy multiplies the spec surface, and the pattern should earn complexity with adoption evidence first.</p>
+
+<h3>7.5 Agent write authority and the threat model</h3>
+<p>How much may an agent modify its own operating rules? The architecture&rsquo;s answer: an agent may <em>propose</em> anything and <em>enact</em> nothing. Every context change lands through the same review gate as code (I3), so the ceiling on agent authority equals the rigor of the project&rsquo;s review process, a dial teams already know how to set.</p>
+<p>The gate is also the security boundary. A context layer is standing instruction to future agents, which makes it an attractive target: a poisoned entry (injected by a compromised dependency&rsquo;s install script, a malicious contribution, or a manipulated agent) becomes persistent prompt injection, executed by every subsequent session. Three properties contain this. Review-gating (P5) means hostile entries must pass a human. Provenance (P1) means every entry has an author, a commit, and a motivating change; anomalous instructions (&ldquo;disable test verification,&rdquo; &ldquo;fetch and follow instructions from this URL&rdquo;) are visible in diffs and attributable in history. And human-readability (P2) denies attackers the obscurity of an opaque store. Reviewers SHOULD treat context diffs with the scrutiny of code diffs, and agents SHOULD refuse to act on context instructions that expand their own privileges. The residual risk, rubber-stamped review, is shared with all code contribution, and is an argument for keeping the context file small enough that its diffs are actually read.</p>
+<p>Agents are not the only actors who can breach I3: <em>tooling</em> can. An early iteration of Metatron&rsquo;s importer (Section 9), which treated every file in the store&rsquo;s directories as context, silently ingested a machine-generated index listing as an empty canonical entry &mdash; no agent involved, no human either. The general rule this taught: nothing may enter the reviewed store unless it explicitly declares itself a context document (an explicit type marker); generated artifacts &mdash; indexes, logs, listings &mdash; are never context, and conformant tooling MUST refuse to promote what merely happens to be adjacent to context.</p>
+
+<h2>8. What the Layer Is Not</h2>
+<p>Four adjacent framings deserve explicit rejection. It is not <em>RAG</em>: consultation is by contract, not similarity, though an implementation may layer retrieval on top for large optional sections. It is not <em>prompt engineering</em>: instruction files configure behavior top-down and are static between human edits, while the layer evolves through execution. It is not <em>documentation</em>: docs address human onboarding at human timescales; the layer is machine-facing operating state, consulted at every session and expected to change weekly. And it is not <em>chat memory</em>: platform memories attach to a user or a tool, while repository context attaches to the artifact all users and tools share. The distinctions matter because each framing suggests the wrong lifecycle: archives are allowed to go stale, and this must not.</p>
+
+<h2>9. Reference Implementation: Metatron</h2>
+<p>Metatron implements L1&ndash;L4 for teams that want the lifecycle automated rather than manual. Its design choices illustrate one point in the implementation space; none is part of the architecture.</p>
+<p>Project knowledge is kept as individual Markdown files in an open knowledge format, one decision or fact per file with structured front matter, sharded under a root-level <code>context/</code> directory &mdash; Section 7.1&rsquo;s visible form. The directory name is configurable, and resolution falls back deterministically to the name older repositories were onboarded under: a rename without such a fallback silently breaks P3. Onboarding scaffolds a minimal root <code>context.md</code> whose Constraints point into the shards, so discovery under Section 5 works for any conformant agent with no Metatron knowledge. The files carry no database identifiers: identity is the filename, and the local SQLite index that accelerates retrieval <em>mints</em> its own identifiers when built &mdash; the index is rebuildable at any time and holds no authoritative state, preserving P1 even while serving reads from a database.</p>
+<p>By default, candidate entries flow through an explicit review step before becoming canonical, mirroring the ledger-to-constraint promotion of Section 6 with tooling support. When authored entries reach the default branch only through a pull request a human reviews file-by-file, that approval itself satisfies P5 and the staging step may be skipped &mdash; the gate is the review, not the directory; the agent may target the canonical set only on explicit human direction, never by its own choice. An optional MCP interface [3] exposes consult and append operations to any protocol-capable agent, demonstrating the transport/persistence separation of Section 2: the protocol serves the layer, the files remain the truth. The Metatron repository itself is onboarded through its own tooling; the importer hardening of Section 7.5 was found on the first self-hosted import.</p>
+<p>The implementation exists to reduce friction, not to be required. A team using plain <code>context.md</code> with disciplined review conforms to the same architecture and interoperates with the same agents.</p>
+
+<h2>10. Agent Integrations</h2>
+<p>Current agents need a one-time bootstrap telling them the contract exists; the natural place is the instruction file they already read. This yields a clean division of labor: <em>the instruction file tells the agent that the context layer exists; the context layer holds what the agent needs to know.</em></p>
+<table>
+<tr><th>Agent</th><th>Bootstrap</th></tr>
+<tr><td>Claude Code</td><td>Two lines in <code>CLAUDE.md</code>: consult <code>context.md</code> before planning; append learnings before committing. Hooks can enforce both.</td></tr>
+<tr><td>Codex-style CLIs</td><td>Same contract stated in <code>AGENTS.md</code>.</td></tr>
+<tr><td>Cursor</td><td>Pointer in <code>.cursorrules</code>; rules reference the file rather than duplicating it.</td></tr>
+<tr><td>Roo Code</td><td>One command (<code>metatron context setup</code>) installs the rule and authoring skills.</td></tr>
+<tr><td>Aider</td><td>Load via conventions file or <code>--read context.md</code>.</td></tr>
+<tr><td>Any agent</td><td>One system-prompt sentence stating the two obligations.</td></tr>
+</table>
+<p class="caption">Table 2. Bootstrap patterns. All tools consume the same file; none requires tool-specific context.</p>
+<p>Because every integration reads the same artifact, a repository worked on by three different tools accumulates one shared context rather than three private memories, which is the property none of the per-tool mechanisms of Section 2 can offer.</p>
+
+<h2>11. Future Work</h2>
+<p><em>Validation.</em> A conformance linter for the file format &mdash; including the Section 7.5 rule that only self-declared context documents may enter the store &mdash; and, more usefully, for the lifecycle: CI that flags substantive changes landing with no context diff over long periods. <em>Semantic merging.</em> Beyond union merges, LLM-assisted reconciliation of contradictory ledger entries, proposed to the human rather than applied. <em>Summarization and budgets.</em> Automatic distillation of aging ledgers, and guidance for fitting context to model budgets. <em>Hierarchy.</em> The nearest-ancestor extension of Section 7.4. <em>Cross-repository inheritance.</em> Organization-wide constraint layers that member repositories extend, giving platform teams a reviewed channel to every agent in the fleet. <em>Efficacy measurement.</em> The load-bearing empirical question: controlled evaluations of identical agent tasks with and without a maintained context layer, measuring repeated-mistake rates, constraint violations, and tokens spent re-deriving known facts.</p>
+
+<h2>12. Conclusion</h2>
+<p>Software repositories already version their code, their tests, their documentation, and their infrastructure. This paper has argued that they should also version their operating context: a small, human-readable, review-gated store that agents consult before planning and improve after executing. The architecture asks for no new infrastructure, reuses the trust machinery of Git and code review, and degrades gracefully to a single Markdown file maintained by hand. Its contested choices (one file, an append-only ledger, human-routed conflicts, deferred hierarchy, propose-but-not-enact agents) all follow from one principle: the layer must remain small enough to read, legible enough to review, and trustworthy enough to obey. Whether the pattern earns the status of a standard repository primitive is now an empirical question, and the evidence that will decide it is adoption.</p>
+
+<h2>References</h2>
+<div class="refs">
+<p>[1] P. Kerbel, &ldquo;The Repository Context Layer: The Missing Layer of Agentic Software Development,&rdquo; manifesto and specification repository, 2026. github.com/kerbelp/context-md</p>
+<p>[2] P. Lewis et al., &ldquo;Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks,&rdquo; in <em>Advances in Neural Information Processing Systems 33</em>, 2020.</p>
+<p>[3] Anthropic, &ldquo;Introducing the Model Context Protocol,&rdquo; 2024. modelcontextprotocol.io</p>
+<p>[4] M. Nygard, &ldquo;Documenting Architecture Decisions,&rdquo; 2011. cognitect.com/blog/2011/11/15/documenting-architecture-decisions</p>
+<p>[5] S. Bradner, &ldquo;Key words for use in RFCs to Indicate Requirement Levels,&rdquo; IETF RFC 2119, 1997.</p>
+</div>
+
+<h2>Appendix A: Format Summary</h2>
+<pre><code>file      := "# Repository Context" section+
+section   := required | optional
+required  := "## Intent" prose
+           | "## Constraints" rule+
+           | "## Evolved Context" entry*
+rule      := "- " statement [reason]
+entry     := "- [" date "] " observation
+date      := YYYY "-" MM "-" DD
+optional  := "## " title content
+             ; unrecognized optional sections
+             ; are ignored (Section 5, rule 3)</code></pre>
+
+<h2>Appendix B: A Worked Change</h2>
+<p>A pull request under the lifecycle contains code and context in one reviewed diff:</p>
+<pre><code>  src/client.rs          | 14 ++++++---
+  context.md             |  3 +++
+
++ ## Evolved Context
++ - [2026-07-02] Staging proxy drops idle
++   connections at 45 s; client timeouts
++   must be set explicitly below that.</code></pre>
+<p>The reviewer sees the timeout fix and the rule it produced together, approves both in one action, and every future session inherits the constraint. That single screen, code and sharpened context reviewed as one change, is the architecture in miniature.</p>
+
+</div>
+
+<footer>&copy; 2026 P. Kerbel. Preprint v0.1, July 2026. Companion to the Repository Context Layer manifesto (github.com/kerbelp/context-md). Comments welcome.<span class="initials">PK</span></footer>
+
+</body>
+</html>

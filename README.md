@@ -4,7 +4,7 @@ A proposed standard for AI project context: one markdown file, versioned with th
 
 > Git stores what changed. `context.md` stores what the project knows.
 
-📋 [Spec](SPEC.md) · 📝 [Full example](context.md.example) · 📄 [Whitepaper (PDF)](whitepaper/context-md-manifesto.pdf)
+📋 [Spec](SPEC.md) · 📝 [Full example](context.md.example) · 📄 [Whitepaper (PDF)](whitepaper/context-md-manifesto.pdf) · 🎓 [Paper (preprint, PDF)](whitepaper/repository-context-layer-paper.pdf)
 
 ## The file
 
@@ -55,7 +55,7 @@ No SDK, no server, no vendor: any agent that can read a file participates, and a
 
 ## Why not existing artifacts
 
-READMEs describe how to use a project, not how to change it. ADRs are write-once essays no agent is required to read. RAG retrieves by similarity, which fails for constraints — a rule matters most when nothing in the prompt resembles it. IDE memories are private to one tool and invisible to review. Agent instruction files (CLAUDE.md, AGENTS.md) carry orders downward but have no defined way to absorb what the agent learns. What's missing is the combination: versioned with the code, consulted by contract, and written back by the agent under human review. The full argument is in the [whitepaper](whitepaper/context-md-manifesto.pdf).
+READMEs describe how to use a project, not how to change it. ADRs are write-once essays no agent is required to read. RAG retrieves by similarity, which fails for constraints — a rule matters most when nothing in the prompt resembles it. IDE memories are private to one tool and invisible to review. Agent instruction files (CLAUDE.md, AGENTS.md) carry orders downward but have no defined way to absorb what the agent learns. What's missing is the combination: versioned with the code, consulted by contract, and written back by the agent under human review. The full argument is in the [whitepaper](whitepaper/context-md-manifesto.pdf); the formal treatment — properties, lifecycle semantics, design analysis, and the reference implementation — is in the [paper](whitepaper/repository-context-layer-paper.pdf).
 
 ## Scope
 
