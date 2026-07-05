@@ -33,3 +33,7 @@ to adopt in an afternoon.
   Kerbel; ORCID iDs recorded for both. PDF/HTML re-rendered. Added
   .gitattributes marking binary assets so committed PDFs are never subject
   to EOL normalization.
+- [2026-07-05] Paper strengthened after review (still v0.1): added an
+  architecture figure (Fig. 1), a concrete failure example, the
+  what/how/why framing, and a stronger close; trimmed implementation
+  minutiae. ORCID display switched to name-first.
