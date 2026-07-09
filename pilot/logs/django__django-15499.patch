@@ -1,0 +1,27 @@
+diff --git a/django/db/migrations/operations/models.py b/django/db/migrations/operations/models.py
+index 90fc31bee5..2fafac2185 100644
+--- a/django/db/migrations/operations/models.py
++++ b/django/db/migrations/operations/models.py
+@@ -944,3 +944,22 @@ class RemoveConstraint(IndexOperation):
+     @property
+     def migration_name_fragment(self):
+         return "remove_%s_%s" % (self.model_name_lower, self.name.lower())
++
++    def reduce(self, operation, app_label):
++        if isinstance(operation, AlterModelManagers) and operation.model_name == self.name:
++            return CreateModel(
++                name=self.name,
++                fields=self.fields,
++                options=self.options,
++                bases=self.bases,
++                managers=operation.managers
++            )
++        elif isinstance(operation, AlterModelOptions) and operation.model_name == self.name:
++            return CreateModel(
++                name=self.name,
++                fields=self.fields,
++                options=operation.options,
++                bases=self.bases,
++                managers=self.managers
++            )
++        return super().reduce(operation, app_label)
