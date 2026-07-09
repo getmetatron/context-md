@@ -212,13 +212,18 @@ def main():
     ap.add_argument("--rep", type=int, default=1)
     ap.add_argument("--oracle", action="store_true",
                     help="oracle-taught arm (§4.3): learning step sees gold patch. Labeled, never pooled.")
+    ap.add_argument("--no-learning", action="store_true",
+                    help="§4.7 pair B-side: consult the store but discard learning output (no chaining).")
+    ap.add_argument("--run-dir", default=None,
+                    help="override run directory (e.g. runs/D/pair_X_Y/rep1) for pair-scoped stores")
     args = ap.parse_args()
 
     import pandas as pd
     df = pd.read_parquet(DATA).set_index("instance_id")
     executor, ctx_mode, seed_author = COND[args.condition]
     chat = chat_frontier if executor == "frontier" else chat_local
-    rep_dir = ROOT / "runs" / (args.condition + ("_oracle" if args.oracle else "")) / f"rep{args.rep}"
+    rep_dir = (Path(args.run_dir) if args.run_dir else
+               ROOT / "runs" / (args.condition + ("_oracle" if args.oracle else "")) / f"rep{args.rep}")
     rep_dir.mkdir(parents=True, exist_ok=True)
     cache = ROOT / "pilot" / "work" / "cache"
     preds = rep_dir / "predictions.jsonl"
@@ -243,7 +248,7 @@ def main():
         context_md = load_context(args.condition, rep_dir, repo, seed_author)
         patch, transcript = run_episode(inst, wd, chat, args.rep, context_md, log)
 
-        if ctx_mode == "emergent":
+        if ctx_mode == "emergent" and not args.no_learning:
             gold = inst["patch"] if args.oracle else None   # §4.3 A-side only
             lessons = learning_step(chat, args.rep, transcript, patch, oracle_gold=gold)
             promoted = []
