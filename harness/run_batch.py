@@ -54,6 +54,16 @@ def main():
                 plan.append(("B", ["--condition", "B", "--instances", p["b"], "--rep", str(rep)], None))
             if "E" in args.arms:
                 plan.append(("E", ["--condition", "E", "--instances", p["b"], "--rep", str(rep)], None))
+            if "C" in args.arms:  # frontier emergent, pair protocol (§4.7)
+                cdir = str(ROOT / "runs" / "C" / f"pair_{tag}" / f"rep{rep}")
+                plan.append((f"C/pair_{tag}", ["--condition", "C", "--instances", p["a"], "--rep", str(rep), "--run-dir", cdir], tag))
+                plan.append((f"C/pair_{tag}", ["--condition", "C", "--instances", p["b"], "--rep", str(rep), "--no-learning", "--run-dir", cdir], tag))
+            if "A" in args.arms:  # frontier control on B-side
+                plan.append(("A", ["--condition", "A", "--instances", p["b"], "--rep", str(rep)], None))
+            if "Do" in args.arms:  # D-oracle (§4.3): labeled upper bound, local
+                odir = str(ROOT / "runs" / "D_oracle" / f"pair_{tag}" / f"rep{rep}")
+                plan.append((f"Do/pair_{tag}", ["--condition", "D", "--oracle", "--instances", p["a"], "--rep", str(rep), "--run-dir", odir], tag))
+                plan.append((f"Do/pair_{tag}", ["--condition", "D", "--instances", p["b"], "--rep", str(rep), "--no-learning", "--run-dir", odir], tag))
     # dedupe identical control/assist episodes (same instance+rep may appear in several pairs)
     seen, deduped = set(), []
     for entry in plan:

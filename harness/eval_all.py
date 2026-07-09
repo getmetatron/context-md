@@ -22,12 +22,17 @@ def record(run_id, iid, resolved, note=""):
 
 
 def main():
+    done_ids = set()
+    if SUMMARY.exists():
+        done_ids = {json.loads(l)["run_id"] for l in SUMMARY.read_text().splitlines()}
     jobs = []
     for pf in sorted((ROOT / "runs").rglob("predictions.jsonl")):
         rel = pf.relative_to(ROOT / "runs")
         run_id = "eval-" + "-".join(rel.parts[:-1]).replace("pair_", "p")
+        if run_id in done_ids:
+            continue  # resume: already evaluated
         jobs.append((run_id, pf))
-    print(f"{len(jobs)} eval jobs", flush=True)
+    print(f"{len(jobs)} eval jobs ({len(done_ids)} run_ids already done)", flush=True)
 
     for run_id, pf in jobs:
         preds = [json.loads(l) for l in pf.read_text().splitlines()]
