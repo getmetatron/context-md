@@ -1,0 +1,40 @@
+{
+ "instance_id": "django__django-15252",
+ "condition": "B",
+ "rep": 4,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 4,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"ensure_schema\" django/db/migrations/recorder.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat django/db/migrations/recorder.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i '/def ensure_schema(self):/,/except DatabaseError as exc:/ s/if self.has_table():\\n            return\\n        # Make the table\\n        try:\\n            with self.connection.schema_editor() as editor:\\n                editor.create_model(self.Migration)\\n        except DatabaseError as exc:/if hasattr(self.connection, \"routers\") and self.connection.routers and not self.connection.routers[self.connection.alias].allow_migrate(self.connection.alias, None):\\n            return\\n        if self.has_table():\\n            return\\n        # Make the table\\n        try:\\n            with self.connection.schema_editor() as editor:\\n                editor.create_model(self.Migration)\\n        except DatabaseError as exc:/' django/db/migrations/recorder.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/migrations/recorder.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The logic needs to check for a router and call allow_migrate.\n# We assume self.connection has a 'routers' attribute if a router is set up.\n# We also need to ensure we don't break the existing structure.\n\n# Original block to replace:\noriginal_block = \"\"\"    def ensure_schema(self):\n        \\\"\\\"\\\"Ensure the table exists and has the correct schema.\\\"\\\"\\\"\n        # If the table's there, that's fine - we've never changed its schema\n        # in the codebase.\n        if self.has_table():\n            return\n        # Make the table\n        try:\n            with self.connection.schema_editor() as editor:\n                editor.create_model(self.Migration)\n        except DatabaseError as exc:\n            raise MigrationSchemaMissing(\"Unable to create the django_migrations table (%s)\" % exc)\"\"\"\n\n# New logic: Check router first.\nnew_logic = \"\"\"    def ensure_schema(self):\n        \\\"\\\"\\\"Ensure the table exists and has the correct schema.\\\"\\\"\\\"\n        if hasattr(self.connection, 'routers') and self.connection.routers:\n            router = self.connection.routers.get(self.connection.alias)\n            if router and not router.allow_migrate(self.connection.alias, None):\n                return\n        \n        if self.has_table():\n            return\n        # Make the table\n        try:\n            with self.connection.schema_editor() as editor:\n                editor.create_model(self.Migration)\n        except DatabaseError as exc:\n            raise MigrationSchemaMissing(\"Unable to create the django_migrations table (%s)\" % exc)\"\"\"\n\n# Perform replacement\nnew_content = content.replace(original_block, new_logic)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 8998,
+ "completion_tokens": 1803,
+ "submitted": true,
+ "patch_bytes": 786,
+ "wall_s": 43.6
+}

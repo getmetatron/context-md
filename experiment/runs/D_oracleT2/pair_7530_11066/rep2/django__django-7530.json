@@ -1,0 +1,82 @@
+{
+ "instance_id": "django__django-7530",
+ "condition": "D",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"allow_migrate\" django/migrations/models.py",
+   "exit": 2
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"allow_migrate\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat tests/migrations/routers.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat tests/multiple_database/tests.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -r \"router.allow_migrate\" django/db/migrations/routers.py",
+   "exit": 2
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -r \"allow_migrate\" django/db/migrations/models.py",
+   "exit": 2
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfrom django.db.migrations.utils import model_to_pk\nfrom django.db.migrations.models import Model\nfrom django.db.utils import ConnectionRouter\n\nclass TestRouter(object):\n    def allow_migrate(self, db, app_label, model_name=None, **hints):\n        \"\"\"\n        The Tribble model should be the only one to appear in the 'other' db.\n        \"\"\"\n        if model_name == 'tribble':\n            return db == 'other'\n        elif db == 'other':\n            return False\n        return True\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i 's/        if model_name == \\'tribble\\':/        if model_name == \\'tribble\\':\\n            return db == \\'other\\'\\n        elif db == \\'other\\':\\n            return False\\n        return True/' tests/migrations/routers.py",
+   "exit": 2
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i '/        elif db == \\'other\\':/a\\        return True' tests/migrations/routers.py",
+   "exit": 2
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"tests/migrations/routers.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Find the function definition and replace the body logic\n# This is a highly targeted replacement based on the observed structure.\nnew_content = content.replace(\n    \"\"\"        if model_name == 'tribble':\n            return db == 'other'\n        elif db == 'other':\n            return False\"\"\",\n    \"\"\"        if model_name == 'tribble':\n            return db == 'other'\n        elif db == 'other':\n            return False\n        return True\"\"\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 30878,
+ "completion_tokens": 2229,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 329,
+ "lessons_raw": [
+  "When interacting with Django's migration system, direct file path lookups for core modules (e.g., `django/migrations/models.py`) are unreliable; rely on documented APIs or broader search patterns.",
+  "Testing database routing logic often requires explicit handling for the default case (e.g., returning `True` if no specific condition is met) to ensure migrations proceed correctly.",
+  "When modifying core framework behavior via tests, understanding the correct iteration pattern for retrieving models (e.g., using `get_app_config().get_models()`) is crucial for robustness."
+ ],
+ "lessons_promoted": [
+  "When interacting with Django's migration system, direct file path lookups for core modules (e.g., `django/migrations/models.py`) are unreliable; rely on documented APIs or broader search patterns.",
+  "Testing database routing logic often requires explicit handling for the default case (e.g., returning `True` if no specific condition is met) to ensure migrations proceed correctly.",
+  "When modifying core framework behavior via tests, understanding the correct iteration pattern for retrieving models (e.g., using `get_app_config().get_models()`) is crucial for robustness."
+ ],
+ "wall_s": 60.7
+}

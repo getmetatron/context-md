@@ -1,0 +1,82 @@
+{
+ "instance_id": "django__django-15278",
+ "condition": "D",
+ "rep": 4,
+ "executor": "local",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 4,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"OneToOneField\" django/db/migrations/",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"ALTER TABLE\" django/db/backends/sqlite3/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"UNIQUE\" django/db/backends/sqlite3/",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat django/db/backends/sqlite3/schema.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "cat django/db/migrations/state.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/def get_related_models_recursive(model):/,/    return list(seen)/ s/    seen = set()/    seen = set()\n    if model._meta.proxy:\n        return set() # Skip recursion for proxies if they cause issues\n    seen = set()/' django/db/migrations/state.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/migrations/state.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Insert check at the beginning of get_related_models_recursive\nnew_content = content.replace(\n    \"def get_related_models_recursive(model):\\n    seen = set()\",\n    \"def get_related_models_recursive(model):\\n    seen = set()\\n    if model._meta.proxy: return set()\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i '/def get_related_models_recursive(model):/,/    return list(seen)/ s/    seen = set()/    seen = set()\\n    if model._meta.proxy: return set()/",
+   "exit": 2
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/migrations/state.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Find the start of the function and insert the check right after the definition line.\n# This assumes the function starts exactly with 'def get_related_models_recursive(model):'\nsearch_pattern = \"def get_related_models_recursive(model):\"\nreplacement_snippet = \"\\n    if model._meta.proxy: return set()\\n\"\n\nif search_pattern in content:\n    new_content = content.replace(search_pattern, search_pattern + replacement_snippet)\n    \n    # A second pass might be needed to ensure the return type matches the original structure if the proxy check returns set() instead of list(seen)\n    # However, returning set() is functionally equivalent for the purpose of stopping recursion early.\n    \n    with open(file_path, 'w') as f:\n        f.write(new_content)\nelse:\n    print(\"Search pattern not found.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 34629,
+ "completion_tokens": 2814,
+ "context_truncated": false,
+ "context_words": 15,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 428,
+ "lessons_raw": [
+  "When modifying core database backend logic, always check for specific SQL dialect limitations (e.g., SQLite's handling of `ALTER TABLE` constraints).",
+  "When modifying complex recursive logic, explicitly check for proxy model metadata (`model._meta.proxy`) to prevent infinite recursion or incorrect state tracking.",
+  "Database schema manipulation logic must account for the interaction between field constraints (like `unique` or `primary_key`) and the capabilities of the underlying SQL dialect's `ALTER TABLE` command."
+ ],
+ "lessons_promoted": [
+  "When modifying core database backend logic, always check for specific SQL dialect limitations (e.g., SQLite's handling of `ALTER TABLE` constraints).",
+  "When modifying complex recursive logic, explicitly check for proxy model metadata (`model._meta.proxy`) to prevent infinite recursion or incorrect state tracking.",
+  "Database schema manipulation logic must account for the interaction between field constraints (like `unique` or `primary_key`) and the capabilities of the underlying SQL dialect's `ALTER TABLE` command."
+ ],
+ "wall_s": 78.5
+}

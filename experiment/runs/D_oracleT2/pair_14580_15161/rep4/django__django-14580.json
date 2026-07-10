@@ -1,0 +1,82 @@
+{
+ "instance_id": "django__django-14580",
+ "condition": "D",
+ "rep": 4,
+ "executor": "local",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 4,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"models.Model\" django/db/migrations/writer.py",
+   "exit": 1
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"models.Model\" django/db/migrations/writer.py",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "cat django/db/migrations/writer.py | grep -E \"models\\.|models\\(\"",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -A 10 \"class Migration(migrations.Migration):\" django/db/migrations/writer.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "head -n 20 django/db/migrations/writer.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport re\nfrom importlib import import_module\n\nfrom django import get_version\nfrom django.apps import apps\n# SettingsReference imported for backwards compatibility in Django 2.2.\nfrom django.conf import SettingsReference  # NOQA\nfrom django.db import migrations\nfrom django.db import models  # Added missing import\nfrom django.db.migrations.loader import MigrationLoader\nfrom django.db.migrations.serializer import Serializer, serializer_factory\nfrom django.utils.inspect import get_func_args\nfrom django.utils.module_loading import module_dir\nfrom django.utils.timezone import now\n\n\nclass OperationWriter:\n    def __init__(self, operation, indentation=2):\n        self.operation = operation\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i 's/from django.db import migrations/from django.db import migrations, models/' django/db/migrations/writer.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/migrations/writer.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Check if 'from django.db import models' is already present to avoid duplication\nif \"from django.db import models\" not in content:\n    # Find the line containing 'from django.db import migrations' and insert the new import after it.\n    # This is a heuristic fix based on the previous successful inspection.\n    new_content = content.replace(\n        \"from django.db import migrations\",\n        \"from django.db import migrations\\nfrom django.db import models\"\n    )\n    with open(file_path, 'w') as f:\n        f.write(new_content)\nelse:\n    print(\"Import for models already seems to be present.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i 's/from django.db import migrations/from django.db import migrations, models/' django/db/migrations/writer.py",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/migrations/writer.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Use a regex replacement to insert the import after the existing one.\n# This pattern looks for the line containing 'from django.db import migrations'\n# and inserts the new import on the next line.\nimport re\npattern = r\"(from django.db import migrations)\"\nreplacement = r\"\\1\\nfrom django.db import models\"\n\nnew_content = re.sub(pattern, replacement, content, count=1)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 22566,
+ "completion_tokens": 1680,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 601,
+ "lessons_raw": [
+  "When modifying imports across files, direct string replacement or simple `sed` commands are brittle; using programmatic file reading/writing with targeted regex substitution is more robust.",
+  "For dependency management in code generation, explicitly checking for and adding necessary imports (like `models`) is required, even if the initial inspection suggests they might be present.",
+  "When dealing with Django internals, the location and method of adding imports must respect existing structure, often requiring insertion immediately following related core imports."
+ ],
+ "lessons_promoted": [
+  "When modifying imports across files, direct string replacement or simple `sed` commands are brittle; using programmatic file reading/writing with targeted regex substitution is more robust.",
+  "For dependency management in code generation, explicitly checking for and adding necessary imports (like `models`) is required, even if the initial inspection suggests they might be present.",
+  "When dealing with Django internals, the location and method of adding imports must respect existing structure, often requiring insertion immediately following related core imports."
+ ],
+ "wall_s": 44.8
+}
