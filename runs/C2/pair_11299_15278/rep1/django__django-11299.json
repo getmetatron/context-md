@@ -1,0 +1,45 @@
+{
+ "instance_id": "django__django-11299",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"SimpleCol\\|simple_col\" django/db/models/sql/query.py django/db/models/query_utils.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '1325,1410p' django/db/models/sql/query.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf='django/db/models/sql/query.py'\ns=open(f).read()\nold='''                child_clause, needed_inner = self._add_q(\n                    child, used_aliases, branch_negated,\n                    current_negated, allow_joins, split_subq)'''\nnew='''                child_clause, needed_inner = self._add_q(\n                    child, used_aliases, branch_negated,\n                    current_negated, allow_joins, split_subq, simple_col)'''\nassert old in s\nopen(f,'w').write(s.replace(old,new))\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 11845,
+ "completion_tokens": 450,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 668,
+ "lessons_raw": [
+  "In `django/db/models/sql/query.py`, `_add_q` recurses on nested `Node` children; propagate flags like `simple_col` through recursive calls or they silently drop for nested Q-objects.",
+  "`SimpleCol` vs `Col` selection is centralized in `_get_col(target, field, alias, simple_col)`; the `simple_col` flag threads through `resolve_lookup_value`, `build_filter`, and `_add_q`."
+ ],
+ "lessons_promoted": [
+  "In `django/db/models/sql/query.py`, `_add_q` recurses on nested `Node` children; propagate flags like `simple_col` through recursive calls or they silently drop for nested Q-objects.",
+  "`SimpleCol` vs `Col` selection is centralized in `_get_col(target, field, alias, simple_col)`; the `simple_col` flag threads through `resolve_lookup_value`, `build_filter`, and `_add_q`."
+ ],
+ "wall_s": 22.2
+}

@@ -1,0 +1,82 @@
+{
+ "instance_id": "django__django-16819",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"class AddIndex\\|class RemoveIndex\\|class RenameIndex\\|def reduce\" django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -i.bak -n '811,1055p' django/db/migrations/operations/models.py; sed -n '811,910p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '811,910p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "mv django/db/migrations/operations/models.py.bak django/db/migrations/operations/models.py 2>/dev/null; sed -n '811,910p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -n \"class IndexOperation\\|def reduce\\|references_model\\|def references_field\" django/db/migrations/operations/models.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -n \"migration_name_fragment\" django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/operations/models.py\"\ns=open(f).read()\nanchor='''    @property\n    def migration_name_fragment(self):\n        return \"%s_%s\" % (self.model_name_lower, self.index.name.lower())\n\n\nclass RemoveIndex(IndexOperation):'''\nnew='''    @property\n    def migration_name_fragment(self):\n        return \"%s_%s\" % (self.model_name_lower, self.index.name.lower())\n\n    def reduce(self, operation, app_label):\n        if isinstance(operation, RemoveIndex) and (\n            self.model_name_lower == operation.model_name_lower\n            and self.index.name == operation.name\n        ):\n            return []\n        return super().reduce(operation, app_label)\n\n\nclass RemoveIndex(IndexOperation):'''\nassert anchor in s\ns=s.replace(anchor,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "grep -n \"^from\\|^import\\|Operation\" django/db/migrations/operations/models.py | head -20",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i 's/^class IndexOperation:/class IndexOperation(Operation):/' django/db/migrations/operations/models.py\ngrep -n \"class IndexOperation\" django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 -m pytest tests/migrations/test_optimizer.py -k \"index\" -q 2>&1 | tail -20",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "cd tests && python3 runtests.py migrations.test_operations -v1 2>&1 | tail -5",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "python3 tests/runtests.py migrations.test_operations -v1 2>&1 | tail -5",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 37892,
+ "completion_tokens": 2294,
+ "context_truncated": false,
+ "context_words": 62,
+ "submitted": true,
+ "patch_bytes": 784,
+ "wall_s": 49.8
+}

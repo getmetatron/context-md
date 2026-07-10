@@ -1,0 +1,62 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8593",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"meta public\\|metadata\\|:meta\\|isprivate\\|has_doc\\|filter_members\" sphinx/ext/autodoc/__init__.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '700,760p' sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '690,700p' sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf = \"sphinx/ext/autodoc/__init__.py\"\ns = open(f).read()\nold = \"\"\"            has_doc = bool(doc)\n\n            metadata = extract_metadata(doc)\"\"\"\nnew = \"\"\"            has_doc = bool(doc)\n\n            metadata = extract_metadata(doc)\n            if 'private' in metadata:\n                # consider a member private if docstring has \"private\" metadata\n                isprivate = True\n            elif 'public' in metadata:\n                # consider a member public if docstring has \"public\" metadata\n                isprivate = False\n            else:\n                doc = None\"\"\"\n# instead do a cleaner approach below\nEOF\necho \"skip\"",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nf = \"sphinx/ext/autodoc/__init__.py\"\ns = open(f).read()\nold = \"\"\"            has_doc = bool(doc)\n\n            metadata = extract_metadata(doc)\n            if 'private' in metadata:\n                # consider a member private if docstring has \"private\" metadata\n                isprivate = True\n            elif 'public' in metadata:\n                # consider a member public if docstring has \"public\" metadata\n                isprivate = False\n            else:\n                isprivate = membername.startswith('_')\"\"\"\nnew = \"\"\"            has_doc = bool(doc)\n\n            metadata = extract_metadata(doc)\n            if 'private' in metadata:\n                # consider a member private if docstring has \"private\" metadata\n                isprivate = True\n            elif 'public' in metadata:\n                # consider a member public if docstring has \"public\" metadata\n                isprivate = False\n            else:\n                if (namespace, membername) in attr_docs:\n                    # keep documented attributes\n                    metadata = extract_metadata('\\\\n'.join(attr_docs[(namespace, membername)]))\n                    if 'private' in metadata:\n                        isprivate = True\n                    elif 'public' in metadata:\n                        isprivate = False\n                    else:\n                        isprivate = membername.startswith('_')\n                else:\n                    isprivate = membername.startswith('_')\"\"\"\nassert old in s\ns = s.replace(old, new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -n '766,800p' sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nf = \"sphinx/ext/autodoc/__init__.py\"\ns = open(f).read()\nold = \"\"\"            has_doc = bool(doc)\n\n            metadata = extract_metadata(doc)\n            if 'private' in metadata:\n                # consider a member private if docstring has \"private\" metadata\n                isprivate = True\n            elif 'public' in metadata:\n                # consider a member public if docstring has \"public\" metadata\n                isprivate = False\n            else:\n                if (namespace, membername) in attr_docs:\n                    # keep documented attributes\n                    metadata = extract_metadata('\\\\n'.join(attr_docs[(namespace, membername)]))\n                    if 'private' in metadata:\n                        isprivate = True\n                    elif 'public' in metadata:\n                        isprivate = False\n                    else:\n                        isprivate = membername.startswith('_')\n                else:\n                    isprivate = membername.startswith('_')\"\"\"\nnew = \"\"\"            has_doc = bool(doc)\n\n            metadata = extract_metadata(doc)\n            if 'private' in metadata:\n                # consider a member private if docstring has \"private\" metadata\n                isprivate = True\n            elif 'public' in metadata:\n                # consider a member public if docstring has \"public\" metadata\n                isprivate = False\n            else:\n                # attribute docstrings (comments) are stored in attr_docs,\n                # so look up the metadata there for module/class variables\n                if (namespace, membername) in attr_docs:\n                    metadata = extract_metadata('\\\\n'.join(attr_docs[(namespace, membername)]))\n                if 'private' in metadata:\n                    isprivate = True\n                elif 'public' in metadata:\n                    isprivate = False\n                else:\n                    isprivate = membername.startswith('_')\"\"\"\nassert old in s\ns = s.replace(old, new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 -c \"from sphinx.util.docstrings import extract_metadata; print(extract_metadata(':meta public:'))\"",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 26256,
+ "completion_tokens": 2081,
+ "context_truncated": false,
+ "context_words": 109,
+ "submitted": true,
+ "patch_bytes": 1069,
+ "wall_s": 37.8
+}

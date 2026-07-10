@@ -1,0 +1,70 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9673",
+ "condition": "A",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"description_target\" sphinx/ext/autodoc/typehints.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '40,130p' sphinx/ext/autodoc/typehints.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '183,200p' sphinx/ext/autodoc/typehints.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf = 'sphinx/ext/autodoc/typehints.py'\ns = open(f).read()\nold = \"\"\"    # Add 'type' for parameters with a description but no declared type.\n    for name in annotations:\n        if name == 'return':\n            continue\n        if name in has_description and name not in has_type:\n            field = nodes.field()\n            field += nodes.field_name('', 'type ' + name)\n            field += nodes.field_body('', nodes.paragraph('', annotations[name]))\n            node += field\n\"\"\"\nnew = \"\"\"    # Add 'type' for parameters with a description but no declared type.\n    for name in annotations:\n        if name in ('return', 'returns'):\n            continue\n        if name in has_description and name not in has_type:\n            field = nodes.field()\n            field += nodes.field_name('', 'type ' + name)\n            field += nodes.field_body('', nodes.paragraph('', annotations[name]))\n            node += field\n\n    # Add 'rtype' if 'return' is present and has a description.\n    if 'return' in annotations:\n        rtype = annotations['return']\n        if 'return' in has_description and 'return' not in has_type:\n            field = nodes.field()\n            field += nodes.field_name('', 'rtype')\n            field += nodes.field_body('', nodes.paragraph('', rtype))\n            node += field\n\"\"\"\nassert old in s\ns = s.replace(old, new)\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '165,175p' sphinx/ext/autodoc/typehints.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nf = 'sphinx/ext/autodoc/typehints.py'\ns = open(f).read()\nold = \"\"\"        elif parts[0] == 'return':\n            has_description.add('return')\"\"\"\nnew = \"\"\"        elif parts[0] in ('return', 'returns'):\n            has_description.add('return')\"\"\"\nassert old in s\ns = s.replace(old, new)\nopen(f,'w').write(s)\nprint(\"ok\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python -m pytest tests/test_ext_autodoc_configs.py -k typehints_description -x -q 2>&1 | tail -30",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 -m pytest tests/test_ext_autodoc_configs.py -k typehints_description -x -q 2>&1 | tail -30",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "ls; which sphinx-build 2>/dev/null; python3 -c \"import sphinx; print(sphinx.__file__)\"",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "The fix looks complete and consistent.",
+   "exit": 127
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 37574,
+ "completion_tokens": 2671,
+ "submitted": true,
+ "patch_bytes": 1579,
+ "wall_s": 44.8
+}

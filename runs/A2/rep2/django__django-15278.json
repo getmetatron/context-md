@@ -1,0 +1,45 @@
+{
+ "instance_id": "django__django-15278",
+ "condition": "A",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"unique\\|UNIQUE\\|add_field\\|_remake_table\\|effective_default\" django/db/backends/sqlite3/schema.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "def add_field(self, model, field):\n        \"\"\"Create a field on a model.\"\"\"\n        # Fields with default values cannot by handled by ALTER TABLE ADD\n        # COLUMN statement because DROP DEFAULT is not supported in\n        # ALTER TABLE.\n        if not field.null or self.effective_default(field) is not None:\n            self._remake_table(model, create_field=field)\n        else:\n            super().add_field(model, field)",
+   "exit": 2
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nimport re\np=\"django/db/backends/sqlite3/schema.py\"\ns=open(p).read()\nold='''        # Fields with default values cannot by handled by ALTER TABLE ADD\n        # COLUMN statement because DROP DEFAULT is not supported in\n        # ALTER TABLE.\n        if not field.null or self.effective_default(field) is not None:\n            self._remake_table(model, create_field=field)'''\nnew='''        # Special-case implicit M2M tables.\n        # Fields with default values cannot by handled by ALTER TABLE ADD\n        # COLUMN statement because DROP DEFAULT is not supported in\n        # ALTER TABLE.\n        if (\n            not field.null\n            or self.effective_default(field) is not None\n            # Unique columns can't be added by ALTER TABLE ADD COLUMN.\n            or field.unique\n        ):\n            self._remake_table(model, create_field=field)'''\nassert old in s\ns=s.replace(old,new)\nopen(p,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\np=\"django/db/backends/sqlite3/schema.py\"\ns=open(p).read()\ns=s.replace(\"        # Special-case implicit M2M tables.\\n\",\"\")\nopen(p,\"w\").write(s)\nprint(\"ok\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '325,345p' django/db/backends/sqlite3/schema.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 11527,
+ "completion_tokens": 984,
+ "submitted": true,
+ "patch_bytes": 859,
+ "wall_s": 19.3
+}

@@ -1,0 +1,35 @@
+{
+ "instance_id": "django__django-13343",
+ "condition": "A",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"storage\" django/db/models/fields/files.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '225,290p' django/db/models/fields/files.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/models/fields/files.py\"\ns=open(f).read()\nold='''        self.storage = storage or default_storage\n        if callable(self.storage):\n            self.storage = self.storage()\n            if not isinstance(self.storage, Storage):'''\nnew='''        self.storage = storage or default_storage\n        if callable(self.storage):\n            self._storage_callable = self.storage\n            self.storage = self.storage()\n            if not isinstance(self.storage, Storage):'''\ns=s.replace(old,new)\nold2='''        if self.storage is not default_storage:\n            kwargs['storage'] = self.storage'''\nnew2='''        if self.storage is not default_storage:\n            kwargs['storage'] = getattr(self, '_storage_callable', self.storage)'''\ns=s.replace(old2,new2)\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 6748,
+ "completion_tokens": 472,
+ "submitted": true,
+ "patch_bytes": 893,
+ "wall_s": 11.5
+}

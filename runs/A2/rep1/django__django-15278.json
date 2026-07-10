@@ -1,0 +1,75 @@
+{
+ "instance_id": "django__django-15278",
+ "condition": "A",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"unique\\|UNIQUE\\|add_field\\|effective_default\\|_remake_table\" django/db/backends/sqlite3/schema.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '325,335p' django/db/backends/sqlite3/schema.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/backends/sqlite3/schema.py\"\ns=open(f).read()\nold='''        # Fields with default values cannot by handled by ALTER TABLE ADD\n        # COLUMN statement because DROP DEFAULT is not supported in\n        # ALTER TABLE.\n        if not field.null or self.effective_default(field) is not None:\n            self._remake_table(model, create_field=field)\n        else:\n            super().add_field(model, field)'''\nnew='''        # Special-case implicit M2M tables.\n        if field.many_to_many and field.remote_field.through._meta.auto_created:\n            self.create_model(field.remote_field.through)\n        elif (\n            # Primary keys and unique fields are not supported in ALTER TABLE\n            # ADD COLUMN.\n            field.primary_key or field.unique or\n            # Fields with default values cannot by handled by ALTER TABLE ADD\n            # COLUMN statement because DROP DEFAULT is not supported in\n            # ALTER TABLE.\n            not field.null or self.effective_default(field) is not None\n        ):\n            self._remake_table(model, create_field=field)\n        else:\n            super().add_field(model, field)'''\nassert old in s\nopen(f,\"w\").write(s.replace(old,new))\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -n \"def add_field\\|many_to_many\\|through\" django/db/backends/base/schema.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 -m pytest tests/schema/tests.py -k \"add\" -q 2>&1 | tail -20 || python3 tests/runtests.py schema.tests -v0 2>&1 | tail -20",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 tests/runtests.py schema --parallel=1 2>&1 | tail -20",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "pip install -e . -q 2>&1 | tail -3",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 -m pip install -e . -q 2>&1 | tail -3",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "PYTHONPATH=. python3 tests/runtests.py schema --parallel=1 2>&1 | tail -15",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 -m pip install --break-system-packages -e . -q 2>&1 | tail -3",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "PYTHONPATH=. python3 tests/runtests.py schema --parallel=1 2>&1 | tail -15",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 32878,
+ "completion_tokens": 1294,
+ "submitted": true,
+ "patch_bytes": 1354,
+ "wall_s": 36.8
+}

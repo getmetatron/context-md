@@ -1,0 +1,66 @@
+{
+ "instance_id": "pydata__xarray-6461",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"keep_attrs = lambda attrs, context: attrs\\[1\\]\" xarray/",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '1825,1835p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i '1832s/.*/        keep_attrs = lambda attrs, context: getattr(x, \"attrs\", {})/' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf=\"xarray/core/computation.py\"\ns=open(f).read()\nold='        keep_attrs = lambda attrs, context: attrs[1]'\nnew='        keep_attrs = lambda attrs, context: getattr(x, \"attrs\", {})'\nassert old in s\nopen(f,\"w\").write(s.replace(old,new))\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 -c \"import xarray as xr; print(xr.where(xr.DataArray([1,2,3])>0,1,0))\"",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 -c \"import numpy\" 2>&1; which python3; ls",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 -c \"import ast; ast.parse(open('xarray/core/computation.py').read()); print('ok')\"",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 11917,
+ "completion_tokens": 690,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 635,
+ "lessons_raw": [
+  "In `xarray/core/computation.py`, `where()` uses `apply_ufunc` with a `keep_attrs` callable `(attrs, context)`; indexing `attrs` positionally breaks when an argument is a scalar without attrs. Use `getattr(x, \"attrs\", {})` to safely handle scalar operands.",
+  "The `keep_attrs=True` convention in `where()` preserves the attributes of `x` (the second parameter), matching the `where` method of `DataArray`/`Dataset`.",
+  "The system `python3` (`/opt/homebrew/bin/python3`) lacks numpy; you cannot import xarray to test. Validate edits with `ast.parse` for syntax checks instead."
+ ],
+ "lessons_promoted": [
+  "The `keep_attrs=True` convention in `where()` preserves the attributes of `x` (the second parameter), matching the `where` method of `DataArray`/`Dataset`.",
+  "The system `python3` (`/opt/homebrew/bin/python3`) lacks numpy; you cannot import xarray to test. Validate edits with `ast.parse` for syntax checks instead."
+ ],
+ "wall_s": 26.4
+}

@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-13820",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"__file__\\|__path__\\|namespace\" django/db/migrations/loader.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '85,110p' django/db/migrations/loader.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf='django/db/migrations/loader.py'\ns=open(f).read()\nold='''                # Empty directories are namespaces.\n                # getattr() needed on PY36 and older (replace w/attribute access).\n                if getattr(module, '__file__', None) is None:\n                    self.unmigrated_apps.add(app_config.label)\n                    continue\n                # Module is not a package (e.g. migrations.py).\n                if not hasattr(module, '__path__'):\n                    self.unmigrated_apps.add(app_config.label)\n                    continue\n'''\nnew='''                # Module is not a package (e.g. migrations.py).\n                if not hasattr(module, '__path__'):\n                    self.unmigrated_apps.add(app_config.label)\n                    continue\n                # Empty directories are namespaces. Namespace packages have no\n                # __file__ and don't use a list for __path__. See\n                # https://docs.python.org/3/reference/import.html#namespace-packages\n                if (\n                    getattr(module, '__file__', None) is None and\n                    not isinstance(module.__path__, list)\n                ):\n                    self.unmigrated_apps.add(app_config.label)\n                    continue\n'''\nassert old in s\nopen(f,'w').write(s.replace(old,new))\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 6833,
+ "completion_tokens": 587,
+ "context_truncated": false,
+ "context_words": 61,
+ "submitted": true,
+ "patch_bytes": 1446,
+ "wall_s": 13.4
+}

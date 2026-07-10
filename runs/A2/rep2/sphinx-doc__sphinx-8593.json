@@ -1,0 +1,70 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8593",
+ "condition": "A",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"meta public\\|:meta \" sphinx/ext/autodoc/__init__.py | head -20",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '646,730p' sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '730,800p' sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '703,730p' sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '729,738p' sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nf='sphinx/ext/autodoc/__init__.py'\ns=open(f).read()\nold='''            has_doc = bool(doc)\n\n            metadata = extract_metadata(doc)'''\nnew='''            has_doc = bool(doc)\n\n            if (namespace, membername) in attr_docs:\n                metadata = extract_metadata('\\\\n'.join(attr_docs[(namespace, membername)]))\n            else:\n                metadata = extract_metadata(doc)'''\nassert old in s\ns=s.replace(old,new,1)\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "grep -n \"def extract_metadata\\|def find_attr_docs\\|attr_docs\\[\" sphinx/pycode/__init__.py sphinx/util/docstrings.py 2>/dev/null | head",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -n '23,60p' sphinx/util/docstrings.py",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "cd /tmp && mkdir -p mp && cat > mp/example.py <<'EOF'\n_foo = None  #: :meta public:\nEOF\npython3 -c \"\nimport sys; sys.path.insert(0,'mp')\nfrom sphinx.pycode import ModuleAnalyzer\na=ModuleAnalyzer.for_module('example')\nprint(a.find_attr_docs())\nfrom sphinx.util.docstrings import extract_metadata\nd=a.find_attr_docs()[('','_foo')]\nprint(extract_metadata('\\n'.join(d)))\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "cd /tmp/mp && PYTHONPATH=/tmp/mp python3 -c \"\nimport sys; sys.path.insert(0,'$OLDPWD')\n\" ; cd - >/dev/null; python3 -c \"\nimport sys; sys.path.insert(0,'/tmp/mp')\nfrom sphinx.pycode import ModuleAnalyzer\na=ModuleAnalyzer.for_module('example')\nd=a.find_attr_docs()[('','_foo')]\nfrom sphinx.util.docstrings import extract_metadata\nprint(extract_metadata('\\n'.join(d)))\n\"",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 40702,
+ "completion_tokens": 2532,
+ "submitted": true,
+ "patch_bytes": 676,
+ "wall_s": 49.4
+}

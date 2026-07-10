@@ -1,0 +1,50 @@
+{
+ "instance_id": "django__django-13343",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"deconstruct\\|_storage_callable\\|storage\" django/db/models/fields/files.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '227,285p' django/db/models/fields/files.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nimport re\nf='django/db/models/fields/files.py'\ns=open(f).read()\n\nold_init='''        self.storage = storage or default_storage\n        if callable(self.storage):\n            self.storage = self.storage()\n            if not isinstance(self.storage, Storage):\n                raise TypeError(\n                    \"%s.storage must be a subclass/instance of %s.%s\"\n                    % (self.__class__.__qualname__, Storage.__module__, Storage.__qualname__)\n                )'''\nnew_init='''        self.storage = storage or default_storage\n        if callable(self.storage):\n            # Hold a reference to the callable for deconstruct().\n            self._storage_callable = self.storage\n            self.storage = self.storage()\n            if not isinstance(self.storage, Storage):\n                raise TypeError(\n                    \"%s.storage must be a subclass/instance of %s.%s\"\n                    % (self.__class__.__qualname__, Storage.__module__, Storage.__qualname__)\n                )'''\ns=s.replace(old_init,new_init)\n\nold_dec='''        if self.storage is not default_storage:\n            kwargs['storage'] = self.storage'''\nnew_dec='''        if self.storage is not default_storage:\n            kwargs['storage'] = getattr(self, '_storage_callable', self.storage)'''\ns=s.replace(old_dec,new_dec)\n\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '227,240p;277,285p' django/db/models/fields/files.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 10569,
+ "completion_tokens": 698,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 960,
+ "lessons_raw": [
+  "FileField (django/db/models/fields/files.py) accepts a callable for `storage`; it's evaluated in `__init__`. To make deconstruct() reproducible, the original callable must be preserved (stored on `_storage_callable`) rather than the resolved Storage instance.",
+  "Field.deconstruct() should serialize the user-provided value (callable/reference), not runtime-resolved objects, so migrations regenerate the same field definition."
+ ],
+ "lessons_promoted": [
+  "FileField (django/db/models/fields/files.py) accepts a callable for `storage`; it's evaluated in `__init__`. To make deconstruct() reproducible, the original callable must be preserved (stored on `_storage_callable`) rather than the resolved Storage instance.",
+  "Field.deconstruct() should serialize the user-provided value (callable/reference), not runtime-resolved objects, so migrations regenerate the same field definition."
+ ],
+ "wall_s": 21.6
+}

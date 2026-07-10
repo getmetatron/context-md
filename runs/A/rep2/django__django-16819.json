@@ -1,0 +1,60 @@
+{
+ "instance_id": "django__django-16819",
+ "condition": "A",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "find . -path ./tests -prune -o -name \"*.py\" -print | xargs grep -ln \"reduce\" 2>/dev/null | grep -i migrat | head",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"class AddIndex\\|class RemoveIndex\\|def reduce\\|def deconstruct\" django/db/migrations/operations/models.py | head -50",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i '' 2>/dev/null; sed -n '811,930p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '780,812p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/operations/models.py\"\ns=open(f).read()\nanchor='''            [],\n            kwargs,\n        )\n\n    def describe(self):\n        if self.index.expressions:'''\nrepl='''            [],\n            kwargs,\n        )\n\n    def reduce(self, operation, app_label):\n        if isinstance(operation, RemoveIndex) and (\n            self.model_name_lower == operation.model_name_lower\n            and self.index.name == operation.name\n        ):\n            return []\n        return super().reduce(operation, app_label)\n\n    def describe(self):\n        if self.index.expressions:'''\nassert s.count(anchor)==1\ns=s.replace(anchor,repl)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 -m pytest tests/migrations/test_optimizer.py -k Index -q 2>/dev/null | tail -20 || python3 tests/runtests.py migrations.test_optimizer -v0 2>&1 | tail -20",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "cd tests && python3 runtests.py migrations.test_optimizer 2>&1 | tail -20; cd ..",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "PYTHONPATH=. python3 tests/runtests.py migrations.test_optimizer 2>&1 | tail -15",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 22046,
+ "completion_tokens": 1621,
+ "submitted": true,
+ "patch_bytes": 743,
+ "wall_s": 40.1
+}

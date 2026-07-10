@@ -1,0 +1,72 @@
+{
+ "instance_id": "pydata__xarray-7229",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"keep_attrs\" xarray/core/computation.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '1855,1885p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -rn \"keep_attrs\" xarray/core/merge.py | head; grep -n \"def merge_attrs\" xarray/core/merge.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '634,690p' xarray/core/merge.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport re\nf=\"xarray/core/computation.py\"\ns=open(f).read()\nold='''    if keep_attrs is True:\n        # keep the attributes of x, the second parameter, by default to\n        # be consistent with the `where` method of `DataArray` and `Dataset`\n        keep_attrs = lambda attrs, context: getattr(x, \"attrs\", {})'''\nnew='''    if keep_attrs is True:\n        # keep the attributes of x, the second parameter, by default to\n        # be consistent with the `where` method of `DataArray` and `Dataset`\n        keep_attrs = lambda attrs, context: getattr(x, \"attrs\", {})\n\n        if isinstance(y, Dataset) and not isinstance(x, Dataset):\n            # handle special case where x gets promoted to a Dataset\n            keep_attrs = lambda attrs, context: {\n                key: getattr(x, \"attrs\", {}) for key in y.data_vars.keys()\n            }'''\n# actually simpler: use attrs[1]\nold2=old\nnew2='''    if keep_attrs is True:\n        # keep the attributes of x (the second parameter) by default,\n        # to be consistent with the `where` method of `DataArray` and `Dataset`\n        # rebuild attrs from x in that case\n        keep_attrs = lambda attrs, context: getattr(x, \"attrs\", {})'''\nopen(f,\"w\")  # noop guard\nEOF\necho skip",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nf=\"xarray/core/computation.py\"\ns=open(f).read()\nold='''    if keep_attrs is True:\n        # keep the attributes of x, the second parameter, by default to\n        # be consistent with the `where` method of `DataArray` and `Dataset`\n        keep_attrs = lambda attrs, context: getattr(x, \"attrs\", {})'''\nnew='''    if keep_attrs is True:\n        # keep the attributes of x, the second parameter, by default to\n        # be consistent with the `where` method of `DataArray` and `Dataset`\n        keep_attrs = lambda attrs, context: attrs[1]'''\nassert old in s, \"not found\"\ns=s.replace(old,new)\nopen(f,\"w\").write(s)\nprint(\"replaced\")\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -n '1858,1866p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "git checkout xarray/core/computation.py && sed -n '1858,1866p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nf=\"xarray/core/computation.py\"\ns=open(f).read()\nold='        keep_attrs = lambda attrs, context: getattr(x, \"attrs\", {})'\nnew='        keep_attrs = lambda attrs, context: attrs[1]'\nassert old in s\ns=s.replace(old,new)\nopen(f,\"w\").write(s)\nprint(\"ok\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "sed -n '1860,1864p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 48186,
+ "completion_tokens": 2185,
+ "context_truncated": false,
+ "context_words": 65,
+ "submitted": true,
+ "patch_bytes": 635,
+ "wall_s": 41.7
+}

@@ -1,0 +1,77 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9658",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat sphinx/ext/autodoc/mock.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -rn \"restify\\|__qualname__\\|__name__\" sphinx/util/typing.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -rn \"qualname\\|__display_name__\\|__name__\" tests/test_ext_autodoc_mock.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf='sphinx/ext/autodoc/mock.py'\ns=open(f).read()\ns=s.replace(\n\"\"\"    def __init__(self, *args: Any, **kwargs: Any) -> None:\n        self.__qualname__ = ''\"\"\",\n\"\"\"    def __init__(self, *args: Any, **kwargs: Any) -> None:\n        self.__qualname__ = self.__name__\"\"\")\ns=s.replace(\n\"\"\"    attrs = {'__module__': module,\n             '__display_name__': module + '.' + name,\n             '__sphinx_decorator_args__': decorator_args}\"\"\",\n\"\"\"    attrs = {'__module__': module,\n             '__display_name__': module + '.' + name,\n             '__name__': name,\n             '__sphinx_decorator_args__': decorator_args}\"\"\")\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -n \"__name__\\|__qualname__\" sphinx/ext/autodoc/mock.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfrom sphinx.ext.autodoc.mock import mock\nfrom sphinx.util.typing import restify\nwith mock(['torch']):\n    import torch\n    class DeepKernel(torch.nn.Module):\n        pass\n    for b in DeepKernel.__bases__:\n        print(b, getattr(b,'__module__',None), getattr(b,'__qualname__',None))\n        print(\"restify:\", restify(b))\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfrom sphinx.ext.autodoc.mock import _MockObject, _make_subclass\nfrom sphinx.util.typing import restify\nModule = _make_subclass('Module','torch.nn')\nclass DeepKernel(Module):\n    pass\nfor b in DeepKernel.__bases__:\n    print(b.__module__, b.__qualname__, restify(b))\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 -c \"import setuptools\" 2>&1; pip install setuptools 2>&1 | tail -1",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nimport importlib.util, types, sys\nspec = importlib.util.spec_from_file_location(\"mockmod\", \"sphinx/ext/autodoc/mock.py\")\n# stub out sphinx.util imports\nm = importlib.util.module_from_spec(spec)\nEOF\necho \"---\"\npython3 - <<'EOF'\nfrom sphinx.ext.autodoc.mock import _make_subclass\nfrom sphinx.util.typing import restify\nModule = _make_subclass('Module','torch.nn')\nclass DeepKernel(Module):\n    pass\nfor b in DeepKernel.__bases__:\n    print(b.__module__, b.__qualname__, \"->\", restify(b))\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF' 2>&1 | tail -20\nimport sys, types\npr = types.ModuleType(\"pkg_resources\")\npr.iter_entry_points = lambda *a, **k: []\npr.DistributionNotFound = Exception\nclass WS: pass\npr.working_set = WS()\nsys.modules[\"pkg_resources\"] = pr\nfrom sphinx.ext.autodoc.mock import _make_subclass\nfrom sphinx.util.typing import restify\nModule = _make_subclass('Module','torch.nn')\nclass DeepKernel(Module):\n    pass\nfor b in DeepKernel.__bases__:\n    print(b.__module__, repr(b.__qualname__), \"->\", restify(b))\nprint(\"OK\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "python3 - <<'EOF' 2>&1 | tail -5\nimport sys, types\npr = types.ModuleType(\"pkg_resources\")\npr.iter_entry_points = lambda *a, **k: []\npr.DistributionNotFound = Exception\nclass WS: pass\npr.working_set = WS()\nsys.modules[\"pkg_resources\"] = pr\nimport pytest\nsys.exit(pytest.main([\"tests/test_ext_autodoc_mock.py\",\"-q\"]))\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 68927,
+ "completion_tokens": 3449,
+ "context_truncated": false,
+ "context_words": 28,
+ "submitted": true,
+ "patch_bytes": 823,
+ "wall_s": 57.3
+}

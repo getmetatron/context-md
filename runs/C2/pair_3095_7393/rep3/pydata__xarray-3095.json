@@ -1,0 +1,91 @@
+{
+ "instance_id": "pydata__xarray-3095",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"def copy\" xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"class PandasIndexAdapter\\|def __init__\\|_dtype\\|copy\" xarray/core/indexing.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "Let me see the rest of the class.",
+   "exit": 127
+  },
+  {
+   "turn": 3,
+   "cmd": "Now let me see the IndexVariable copy deep branch that's broken. The current code returns self._data always for deep. Let me rewrite it properly to deepcopy the pandas index while preserving dtype.",
+   "exit": 2
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -n '1940,1958p' xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i 's/data = PandasIndexAdapter(self._data.array.copy(deep=True))/data = indexing.PandasIndexAdapter(self._data.array.copy(deep=True), dtype=self._data.dtype)/' xarray/core/variable.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 -c \"\nimport xarray\nds = xarray.Dataset(coords={'x':['foo'],'y':('x',['bar'])}, data_vars={'z':('x',['baz'])})\nprint(ds.copy(deep=True).x.dtype, ds.z.copy().x.dtype, ds.z.copy(deep=True).x.dtype)\nimport copy\nprint(copy.deepcopy(ds).x.dtype)\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "git diff | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "sed -n '1943,1954p' xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "python3 - <<'PYEOF'\nf=\"xarray/core/variable.py\"\ns=open(f).read()\nold=\"data = PandasIndexAdapter(self._data.array.copy(deep=True))\"\nnew=(\"data = indexing.PandasIndexAdapter(\\n\"\n     \"                    self._data.array.copy(deep=True),\\n\"\n     \"                    dtype=self._data.dtype)\")\nassert old in s, \"not found\"\ns=s.replace(old,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nPYEOF",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "git diff | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 64449,
+ "completion_tokens": 4837,
+ "context_truncated": false,
+ "context_words": 15,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 719,
+ "lessons_raw": [
+  "In xarray, `PandasIndexAdapter` lives in `xarray/core/indexing.py`; reference it as `indexing.PandasIndexAdapter` from `variable.py`, and it accepts a `dtype=` argument to preserve the original dtype.",
+  "`IndexVariable._data` is a `PandasIndexAdapter` wrapping a pandas index; copying it requires deep-copying the underlying `.array` and re-wrapping, since the adapter has no copy method. Pass `dtype=self._data.dtype` to avoid dtype inference changes.",
+  "For editing files in this repo, prefer a Python heredoc (`python3 - <<'PYEOF'`) doing string replace with an `assert old in s` guard; `sed` in-place edits are error-prone with the given paths/quoting."
+ ],
+ "lessons_promoted": [
+  "In xarray, `PandasIndexAdapter` lives in `xarray/core/indexing.py`; reference it as `indexing.PandasIndexAdapter` from `variable.py`, and it accepts a `dtype=` argument to preserve the original dtype.",
+  "For editing files in this repo, prefer a Python heredoc (`python3 - <<'PYEOF'`) doing string replace with an `assert old in s` guard; `sed` in-place edits are error-prone with the given paths/quoting."
+ ],
+ "wall_s": 85.4
+}

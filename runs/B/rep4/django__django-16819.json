@@ -1,0 +1,45 @@
+{
+ "instance_id": "django__django-16819",
+ "condition": "B",
+ "rep": 4,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 4,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"AddIndex\" . --include=\"*.py\"",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat django/contrib/postgres/operations.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"AddIndex\" django/contrib/postgres/operations.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -A 20 \"AddIndexConcurrently\" django/contrib/postgres/operations.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport re\n\ndef patch_addindexconcurrently(content):\n    # Regex to find the database_forwards method body\n    pattern = re.compile(\n        r\"    def database_forwards\\(self, app_label, schema_editor, from_state, to_state\\):\\s*([\\s\\S]*?)(?=\\n\\s*def database_backwards)\",\n        re.DOTALL\n    )\n    \n    def replacer(match):\n        original_body = match.group(1)\n        \n        # Check if the original body already contains the necessary logic or if modification is needed\n        if \"schema_editor.add_index(model, self.index, concurrently=True)\" not in original_body:\n            return match.group(0) # No change needed if the core logic isn't there\n        \n        # Inject existence check before calling add_index\n        new_body = \"\"\"\n        self._ensure_not_in_transaction(schema_editor)\n        model = to_state.apps.get_model(app_label, self.model_name)\n        \n        # Check if index already exists to prevent redundant operations\n        with schema_editor.connection.cursor() as cursor:\n            cursor.execute(\n                \"SELECT 1 FROM pg_indexes WHERE tablename = %s AND indexname = %s\",\n                [model._meta.db_table, self.index.name]\n            )\n            index_exists = cursor.fetchone()\n        \n        if index_exists:\n            return # Index already exists, skip operation\n            \n        schema_editor.add_index(model, self.index, concurrently=True)\n\"\"\"\n        # Simple replacement logic assuming the structure is consistent\n        return original_body.replace(\n            \"self._ensure_not_in_transaction(schema_editor)\\n        model = to_state.apps.get_model(app_label, self.model_name)\\n        if self.allow_migrate_model(schema_editor.connection.alias, model):\\n            schema_editor.add_index(model, self.index, concurrently=True)\",\n            new_body.strip()\n        )\n\n    return pattern.sub(replacer, content)\n\n# Read file content\nwith open(\"django/contrib/postgres/operations.py\", \"r\") as f:\n    content = f.read()\n\n# Apply patch and write back\npatched_content = patch_addindexconcurrently(content)\n\nwith open(\"django/contrib/postgres/operations.py\", \"w\") as f:\n    f.write(patched_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 12643,
+ "completion_tokens": 1718,
+ "submitted": true,
+ "patch_bytes": 1443,
+ "wall_s": 42.4
+}

@@ -1,0 +1,92 @@
+{
+ "instance_id": "pydata__xarray-3305",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"def quantile\" xarray/core/*.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '1595,1680p' xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"def reduce\" xarray/core/variable.py xarray/core/dataset.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '3775,3870p' xarray/core/dataset.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '3870,3910p' xarray/core/dataset.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nf=\"xarray/core/variable.py\"\ns=open(f).read()\nold='    def quantile(self, q, dim=None, interpolation=\"linear\"):'\nnew='    def quantile(self, q, dim=None, interpolation=\"linear\", keep_attrs=None):'\ns=s.replace(old,new,1)\nold2='''        qs = np.nanpercentile(\n            self.data, q * 100.0, axis=axis, interpolation=interpolation\n        )\n        return Variable(new_dims, qs)'''\nnew2='''        qs = np.nanpercentile(\n            self.data, q * 100.0, axis=axis, interpolation=interpolation\n        )\n\n        if keep_attrs is None:\n            keep_attrs = _get_keep_attrs(default=False)\n        attrs = self._attrs if keep_attrs else None\n\n        return Variable(new_dims, qs, attrs)'''\ns=s.replace(old2,new2,1)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "grep -n \"_get_keep_attrs\\|from .options\" xarray/core/variable.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nf=\"xarray/core/dataset.py\"\ns=open(f).read()\nold='''        if isinstance(dim, str):\n            dim = [dim]\n        elif dim is None:\n            dim = list(self.dims)\n\n        _assert_empty(\n            [d for d in dim if d not in self.dims],\n            \"%s does not exist in all dimensions\" % (d for d in dim),\n        )\n\n        q = self.reduce(\n            Dataset.quantile,\n            dim,\n            q=q,\n            keep_attrs=keep_attrs,\n            interpolation=interpolation,\n        )\n        return q'''\nnew='''        if isinstance(dim, str):\n            dims = {dim}\n        elif dim is None:\n            dims = set(self.dims)\n        else:\n            dims = set(dim)\n\n        _assert_empty(\n            [d for d in dims if d not in self.dims],\n            \"Dataset does not contain the dimensions: %s\",\n        )\n\n        q = np.asarray(q, dtype=np.float64)\n\n        variables = OrderedDict()\n        for name, var in self.variables.items():\n            reduce_dims = [d for d in var.dims if d in dims]\n            if reduce_dims or not var.dims:\n                if name not in self.coords:\n                    if (\n                        not numeric_only\n                        or np.issubdtype(var.dtype, np.number)\n                        or var.dtype == np.bool_\n                    ):\n                        if len(reduce_dims) == var.ndim:\n                            # prefer to aggregate over axis=None rather than\n                            # axis=(0, 1) if they will be equivalent, because\n                            # the former is often more efficient\n                            reduce_dims = None\n                        variables[name] = var.quantile(\n                            q,\n                            dim=reduce_dims,\n                            interpolation=interpolation,\n                            keep_attrs=keep_attrs,\n                        )\n\n            else:\n                variables[name] = var\n\n        # construct the new dataset\n        coord_names = {k for k in self.coords if k in variables}\n        indexes = OrderedDict(\n            (k, v) for k, v in self.indexes.items() if k in variables\n        )\n        if keep_attrs is None:\n            keep_attrs = _get_keep_attrs(default=False)\n        attrs = self.attrs if keep_attrs else None\n        new = self._replace_with_new_dims(\n            variables, coord_names=coord_names, attrs=attrs, indexes=indexes\n        )\n        if \"quantile\" in new.dims:\n            new.coords[\"quantile\"] = Variable(\"quantile\", q)\n        else:\n            new.coords[\"quantile\"] = q\n        return new'''\nassert old in s\ns=s.replace(old,new,1)\nopen(f,\"w\").write(s)\nprint(\"ok\")\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -n '4740,4762p' xarray/core/dataset.py",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "sed -n '2870,2895p' xarray/core/dataarray.py",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "python3 -c \"\nimport xarray as xr\nda = xr.DataArray([0,0], dims='x', attrs={'units':'K'})\nout = da.quantile(.9, dim='x', keep_attrs=True)\nprint(dict(out.attrs))\nout2 = da.quantile(.9, dim='x', keep_attrs=False)\nprint(dict(out2.attrs))\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 11,
+   "cmd": "ls xarray/tests/ | grep -i quantile; which python3; python3 -c \"import numpy\" 2>&1 | head -1",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 83422,
+ "completion_tokens": 6098,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 1033,
+ "lessons_raw": [
+  "In xarray, `keep_attrs` handling follows a common pattern: `if keep_attrs is None: keep_attrs = _get_keep_attrs(default=False)`, where `_get_keep_attrs` is imported from `.options` in core modules like variable.py.",
+  "Dataset reductions build results by iterating `self.variables.items()`, skipping coords and (when `numeric_only`) non-numeric vars, then reassembling via `self._replace_with_new_dims(variables, coord_names=..., attrs=..., indexes=...)`.",
+  "DataArray methods often delegate to Dataset by calling `self._to_temp_dataset().<method>(...)` and wrapping the result with `self._from_temp_dataset(ds)`."
+ ],
+ "lessons_promoted": [
+  "In xarray, `keep_attrs` handling follows a common pattern: `if keep_attrs is None: keep_attrs = _get_keep_attrs(default=False)`, where `_get_keep_attrs` is imported from `.options` in core modules like variable.py.",
+  "Dataset reductions build results by iterating `self.variables.items()`, skipping coords and (when `numeric_only`) non-numeric vars, then reassembling via `self._replace_with_new_dims(variables, coord_names=..., attrs=..., indexes=...)`.",
+  "DataArray methods often delegate to Dataset by calling `self._to_temp_dataset().<method>(...)` and wrapping the result with `self._from_temp_dataset(ds)`."
+ ],
+ "wall_s": 104.5
+}

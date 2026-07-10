@@ -1,0 +1,57 @@
+{
+ "instance_id": "django__django-15161",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"deconstruct\\|_constructor_args\\|path =\" django/db/models/expressions.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"^class \\|@deconstructible\" django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"Func\\|Value\\|ExpressionWrapper\\|OuterRef\\|RowRange\\|ValueRange\\|When\\|Case\\|Window\\|Subquery\\|Exists\\|OrderBy\\|Expression\\b\\|RawSQL\" django/db/models/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport re\nf='django/db/models/expressions.py'\ns=open(f).read()\n\n# Expression class: has @deconstructible on line before class Expression\ns=s.replace(\n\"@deconstructible\\nclass Expression(BaseExpression, Combinable):\",\n\"@deconstructible(path='django.db.models.Expression')\\nclass Expression(BaseExpression, Combinable):\")\n\nmapping={\n'class Func(SQLiteNumericMixin, Expression):':'django.db.models.Func',\n'class Value(SQLiteNumericMixin, Expression):':'django.db.models.Value',\n'class ExpressionList(Func):':'django.db.models.ExpressionList',\n'class ExpressionWrapper(SQLiteNumericMixin, Expression):':'django.db.models.ExpressionWrapper',\n'class When(Expression):':'django.db.models.When',\n'class Case(SQLiteNumericMixin, Expression):':'django.db.models.Case',\n'class Subquery(BaseExpression, Combinable):':'django.db.models.Subquery',\n'class Exists(Subquery):':'django.db.models.Exists',\n'class OrderBy(Expression):':'django.db.models.OrderBy',\n'class Window(SQLiteNumericMixin, Expression):':'django.db.models.Window',\n'class WindowFrame(Expression):':'django.db.models.WindowFrame',\n}\nfor cls,path in mapping.items():\n    assert cls in s, cls\n    s=s.replace(cls, \"@deconstructible(path='%s')\\n%s\"%(path,cls),1)\n\n# OuterRef\ns=s.replace('class OuterRef(F):',\"@deconstructible(path='django.db.models.OuterRef')\\nclass OuterRef(F):\",1)\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -n \"@deconstructible\\|^class \" django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nf='django/db/models/expressions.py'\ns=open(f).read()\ns=s.replace('class RowRange(WindowFrame):',\"@deconstructible(path='django.db.models.RowRange')\\nclass RowRange(WindowFrame):\",1)\ns=s.replace('class ValueRange(WindowFrame):',\"@deconstructible(path='django.db.models.ValueRange')\\nclass ValueRange(WindowFrame):\",1)\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -n '1,60p' django/utils/deconstruct.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 19998,
+ "completion_tokens": 1678,
+ "context_truncated": false,
+ "context_words": 67,
+ "submitted": true,
+ "patch_bytes": 4151,
+ "wall_s": 31.6
+}

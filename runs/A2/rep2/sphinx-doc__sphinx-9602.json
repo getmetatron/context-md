@@ -1,0 +1,75 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9602",
+ "condition": "A",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"pending_xref\\|_parse_annotation\\|addnodes.desc_sig\" sphinx/domains/python.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '110,180p' sphinx/domains/python.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '180,200p' sphinx/domains/python.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport re\nf=\"sphinx/domains/python.py\"\ns=open(f).read()\n\n# Replace Constant handling to use desc_sig_literal\nold='''            if node.value is Ellipsis:\n                return [addnodes.desc_sig_punctuation('', \"...\")]\n            else:\n                return [nodes.Text(node.value)]'''\nnew='''            if node.value is Ellipsis:\n                return [addnodes.desc_sig_punctuation('', \"...\")]\n            else:\n                return [nodes.Text(repr(node.value))]'''\nassert old in s\ns=s.replace(old,new)\n\n# Subscript: detect Literal to avoid xref of inner constants\nold2='''        elif isinstance(node, ast.Subscript):\n            result = unparse(node.value)\n            result.append(addnodes.desc_sig_punctuation('', '['))\n            result.extend(unparse(node.slice))\n            result.append(addnodes.desc_sig_punctuation('', ']'))\n            return result'''\nnew2='''        elif isinstance(node, ast.Subscript):\n            if getattr(node.value, 'id', '') in {'Optional', 'Union'}:\n                return _unparse_pep_604_annotation(node)\n            result = unparse(node.value)\n            result.append(addnodes.desc_sig_punctuation('', '['))\n            result.extend(unparse(node.slice))\n            result.append(addnodes.desc_sig_punctuation('', ']'))\n\n            # Wrap the Text nodes inside brackets by literal node if the subscript is a Literal\n            if result[0] in ('Literal', 'typing.Literal'):\n                for i, subnode in enumerate(result[1:], start=1):\n                    if isinstance(subnode, nodes.Text):\n                        result[i] = nodes.literal('', '', subnode)\n            return result'''\n# our simpler approach: don't add the Optional/Union branch (may not exist)\nnew2='''        elif isinstance(node, ast.Subscript):\n            result = unparse(node.value)\n            result.append(addnodes.desc_sig_punctuation('', '['))\n            result.extend(unparse(node.slice))\n            result.append(addnodes.desc_sig_punctuation('', ']'))\n\n            # Wrap the Text nodes inside brackets by literal node if the subscript is a Literal\n            if result[0] in ('Literal', 'typing.Literal'):\n                for i, subnode in enumerate(result[1:], start=1):\n                    if isinstance(subnode, nodes.Text):\n                        result[i] = nodes.literal('', '', subnode)\n            return result'''\nassert old2 in s\ns=s.replace(old2,new2)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '122,155p' sphinx/domains/python.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfrom sphinx.domains.python import _parse_annotation\nimport warnings\nwarnings.simplefilter(\"ignore\")\nres=_parse_annotation(\"typing.Literal[True]\", None)\nprint([type(n).__name__+':'+n.astext() for n in res])\nres2=_parse_annotation(\"Literal['abc', 42]\", None)\nprint([type(n).__name__+':'+n.astext() for n in res2])\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "pip install setuptools -q 2>&1 | tail -1",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 -m pip install setuptools -q 2>&1 | tail -2",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 -m pip install setuptools -q --break-system-packages 2>&1 | tail -2",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfrom sphinx.domains.python import _parse_annotation\nimport warnings\nwarnings.simplefilter(\"ignore\")\nres=_parse_annotation(\"typing.Literal[True]\", None)\nprint([type(n).__name__+':'+n.astext() for n in res])\nres2=_parse_annotation(\"Literal['abc', 42]\", None)\nprint([type(n).__name__+':'+n.astext() for n in res2])\nres3=_parse_annotation(\"int\", None)\nprint([type(n).__name__+':'+n.astext() for n in res3])\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 10,
+   "cmd": "python3 - <<'EOF'\nfrom sphinx.domains.python import _parse_annotation\nimport warnings\nwarnings.simplefilter(\"ignore\")\nfor a in [\"typing.Literal[True]\",\"Literal['abc', 42]\",\"int\"]:\n    res=_parse_annotation(a, None)\n    print(a, \"->\", [type(n).__name__+':'+n.astext() for n in res])\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 11,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 61357,
+ "completion_tokens": 2916,
+ "submitted": true,
+ "patch_bytes": 1349,
+ "wall_s": 50.3
+}

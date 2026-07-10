@@ -1,0 +1,77 @@
+{
+ "instance_id": "django__django-15161",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"_constructor_args\\|deconstruct\\|@deconstructible\\|^class \" django/db/models/expressions.py | head -60",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"expressions\" django/db/models/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '13,25p' django/db/models/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport re\nf='django/db/models/expressions.py'\ns=open(f).read()\nnames=['Case','Exists','Expression','ExpressionList','ExpressionWrapper',\n'Func','OrderBy','OuterRef','RowRange','Subquery','Value','ValueRange',\n'When','Window','WindowFrame']\nfor n in names:\n    pat=re.compile(r'(\\n)(class %s\\()' % n)\n    # avoid double-adding\n    if ('@deconstructible(path=\\'django.db.models.%s\\')\\nclass %s('%(n,n)) in s:\n        continue\n    def repl(m):\n        return \"%s@deconstructible(path='django.db.models.%s')\\n%s\"%(m.group(1),n,m.group(2))\n    s2=pat.sub(repl,s,count=1)\n    assert s2!=s, n\n    s=s2\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '393,400p' django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i \"393{/^@deconstructible$/d}\" django/db/models/expressions.py\nsed -n '391,396p' django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '' '393d' django/db/models/expressions.py\nsed -n '391,396p' django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 -c \"\nimport django,os\nos.environ.setdefault('DJANGO_SETTINGS_MODULE','x')\nfrom django.conf import settings; settings.configure()\ndjango.setup()\nfrom django.db.models import F,Value,Func,Case,When,ExpressionWrapper\nfor e in [Value(1),Func(),Case(),When(1,then=2),ExpressionWrapper(F('a'),output_field=None)]:\n    print(e.deconstruct()[0])\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "grep -n \"@deconstructible\" django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 26380,
+ "completion_tokens": 3817,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 4151,
+ "lessons_raw": [
+  "The `@deconstructible` decorator (from `django.utils.deconstruct`) accepts a `path=` kwarg to set the import path emitted by `deconstruct()`; classes reexported in `django.db.models.__init__` should use their public path there.",
+  "Public expression classes live in `django/db/models/expressions.py` and are reexported via `django/db/models/__init__.py`.",
+  "BSD sed on macOS requires an argument after `-i` (use `-i ''`) and doesn't support GNU `sed -i` line-brace forms; prefer Python scripts for reliable in-place edits."
+ ],
+ "lessons_promoted": [
+  "The `@deconstructible` decorator (from `django.utils.deconstruct`) accepts a `path=` kwarg to set the import path emitted by `deconstruct()`; classes reexported in `django.db.models.__init__` should use their public path there.",
+  "Public expression classes live in `django/db/models/expressions.py` and are reexported via `django/db/models/__init__.py`.",
+  "BSD sed on macOS requires an argument after `-i` (use `-i ''`) and doesn't support GNU `sed -i` line-brace forms; prefer Python scripts for reliable in-place edits."
+ ],
+ "wall_s": 63.9
+}

@@ -1,0 +1,67 @@
+{
+ "instance_id": "django__django-16819",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"class AddIndex\\|class RemoveIndex\\|def reduce\" django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -i '' 2>/dev/null; sed -n '811,920p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '795,811p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf = \"django/db/migrations/operations/models.py\"\ns = open(f).read()\nanchor = '''    @property\n    def migration_name_fragment(self):\n        return \"%s_%s\" % (self.model_name_lower, self.index.name.lower())\n\n\nclass RemoveIndex(IndexOperation):'''\nnew = '''    @property\n    def migration_name_fragment(self):\n        return \"%s_%s\" % (self.model_name_lower, self.index.name.lower())\n\n    def reduce(self, operation, app_label):\n        if isinstance(operation, RemoveIndex) and self.index.name == operation.name:\n            return []\n        return super().reduce(operation, app_label)\n\n\nclass RemoveIndex(IndexOperation):'''\nassert anchor in s\ns = s.replace(anchor, new)\nopen(f, \"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '860,866p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nf = \"django/db/migrations/operations/models.py\"\ns = open(f).read()\nold = '''    def reduce(self, operation, app_label):\n        if isinstance(operation, RemoveIndex) and self.index.name == operation.name:\n            return []\n        return super().reduce(operation, app_label)'''\nnew = '''    def reduce(self, operation, app_label):\n        if (\n            isinstance(operation, RemoveIndex)\n            and self.index.name == operation.name\n            and self.model_name_lower == operation.model_name_lower\n        ):\n            return []\n        return super().reduce(operation, app_label)'''\nassert old in s\ns = s.replace(old, new)\nopen(f, \"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 tests/runtests.py migrations.test_optimizer -v1 2>&1 | tail -15",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "PYTHONPATH=. python3 tests/runtests.py migrations.test_optimizer -v1 2>&1 | tail -15",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -n '860,875p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 26379,
+ "completion_tokens": 1388,
+ "context_truncated": false,
+ "context_words": 68,
+ "submitted": true,
+ "patch_bytes": 797,
+ "wall_s": 33.6
+}

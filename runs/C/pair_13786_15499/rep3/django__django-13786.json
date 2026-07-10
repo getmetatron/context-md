@@ -1,0 +1,80 @@
+{
+ "instance_id": "django__django-13786",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "sed -n '130,160p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"ALTER_OPTION_KEYS\" django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "submit"
+  },
+  {
+   "turn": 3,
+   "cmd": "git diff --stat && grep -n \"AlterModelOptions) and self.name_lower\" django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/operations/models.py\"\nlines=open(f).readlines()\n# find the branch line (0-indexed 138)\nfor i,l in enumerate(lines):\n    if \"isinstance(operation, AlterModelOptions) and self.name_lower\" in l:\n        idx=i\n        break\nprint(\"idx\",idx)\nprint(\"\".join(lines[idx:idx+9]))\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "git diff django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "pwd; ls django/db/migrations/operations/models.py; git status --short | head; sed -n '138,152p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 -c \"import os;print(os.path.realpath('django/db/migrations/operations/models.py'));print(os.access('django/db/migrations/operations/models.py',os.W_OK))\"",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/operations/models.py\"\nlines=open(f).readlines()\nidx=None\nfor i,l in enumerate(lines):\n    if \"isinstance(operation, AlterModelOptions) and self.name_lower\" in l:\n        idx=i;break\ninsert=(\"            options = {**self.options, **operation.options}\\n\"\n        \"            for key in operation.ALTER_OPTION_KEYS:\\n\"\n        \"                if key not in operation.options:\\n\"\n        \"                    options.pop(key, None)\\n\")\nlines[idx+5]=\"                    options=options,\\n\"\nlines[idx+1]=insert+\"            return [\\n\"\nopen(f,\"w\").writelines(lines)\nimport subprocess\nprint(subprocess.run([\"sed\",\"-n\",\"139,152p\",f],capture_output=True,text=True).stdout)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "git diff django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 24935,
+ "completion_tokens": 1805,
+ "context_truncated": false,
+ "context_words": 15,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 966,
+ "lessons_raw": [
+  "Migration operation optimization/squashing logic lives in `django/db/migrations/operations/models.py`, where operations implement `reduce()` to merge with a following operation into new operations.",
+  "`AlterModelOptions.ALTER_OPTION_KEYS` lists options that AlterModelOptions manages; when empty in an operation, those keys must be removed from the merged options (they represent clearing), not just overwritten."
+ ],
+ "lessons_promoted": [
+  "Migration operation optimization/squashing logic lives in `django/db/migrations/operations/models.py`, where operations implement `reduce()` to merge with a following operation into new operations.",
+  "`AlterModelOptions.ALTER_OPTION_KEYS` lists options that AlterModelOptions manages; when empty in an operation, those keys must be removed from the merged options (they represent clearing), not just overwritten."
+ ],
+ "wall_s": 43.2
+}

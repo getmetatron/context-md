@@ -1,0 +1,128 @@
+{
+ "instance_id": "django__django-12125",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"def deconstruct\" django/db/models/fields/__init__.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '414,500p' django/db/models/fields/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '500,560p' django/db/models/fields/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -n \"__qualname__\\|__name__\\|__module__\\|path =\" django/db/models/fields/__init__.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -rn \"rsplit\\|__qualname__\\|_serialize_path\\|split('.')\" django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -n '75,130p' django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -n '185,195p' django/db/models/fields/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/serializer.py\"\ns=open(f).read()\nold='''    @staticmethod\n    def _serialize_path(path):\n        module, name = path.rsplit(\".\", 1)\n        if module == \"django.db.models\":\n            imports = {\"from django.db import models\"}\n            name = \"models.%s\" % name\n        else:\n            imports = {\"import %s\" % module}\n            name = path\n        return name, imports'''\nnew='''    @staticmethod\n    def _serialize_path(path):\n        module, name = path.rsplit(\".\", 1)\n        if module == \"django.db.models\":\n            imports = {\"from django.db import models\"}\n            name = \"models.%s\" % name\n        else:\n            imports = {\"import %s\" % module}\n            name = path\n        return name, imports\n\n    @staticmethod\n    def _serialize_path_original(path):\n        return DeconstructableSerializer._serialize_path(path)'''\n# no-op placeholder to verify content\nprint(\"current split behavior verified\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nimport django\nprint(django.get_version())\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "Wait \u2014 that file was already edited? Let me re-view actual content around 150-165.",
+   "exit": 1
+  },
+  {
+   "turn": 10,
+   "cmd": "Now find the TypeSerializer.",
+   "exit": 127
+  },
+  {
+   "turn": 11,
+   "cmd": "",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "wc -l django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 13,
+   "cmd": "awk 'NR>=269 && NR<=310' django/db/migrations/serializer.py | cat -A | head -50",
+   "exit": 0
+  },
+  {
+   "turn": 14,
+   "cmd": "awk 'NR>=269 && NR<=310 {print NR\": \"$0}' django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 15,
+   "cmd": "This file has been corrupted/scrambled. I need to rewrite the TypeSerializer and EnumSerializer correctly. Let me rewrite TypeSerializer properly.",
+   "exit": 127
+  },
+  {
+   "turn": 16,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/serializer.py\"\nlines=open(f).read().split(\"\\n\")\nnew_block = '''class TypeSerializer(BaseSerializer):\n    def serialize(self):\n        special_cases = [\n            (models.Model, \"models.Model\", []),\n            (type(None), 'type(None)', []),\n        ]\n        for case, string, imports in special_cases:\n            if case is self.value:\n                return string, set(imports)\n        if hasattr(self.value, \"__module__\"):\n            module = self.value.__module__\n            if module == builtins.__name__:\n                return self.value.__name__, set()\n            else:\n                return \"%s.%s\" % (module, self.value.__qualname__), {\"import %s\" % module}'''\nout = lines[:254] + new_block.split(\"\\n\") + lines[272:]\nopen(f,\"w\").write(\"\\n\".join(out))\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 17,
+   "cmd": "awk 'NR>=148 && NR<=175 {print NR\": \"$0}' django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 18,
+   "cmd": "awk 'NR>=140 && NR<=157' django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 19,
+   "cmd": "python3 -c \"import ast; ast.parse(open('django/db/migrations/serializer.py').read()); print('parses ok')\"",
+   "exit": 1
+  }
+ ],
+ "prompt_tokens": 122756,
+ "completion_tokens": 4669,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": false,
+ "patch_bytes": 982,
+ "lessons_raw": [
+  "Migration value serialization lives in `django/db/migrations/serializer.py`, dispatched via `Serializer._registry`; type serialization is handled by `TypeSerializer`, and nested/inner class names require `__qualname__` rather than `__name__`.",
+  "Splicing files by fixed line-number slices in Python scripts (`lines[:254] + ... + lines[272:]`) is fragile and can drop or corrupt surrounding code; prefer targeted string replacement and always re-verify with `ast.parse` afterward.",
+  "Running this Django checkout may fail on newer Python because `django/utils/version.py` imports `distutils.version`, which is removed in recent CPython; don't rely on importing `django` directly to validate changes."
+ ],
+ "lessons_promoted": [
+  "Migration value serialization lives in `django/db/migrations/serializer.py`, dispatched via `Serializer._registry`; type serialization is handled by `TypeSerializer`, and nested/inner class names require `__qualname__` rather than `__name__`.",
+  "Splicing files by fixed line-number slices in Python scripts (`lines[:254] + ... + lines[272:]`) is fragile and can drop or corrupt surrounding code; prefer targeted string replacement and always re-verify with `ast.parse` afterward.",
+  "Running this Django checkout may fail on newer Python because `django/utils/version.py` imports `distutils.version`, which is removed in recent CPython; don't rely on importing `django` directly to validate changes."
+ ],
+ "wall_s": 103.5
+}

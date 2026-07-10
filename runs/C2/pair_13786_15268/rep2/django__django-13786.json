@@ -1,0 +1,45 @@
+{
+ "instance_id": "django__django-13786",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"AlterModelOptions\\|ALTER_OPTION_KEYS\\|options={\" django/db/migrations/operations/models.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '139,146p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nimport re\nf=\"django/db/migrations/operations/models.py\"\ns=open(f).read()\nold=\"\"\"        elif isinstance(operation, AlterModelOptions) and self.name_lower == operation.name_lower:\n            return [\n                CreateModel(\n                    self.name,\n                    fields=self.fields,\n                    options={**self.options, **operation.options},\n                    bases=self.bases,\n                    managers=self.managers,\"\"\"\nnew=\"\"\"        elif isinstance(operation, AlterModelOptions) and self.name_lower == operation.name_lower:\n            options = {**self.options, **operation.options}\n            for key in operation.ALTER_OPTION_KEYS:\n                if key not in operation.options:\n                    options.pop(key, None)\n            return [\n                CreateModel(\n                    self.name,\n                    fields=self.fields,\n                    options=options,\n                    bases=self.bases,\n                    managers=self.managers,\"\"\"\nassert old in s\nopen(f,\"w\").write(s.replace(old,new))\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 4548,
+ "completion_tokens": 557,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 966,
+ "lessons_raw": [
+  "Migration operation optimization/reduction logic lives in `django/db/migrations/operations/models.py`, where `CreateModel.reduce()` merges subsequent operations like `AlterModelOptions` into a new `CreateModel`.",
+  "`AlterModelOptions` defines `ALTER_OPTION_KEYS`, listing option keys it manages; absence of a key in its `options` means that option should be cleared, not left unchanged, when merging."
+ ],
+ "lessons_promoted": [
+  "Migration operation optimization/reduction logic lives in `django/db/migrations/operations/models.py`, where `CreateModel.reduce()` merges subsequent operations like `AlterModelOptions` into a new `CreateModel`.",
+  "`AlterModelOptions` defines `ALTER_OPTION_KEYS`, listing option keys it manages; absence of a key in its `options` means that option should be cleared, not left unchanged, when merging."
+ ],
+ "wall_s": 16.6
+}

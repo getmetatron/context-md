@@ -49,13 +49,15 @@ def main():
         for p in pairs:
             tag = f"{p['a'].split('-')[-1]}_{p['b'].split('-')[-1]}"
             if "D" in args.arms:
-                pdir = str(ROOT / "runs" / "D" / f"pair_{tag}" / f"rep{rep}")
-                plan.append((f"D/pair_{tag}", ["--condition", "D", "--instances", p["a"], "--rep", str(rep), "--run-dir", pdir], tag))
-                plan.append((f"D/pair_{tag}", ["--condition", "D", "--instances", p["b"], "--rep", str(rep), "--no-learning", "--run-dir", pdir], tag))
+                pdir = str(ROOT / "runs" / f"D{R}" / f"pair_{tag}" / f"rep{rep}")
+                plan.append((f"D{R}/pair_{tag}", ["--condition", "D", "--instances", p["a"], "--rep", str(rep), "--run-dir", pdir], tag))
+                plan.append((f"D{R}/pair_{tag}", ["--condition", "D", "--instances", p["b"], "--rep", str(rep), "--no-learning", "--run-dir", pdir], tag))
             if "B" in args.arms:
-                plan.append(("B", ["--condition", "B", "--instances", p["b"], "--rep", str(rep)], None))
+                bdir = str(ROOT / "runs" / f"B{R}" / f"rep{rep}")
+                plan.append((f"B{R}", ["--condition", "B", "--instances", p["b"], "--rep", str(rep), "--run-dir", bdir], None))
             if "E" in args.arms:
-                plan.append(("E", ["--condition", "E", "--instances", p["b"], "--rep", str(rep)], None))
+                edir = str(ROOT / "runs" / f"E{R}" / f"rep{rep}")
+                plan.append((f"E{R}", ["--condition", "E", "--instances", p["b"], "--rep", str(rep), "--run-dir", edir], None))
             if "C" in args.arms:  # frontier emergent, pair protocol (§4.7)
                 cdir = str(ROOT / "runs" / f"C{R}" / f"pair_{tag}" / f"rep{rep}")
                 plan.append((f"C{R}/pair_{tag}", ["--condition", "C", "--instances", p["a"], "--rep", str(rep), "--run-dir", cdir], tag))
@@ -64,7 +66,7 @@ def main():
                 adir = str(ROOT / "runs" / f"A{R}" / f"rep{rep}")
                 plan.append((f"A{R}", ["--condition", "A", "--instances", p["b"], "--rep", str(rep), "--run-dir", adir], None))
             if "Do" in args.arms:  # D-oracle (§4.3): labeled upper bound, local
-                odir = str(ROOT / "runs" / "D_oracle" / f"pair_{tag}" / f"rep{rep}")
+                odir = str(ROOT / "runs" / f"D_oracle{R}" / f"pair_{tag}" / f"rep{rep}")
                 plan.append((f"Do/pair_{tag}", ["--condition", "D", "--oracle", "--instances", p["a"], "--rep", str(rep), "--run-dir", odir], tag))
                 plan.append((f"Do/pair_{tag}", ["--condition", "D", "--instances", p["b"], "--rep", str(rep), "--no-learning", "--run-dir", odir], tag))
     # dedupe identical control/assist episodes (same instance+rep may appear in several pairs)

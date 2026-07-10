@@ -1,0 +1,116 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9658",
+ "condition": "A",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat sphinx/ext/autodoc/mock.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -rn \"__qualname__\\|restify\\|Bases\" sphinx/util/typing.py | head -20",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 -c \"\nfrom sphinx.ext.autodoc.mock import _MockModule\ntorch_nn = _MockModule('torch.nn')\nclass DeepKernel(torch_nn.Module):\n    pass\nbase = DeepKernel.__bases__[0]\nprint('name=',repr(base.__name__),'module=',repr(base.__module__),'qualname=',repr(base.__qualname__))\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 -c \"\nfrom types import ModuleType\nfrom typing import Any, Tuple\nclass _MockObject:\n    __display_name__='_MockObject'\n    def __init__(self,*a,**k): self.__qualname__=''\n    def __mro_entries__(self,bases): return (self.__class__,)\n    def __getattr__(self,key): return _make_subclass(key,self.__display_name__,self.__class__)()\ndef _make_subclass(name,module,superclass=_MockObject,attributes=None,decorator_args=()):\n    attrs={'__module__':module,'__display_name__':module+'.'+name,'__sphinx_decorator_args__':decorator_args}\n    attrs.update(attributes or {})\n    return type(name,(superclass,),attrs)\nclass _MockModule(ModuleType):\n    def __init__(self,name): super().__init__(name); self.__all__=[]; self.__path__=[]\n    def __getattr__(self,name): return _make_subclass(name,self.__name__)()\ntn=_MockModule('torch.nn')\nclass DeepKernel(tn.Module): pass\nb=DeepKernel.__bases__[0]\nprint(repr(b.__name__),repr(b.__module__),repr(b.__qualname__))\n\"",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -n \"Bases\\|__bases__\\|restify\\|:py:class:\" sphinx/ext/autodoc/__init__.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -n \"def isgenericalias\\|def isNewType\\|__sphinx_mock__\\|def ismock\" sphinx/util/inspect.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 -c \"\nfrom types import ModuleType\nclass _MockObject:\n    __display_name__='_MockObject'\n    __sphinx_mock__=True\n    def __getattr__(self,key): return _make_subclass(key,self.__display_name__,self.__class__)()\ndef _make_subclass(name,module,superclass=_MockObject,attributes=None,decorator_args=()):\n    attrs={'__module__':module,'__display_name__':module+'.'+name}\n    attrs.update(attributes or {})\n    return type(name,(superclass,),attrs)\nclass _MockModule(ModuleType):\n    def __init__(self,name): super().__init__(name); self.__all__=[]; self.__path__=[]\n    def __getattr__(self,name): return _make_subclass(name,self.__name__)()\ntn=_MockModule('torch.nn')\nclass DeepKernel(tn.Module): pass\nb=DeepKernel.__bases__[0]\nprint('name',repr(b.__name__),'_name',repr(getattr(b,'_name',None)),'origin',repr(getattr(b,'__origin__',None)))\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 -c \"import pkg_resources\" 2>&1; pip install setuptools 2>&1 | tail -1",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 -m pip install setuptools 2>&1 | tail -2",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 -m pip install --break-system-packages setuptools 2>&1 | tail -2",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "I need to see if there's an `ismock` helper.",
+   "exit": 2
+  },
+  {
+   "turn": 11,
+   "cmd": "grep -rn \"def ismock\\|ismock\" sphinx/",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "awk 'NR>=1655 && NR<=1672' sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 13,
+   "cmd": "Now let me understand why restify produces \"torch.nn.\" \u2014 the empty qualname. In the actual bug, mocked base class `__qualname__` is empty because `_MockObject.__init__` sets `self.__qualname__=''`. When a class is created via `type(name,(superclass,),attrs)` where superclass is a mock, and the base used is an *instance* whose `__qualname__=''`... Actually the base in `__bases__` is a class, not instance. But its `__qualname__` \u2014 does it inherit? Let me test using the module's `__getattr__` returning instance, then `__mro_entries__`.",
+   "exit": 2
+  },
+  {
+   "turn": 14,
+   "cmd": "python3 - <<'EOF'\nimport re\nf='sphinx/util/typing.py'\ns=open(f).read()\nold='''def restify(cls: Optional[Type]) -> str:\n    \"\"\"Convert python class to a reST reference.\"\"\"\n    from sphinx.util import inspect  # lazy loading\n    try:\n        if cls is None or cls is NoneType:\n            return ':py:obj:`None`\\''''\nnew='''def restify(cls: Optional[Type]) -> str:\n    \"\"\"Convert python class to a reST reference.\"\"\"\n    from sphinx.ext.autodoc.mock import ismock\n    from sphinx.util import inspect  # lazy loading\n    try:\n        if cls is None or cls is NoneType:\n            return ':py:obj:`None`\\''''\nopen(f,'w').write(s.replace(old,new,1))\nprint('done imports' if 'from sphinx.ext.autodoc.mock import ismock' in open(f).read() else 'FAIL')\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 15,
+   "cmd": "python3 - <<'EOF'\nf='sphinx/util/typing.py'\ns=open(f).read()\nold='''    from sphinx.util import inspect  # lazy loading\n    try:\n        if cls is None or cls is NoneType:\n            return ':py:obj:`None`'\n        elif cls is Ellipsis:\n            return '...\\''''\nnew='''    from sphinx.ext.autodoc.mock import ismock\n    from sphinx.util import inspect  # lazy loading\n    try:\n        if cls is None or cls is NoneType:\n            return ':py:obj:`None`'\n        elif ismock(cls):\n            return ':py:class:`%s.%s`' % (cls.__module__, cls.__name__)\n        elif cls is Ellipsis:\n            return '...\\''''\nassert old in s\nopen(f,'w').write(s.replace(old,new,1))\nprint('done')\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 16,
+   "cmd": "submit"
+  },
+  {
+   "turn": 17,
+   "cmd": "git diff --stat; grep -n \"ismock\" sphinx/util/typing.py",
+   "exit": 1
+  },
+  {
+   "turn": 18,
+   "cmd": "grep -n \"ismock\" sphinx/util/typing.py; ls -la sphinx/util/typing.py; pwd",
+   "exit": 0
+  },
+  {
+   "turn": 19,
+   "cmd": "sed -n '105,116p' sphinx/util/typing.py",
+   "exit": 0
+  }
+ ],
+ "prompt_tokens": 177576,
+ "completion_tokens": 9309,
+ "empty_submit_nudged": true,
+ "submitted": false,
+ "patch_bytes": 0,
+ "wall_s": 136.7
+}

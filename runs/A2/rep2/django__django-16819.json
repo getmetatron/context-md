@@ -1,0 +1,65 @@
+{
+ "instance_id": "django__django-16819",
+ "condition": "A",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "find . -path ./tests -prune -o -name '*.py' -print | xargs grep -ln \"class AddIndex\\|class RemoveIndex\" 2>/dev/null",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"class AddIndex\\|class RemoveIndex\\|def reduce\\|def state_forwards\\|def deconstruct\" django/db/migrations/operations/models.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '790,910p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '910,940p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -n \"migration_name_fragment\\|class RemoveIndex\\|class RenameIndex\\|def describe\" django/db/migrations/operations/models.py | sed -n '1,30p'",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -n '861,865p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/operations/models.py\"\ns=open(f).read()\nanchor='        return \"%s_%s\" % (self.model_name_lower, self.index.name.lower())\\n\\n\\nclass RemoveIndex(IndexOperation):'\nnew='''        return \"%s_%s\" % (self.model_name_lower, self.index.name.lower())\n\n    def reduce(self, operation, app_label):\n        if isinstance(operation, RemoveIndex) and (\n            self.model_name_lower == operation.model_name_lower\n            and self.index.name == operation.name\n        ):\n            return []\n        return super().reduce(operation, app_label)\n\n\nclass RemoveIndex(IndexOperation):'''\nassert s.count(anchor)==1\ns=s.replace(anchor,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -n '855,880p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 -m pytest tests/migrations/test_optimizer.py -k Index -q 2>&1 | tail -20",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 30635,
+ "completion_tokens": 2007,
+ "submitted": true,
+ "patch_bytes": 784,
+ "wall_s": 38.7
+}
