@@ -1,0 +1,47 @@
+{
+ "instance_id": "django__django-15252",
+ "condition": "D",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"ensure_schema\" django/db/migrations/recorder.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat django/db/migrations/recorder.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nfrom django.db.utils import OperationalError\n\n# ... (rest of the file content)\n\n    def ensure_schema(self):\n        \"\"\"Ensure the table exists and has the correct schema.\"\"\"\n        # Only ensure schema on the default database connection\n        if self.connection.alias != 'default':\n            return\n\n        # If the table's there, that's fine - we've never changed its schema\n        # in the codebase.\n        if self.has_table():\n            return\n        # Make the table\n        try:\n            with self.connection.schema_editor() as editor:\n                editor.create_model(self.Migration)\n        except DatabaseError as exc:\n            raise MigrationSchemaMissing(\"Unable to create the django_migrations table (%s)\" % exc)\n\n# ... (rest of the file content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '/    def ensure_schema(self):/,/        except DatabaseError as exc:/ s/if self.has_table():\\n            return/if self.connection.alias != \\'default\\' or self.has_table():\\n            return/g' django/db/migrations/recorder.py",
+   "exit": 2
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/migrations/recorder.py\"\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# Define the replacement logic: insert the check after the function signature.\n# We look for the start of the function body after the docstring.\n# The original code structure is:\n# def ensure_schema(self):\n#     \"\"\"...\"\"\"\n#     # If the table's there, that's fine...\n#     if self.has_table():\n#         return\n#     ...\n\n# We will replace the content starting from the first line after the docstring.\n# This is the safest way to inject the check.\n\n# Find the line containing 'if self.has_table():' which is the first executable line.\n# We insert the check right before it.\n\nnew_content = content.replace(\n    \"        if self.has_table():\",\n    \"        if self.connection.alias != 'default':\\n            return\\n        if self.has_table():\"\n)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 12365,
+ "completion_tokens": 1758,
+ "context_truncated": false,
+ "context_words": 92,
+ "submitted": true,
+ "patch_bytes": 942,
+ "wall_s": 38.3
+}

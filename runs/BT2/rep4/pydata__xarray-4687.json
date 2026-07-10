@@ -1,0 +1,85 @@
+{
+ "instance_id": "pydata__xarray-4687",
+ "condition": "B",
+ "rep": 4,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 4,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"where\" xarray/core/core.py",
+   "exit": 2
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"xr.where\" . --include=\"*.py\" | head -n 10",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"where\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -A 10 \"def where(cond, x, y):\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i 's/res = np.where(cond, x, y)/res = xr.DataArray(np.where(cond, x.data, y.data), coords=x.coords, dims=x.dims).assign_attrs(x.attrs, y.attrs)/g' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i 's/res = np.where(cond, x, y)/res = xr.DataArray(np.where(cond, x.data, y.data), coords=x.coords, dims=x.dims).assign_attrs(x.attrs, y.attrs)/g' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"xarray/core/computation.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# We are looking for the line where the result 'res' is assigned using np.where.\n# This is a heuristic replacement based on the function's purpose.\n# We replace the assignment with logic that uses xr.DataArray to wrap the result\n# and explicitly merge attributes.\n\n# The replacement logic assumes x and y are DataArrays/Variables with attributes.\n# We use a placeholder replacement to avoid syntax errors in sed/shell.\nnew_content = re.sub(r\"(res\\s*=\\s*np\\.where\\(cond, x, y\\))\", r\"res = xr.DataArray(np.where(cond, x.data, y.data), coords=x.coords, dims=x.dims).assign_attrs(x.attrs, y.attrs)\", content)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nimport re\nfile_path = \"xarray/core/computation.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Replace the assignment line that uses np.where to wrap the result in DataArray\n# and explicitly merge attributes from x and y.\nnew_content = re.sub(r\"(res\\s*=\\s*np\\.where\\(cond, x, y\\))\", r\"res = xr.DataArray(np.where(cond, x.data, y.data), coords=x.coords, dims=x.dims).assign_attrs(x.attrs, y.attrs)\", content)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  },
+  {
+   "turn": 10,
+   "cmd": "grep -C 5 \"res = np.where(cond, x, y)\" xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 11,
+   "cmd": "sed -i '/def where(cond, x, y):/,/numpy.where : corresponding numpy function/ s/res = np.where(cond, x, y)/res = xr.DataArray(np.where(cond, x.data, y.data), coords=x.coords, dims=x.dims).assign_attrs(x.attrs, y.attrs)/g' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 12,
+   "cmd": "python3 - <<'EOF'\nimport re\nfile_path = \"xarray/core/computation.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target the line that performs the assignment using np.where\n# We use a non-greedy match for the line containing the assignment.\npattern = r\"(res\\s*=\\s*np\\.where\\(cond, x, y\\))\"\nreplacement = r\"res = xr.DataArray(np.where(cond, x.data, y.data), coords=x.coords, dims=x.dims).assign_attrs(x.attrs, y.attrs)\"\n\nnew_content = re.sub(pattern, replacement, content)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 13,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 61387,
+ "completion_tokens": 3084,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "wall_s": 70.3
+}

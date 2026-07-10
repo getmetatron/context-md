@@ -1,0 +1,82 @@
+{
+ "instance_id": "django__django-11299",
+ "condition": "D",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"CheckConstraint\" django/db/models/constraints.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat django/db/models/constraints.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "ls django/db/models/",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"OR\" django/db/models/query_utils.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -r \"CheckConstraint\" django/db/models/query.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 -c \"from django.db.models.constraints import CheckConstraint; print(CheckConstraint.__doc__)\"",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 -c \"from django.db.models.constraints import CheckConstraint; print(CheckConstraint.__doc__)\"",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '/def _get_check_sql(self, model, schema_editor):/,/        return sql % tuple(schema_editor.quote_value(p) for p in params)/ s/query = Query(model=model)\\n        where = query.build_where(self.check)\\n        compiler = query.get_compiler(connection=schema_editor.connection)\\n        sql, params = where.as_sql(compiler, schema_editor.connection)/query = self.check.sql(schema_editor.connection.get_compiler(schema_editor.connection), schema_editor.connection)/' django/db/models/constraints.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i '/def _get_check_sql(self, model, schema_editor):/,/        return sql % tuple(schema_editor.quote_value(p) for p in params)/ s/query = Query(model=model)\\n        where = query.build_where(self.check)\\n        compiler = query.get_compiler(connection=schema_editor.connection)\\n        sql, params = where.as_sql(compiler, schema_editor.connection)/sql, params = self.check.sql(schema_editor.connection.get_compiler(schema_editor.connection), schema_editor.connection)/' django/db/models/constraints.py",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/models/constraints.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Original block to replace:\n# query = Query(model=model)\n# where = query.build_where(self.check)\n# compiler = query.get_compiler(connection=schema_editor.connection)\n# sql, params = where.as_sql(compiler, schema_editor.connection)\n\n# Replacement logic: Use self.check.sql() directly\nnew_content = content.replace(\n    \"query = Query(model=model)\\n        where = query.build_where(self.check)\\n        compiler = query.get_compiler(connection=schema_editor.connection)\\n        sql, params = where.as_sql(compiler, schema_editor.connection)\",\n    \"sql, params = self.check.sql(schema_editor.connection.get_compiler(schema_editor.connection), schema_editor.connection)\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 36342,
+ "completion_tokens": 1785,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 825,
+ "lessons_raw": [
+  "When modifying SQL generation logic within constraints, directly calling the underlying expression's `.sql()` method is often a more robust and concise replacement for multi-step `Query` object construction.",
+  "Core utility modules like `django/db/models/query_utils.py` define constants (e.g., `OR = 'OR'`) that should be respected when building query components.",
+  "File system operations involving complex text replacement (like `sed`) are brittle; using programmatic file reading/writing (e.g., Python context managers) is safer for structural code changes."
+ ],
+ "lessons_promoted": [
+  "When modifying SQL generation logic within constraints, directly calling the underlying expression's `.sql()` method is often a more robust and concise replacement for multi-step `Query` object construction.",
+  "Core utility modules like `django/db/models/query_utils.py` define constants (e.g., `OR = 'OR'`) that should be respected when building query components.",
+  "File system operations involving complex text replacement (like `sed`) are brittle; using programmatic file reading/writing (e.g., Python context managers) is safer for structural code changes."
+ ],
+ "wall_s": 54.7
+}

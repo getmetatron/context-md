@@ -1,0 +1,52 @@
+{
+ "instance_id": "django__django-15278",
+ "condition": "E",
+ "rep": 5,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 5,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"UNIQUE\" django/db/backends/sqlite3/schema.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"add_field\" django/db/backends/sqlite3/schema.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"UNIQUE\" django/db/backends/sqlite3/schema.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i 's/sql_create_unique = \"CREATE UNIQUE INDEX %(name)s ON %(table)s (%(columns)s)\"/sql_create_unique = \"CREATE UNIQUE INDEX %(name)s ON %(table)s (%(columns)s) WHERE %(columns)s IS NOT NULL\"/g' django/db/backends/sqlite3/schema.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/sql_create_unique = \"CREATE UNIQUE INDEX %(name)s ON %(table)s (%(columns)s)\"/sql_create_unique = \"CREATE UNIQUE INDEX %(name)s ON %(table)s (%(columns)s) WHERE %(columns)s IS NOT NULL\"/g' django/db/backends/sqlite3/schema.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/backends/sqlite3/schema.py\"\nnew_content = \"\"\"sql_create_unique = \"CREATE UNIQUE INDEX %(name)s ON %(table)s (%(columns)s) WHERE %(columns)s IS NOT NULL\"\n\"\"\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Simple replacement assuming the line structure is consistent\nif \"sql_create_unique = \\\"CREATE UNIQUE INDEX %(name)s ON %(table)s (%(columns)s)\\\"\" in content:\n    new_content_final = new_content.strip()\n    new_content_final = new_content_final.replace('\"', '\\\\\"') # Escape quotes for final write\n    \n    # Re-read the file to ensure we only replace the exact line\n    lines = content.splitlines()\n    new_lines = []\n    replaced = False\n    for line in lines:\n        if \"sql_create_unique = \\\"CREATE UNIQUE INDEX %(name)s ON %(table)s (%(columns)s)\\\"\" in line:\n            new_lines.append(new_content_final)\n            replaced = True\n        else:\n            new_lines.append(line)\n    \n    if replaced:\n        with open(file_path, 'w') as f:\n            f.write(\"\\\\n\".join(new_lines))\n    else:\n        print(\"Pattern not found.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 24784,
+ "completion_tokens": 2461,
+ "context_truncated": false,
+ "context_words": 830,
+ "submitted": true,
+ "patch_bytes": 43355,
+ "wall_s": 57.5
+}

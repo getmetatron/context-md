@@ -1,0 +1,76 @@
+{
+ "instance_id": "django__django-7530",
+ "condition": "D",
+ "rep": 5,
+ "executor": "local",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 5,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"allow_migrate\" django/migrations/models.py",
+   "exit": 2
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"allow_migrate\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat tests/migrations/routers.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat tests/multiple_database/tests.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -r \"router.allow_migrate\" django/db/migrations/routers.py",
+   "exit": 2
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -r \"allow_migrate\" django/db/migrations/models.py",
+   "exit": 2
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfrom django.db.migrations.utils import model_to_pk\nfrom django.db.migrations.models import Model\nfrom django.db.utils import ConnectionRouter\n\nclass TestRouter(object):\n    def allow_migrate(self, db, app_label, model_name=None, **hints):\n        \"\"\"\n        The Tribble model should be the only one to appear in the 'other' db.\n        \"\"\"\n        if model_name == 'tribble':\n            return db == 'other'\n        elif db == 'other':\n            return False\n        return True\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i 's/class TestRouter(object):/class TestRouter(object):/' tests/migrations/routers.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nwith open(\"tests/migrations/routers.py\", \"r\") as f:\n    content = f.read()\n\nnew_content = \"\"\"\nclass EmptyRouter(object):\n    pass\n\n\nclass TestRouter(object):\n    def allow_migrate(self, db, app_label, model_name=None, **hints):\n        \\\"\\\"\\\"\n        The Tribble model should be the only one to appear in the 'other' db.\n        \\\"\\\"\\\"\n        if model_name == 'tribble':\n            return db == 'other'\n        elif db == 'other':\n            return False\n        return True\n\"\"\"\n\nwith open(\"tests/migrations/routers.py\", \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 25506,
+ "completion_tokens": 1671,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 387,
+ "lessons_raw": [
+  "When testing database routing logic, ensure that the `allow_migrate` method explicitly returns `True` for cases not covered by specific `if/elif` checks to maintain expected default behavior.",
+  "Directory structure for migration testing utilities (e.g., `tests/migrations/`) should be treated as source code locations, not just areas for simple file existence checks.",
+  "Relying on `grep` across the entire repository for specific function signatures (`allow_migrate`) is brittle; targeted file reading or explicit module imports are more reliable for code analysis."
+ ],
+ "lessons_promoted": [
+  "Directory structure for migration testing utilities (e.g., `tests/migrations/`) should be treated as source code locations, not just areas for simple file existence checks.",
+  "Relying on `grep` across the entire repository for specific function signatures (`allow_migrate`) is brittle; targeted file reading or explicit module imports are more reliable for code analysis."
+ ],
+ "wall_s": 47.3
+}
