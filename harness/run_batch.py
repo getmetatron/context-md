@@ -34,7 +34,9 @@ def main():
     ap.add_argument("--reps", type=int, nargs="+", default=[1])
     ap.add_argument("--arms", nargs="+", default=["D", "B", "E"])
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--round", default="", help="suffix isolating a rerun (e.g. '2' -> runs/C2, runs/A2)")
     args = ap.parse_args()
+    R = args.round
 
     pairs = json.loads(Path(args.pairs).read_text())["pairs"]
     log = ROOT / "runs" / "batch.log"
@@ -55,11 +57,12 @@ def main():
             if "E" in args.arms:
                 plan.append(("E", ["--condition", "E", "--instances", p["b"], "--rep", str(rep)], None))
             if "C" in args.arms:  # frontier emergent, pair protocol (§4.7)
-                cdir = str(ROOT / "runs" / "C" / f"pair_{tag}" / f"rep{rep}")
-                plan.append((f"C/pair_{tag}", ["--condition", "C", "--instances", p["a"], "--rep", str(rep), "--run-dir", cdir], tag))
-                plan.append((f"C/pair_{tag}", ["--condition", "C", "--instances", p["b"], "--rep", str(rep), "--no-learning", "--run-dir", cdir], tag))
+                cdir = str(ROOT / "runs" / f"C{R}" / f"pair_{tag}" / f"rep{rep}")
+                plan.append((f"C{R}/pair_{tag}", ["--condition", "C", "--instances", p["a"], "--rep", str(rep), "--run-dir", cdir], tag))
+                plan.append((f"C{R}/pair_{tag}", ["--condition", "C", "--instances", p["b"], "--rep", str(rep), "--no-learning", "--run-dir", cdir], tag))
             if "A" in args.arms:  # frontier control on B-side
-                plan.append(("A", ["--condition", "A", "--instances", p["b"], "--rep", str(rep)], None))
+                adir = str(ROOT / "runs" / f"A{R}" / f"rep{rep}")
+                plan.append((f"A{R}", ["--condition", "A", "--instances", p["b"], "--rep", str(rep), "--run-dir", adir], None))
             if "Do" in args.arms:  # D-oracle (§4.3): labeled upper bound, local
                 odir = str(ROOT / "runs" / "D_oracle" / f"pair_{tag}" / f"rep{rep}")
                 plan.append((f"Do/pair_{tag}", ["--condition", "D", "--oracle", "--instances", p["a"], "--rep", str(rep), "--run-dir", odir], tag))
