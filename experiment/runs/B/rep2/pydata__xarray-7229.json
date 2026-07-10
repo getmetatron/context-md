@@ -1,0 +1,55 @@
+{
+ "instance_id": "pydata__xarray-7229",
+ "condition": "B",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"xr.where\" xarray/",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"where\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -n \"merge_attrs\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '/def where(cond, x, y, keep_attrs=None):/,/    numpy.where : corresponding numpy function/ s/    attrs = merge_attrs([x.attrs for x in objs], combine_attrs=keep_attrs)/    attrs = merge_attrs([x.attrs for x in objs], combine_attrs=keep_attrs, coords_attrs=True)/g' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/def where(cond, x, y, keep_attrs=None):/,/    numpy.where : corresponding numpy function/ s/    attrs = merge_attrs([x.attrs for x in objs], combine_attrs=keep_attrs)/    attrs = merge_attrs([x.attrs for x in objs], combine_attrs=keep_attrs, preserve_coords=True)/g' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"xarray/core/computation.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target the attribute merging call inside the where function.\n# This is a heuristic patch based on the bug description.\nnew_content = content.replace(\n    \"    attrs = merge_attrs([x.attrs for x in objs], combine_attrs=keep_attrs)\",\n    \"    attrs = merge_attrs([x.attrs for x in objs], combine_attrs=keep_attrs, preserve_coords=True)\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 28595,
+ "completion_tokens": 1955,
+ "submitted": true,
+ "patch_bytes": 985,
+ "wall_s": 42.4
+}

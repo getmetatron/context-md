@@ -1,0 +1,71 @@
+{
+ "instance_id": "django__django-15161",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"deconstruct\\|@deconstructible\\|_constructor_args\\|django.db.models\" django/db/models/expressions.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"^class \\|@deconstructible\" django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"expressions\\|import\" django/db/models/__init__.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '13,18p' django/db/models/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport re\nf='django/db/models/expressions.py'\ns=open(f).read()\ntargets={\n'Expression':'@deconstructible\\nclass Expression(BaseExpression, Combinable):',\n'ExpressionList':'class ExpressionList(Func):',\n'ExpressionWrapper':'class ExpressionWrapper(SQLiteNumericMixin, Expression):',\n'Func':'class Func(SQLiteNumericMixin, Expression):',\n'OrderBy':'class OrderBy(Expression):',\n'OuterRef':'class OuterRef(F):',\n'RowRange':'class RowRange(WindowFrame):',\n'Subquery':'class Subquery(BaseExpression, Combinable):',\n'Value':'class Value(SQLiteNumericMixin, Expression):',\n'ValueRange':'class ValueRange(WindowFrame):',\n'When':'class When(Expression):',\n'Window':'class Window(SQLiteNumericMixin, Expression):',\n'WindowFrame':'class WindowFrame(Expression):',\n'Case':'class Case(SQLiteNumericMixin, Expression):',\n'Exists':'class Exists(Subquery):',\n}\nfor name,decl in targets.items():\n    if decl.startswith('@deconstructible'):\n        old=decl\n        new='@deconstructible(path=%r)\\nclass %s'%('django.db.models.%s'%name, decl.split('\\n')[1][6:])\n    else:\n        old=decl\n        new='@deconstructible(path=%r)\\n%s'%('django.db.models.%s'%name, decl)\n    assert s.count(old)==1, (name,s.count(old))\n    s=s.replace(old,new,1)\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -n \"@deconstructible\" django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 -c \"import django; from django.conf import settings; settings.configure(); django.setup(); from django.db.models import Value, Func, Case, When, OrderBy; print(Value(1).deconstruct()); print(Func().deconstruct()); print(OrderBy(Value(1)).deconstruct()[0])\"",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 -c \"from django.db.models.expressions import Value, Func, OrderBy; print(Value(1).deconstruct()[0]); print(Func().deconstruct()[0]); print(OrderBy(Value(1)).deconstruct()[0])\"",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 23551,
+ "completion_tokens": 1702,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 4151,
+ "lessons_raw": [
+  "`django.utils.deconstruct.deconstructible` accepts a `path=` kwarg to override the import path reported by `deconstruct()`; use it so expressions/classes serialize to their public `django.db.models.X` path rather than their defining module.",
+  "Public expression classes are defined in `django/db/models/expressions.py` and re-exported via `django/db/models/__init__.py`; the public import path is `django.db.models.<ClassName>`.",
+  "`django.conf.settings.configure()` without args fails on some setup; importing classes directly from `django.db.models.expressions` avoids needing full Django setup when only testing `deconstruct()` behavior."
+ ],
+ "lessons_promoted": [
+  "`django.utils.deconstruct.deconstructible` accepts a `path=` kwarg to override the import path reported by `deconstruct()`; use it so expressions/classes serialize to their public `django.db.models.X` path rather than their defining module.",
+  "Public expression classes are defined in `django/db/models/expressions.py` and re-exported via `django/db/models/__init__.py`; the public import path is `django.db.models.<ClassName>`."
+ ],
+ "wall_s": 48.4
+}

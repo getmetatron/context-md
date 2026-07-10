@@ -1,0 +1,57 @@
+{
+ "instance_id": "pydata__xarray-6461",
+ "condition": "D",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"keep_attrs\" xarray/core/core.py",
+   "exit": 2
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"apply_ufunc\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"xr.where\" .",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -n \"where\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '1743 s/def where(cond, x, y, keep_attrs=None):/def where(cond, x, y, keep_attrs=None):\n    if np.isscalar(x) and keep_attrs is True:\n        # If x is scalar, we cannot preserve its attributes in the same way.\n        # We might need to force keep_attrs to False or handle it specially.\n        # For now, I'll just return early or adjust keep_attrs if possible.\n        # Given the error, setting keep_attrs=False seems like the safe workaround.\n        keep_attrs = False' xarray/core/computation.py",
+   "exit": 2
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"xarray/core/computation.py\"\nwith open(file_path, 'r') as f:\n    lines = f.readlines()\n\nnew_lines = []\nin_where_func = False\nfound_signature = False\n\nfor i, line in enumerate(lines):\n    if \"def where(cond, x, y, keep_attrs=None):\" in line:\n        new_lines.append(line)\n        in_where_func = True\n        found_signature = True\n        # Insert the fix immediately after the signature line\n        new_lines.append(\"    if np.isscalar(x) and keep_attrs is True:\\n\")\n        new_lines.append(\"        warnings.warn(\\\"Cannot preserve attributes from a scalar argument when using xr.where. Setting keep_attrs=False.\\\")\\n\")\n        new_lines.append(\"        keep_attrs = False\\n\")\n        continue\n\n    if in_where_func and found_signature and i > 0 and \"def where(cond, x, y, keep_attrs=None):\" not in lines[i-1]:\n        # Stop injecting logic once we are clearly past the function definition block\n        # This is a heuristic to prevent over-modification.\n        if \"return\" in line and \"apply_ufunc\" in line:\n            # If we hit a return statement that seems to be the main body, we stop injecting.\n            pass\n        elif \"def where\" not in line and \"return\" not in line and \"if\" not in line:\n            # Simple heuristic: if we are deep inside the function body, we might be safe to stop injecting.\n            pass\n\n    new_lines.append(line)\n\nwith open(file_path, 'w') as f:\n    f.writelines(new_lines)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 25032,
+ "completion_tokens": 1657,
+ "context_truncated": false,
+ "context_words": 94,
+ "submitted": true,
+ "patch_bytes": 597,
+ "wall_s": 41.2
+}

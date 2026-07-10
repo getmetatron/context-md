@@ -1,0 +1,77 @@
+{
+ "instance_id": "pydata__xarray-4687",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"^def where\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '1730,1810p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"keep_attrs\" xarray/core/computation.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf=\"xarray/core/computation.py\"\ns=open(f).read()\nold='''    # alignment for three arguments is complicated, so don't support it yet\n    return apply_ufunc(\n        duck_array_ops.where,\n        cond,\n        x,\n        y,\n        join=\"exact\",\n        dataset_join=\"exact\",\n        dataset_fill_value=np.nan,\n        keep_attrs=True,\n        docstring=True,\n    )'''\nnew='''    if keep_attrs is None:\n        keep_attrs = _get_keep_attrs(default=False)\n\n    if keep_attrs is True:\n        # keep the attributes of x, the second parameter, by default to\n        # be consistent with the `where` method of `DataArray` and `Dataset`\n        keep_attrs = lambda attrs, context: attrs[1]\n\n    # alignment for three arguments is complicated, so don't support it yet\n    return apply_ufunc(\n        duck_array_ops.where,\n        cond,\n        x,\n        y,\n        join=\"exact\",\n        dataset_join=\"exact\",\n        dataset_fill_value=np.nan,\n        keep_attrs=keep_attrs,\n        docstring=True,\n    )'''\ns=s.replace(old,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/^def where(cond, x, y):/def where(cond, x, y, keep_attrs=None):/' xarray/core/computation.py\ngrep -n \"def merge_attrs\\|combine_attrs\" xarray/core/merge.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i 's#^def where(cond, x, y):#def where(cond, x, y, keep_attrs=None):#' xarray/core/computation.py\ngrep -n \"def where\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i.bak 's|^def where(cond, x, y):|def where(cond, x, y, keep_attrs=None):|' xarray/core/computation.py && grep -n \"^def where\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -n '516,530p' xarray/core/merge.py",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "rm -f xarray/core/computation.py.bak && python3 -c \"\nimport numpy as np, xarray as xr\ndata = xr.DataArray(np.ones([3,3], dtype=np.int8))\ndata.attrs['a']='1'\nprint(xr.where(data==1,5,0).attrs)\nda=xr.DataArray(1); da.attrs['foo']='bar'\nprint(xr.where(da==0,-1,da,keep_attrs=True).attrs)\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "which python python3; python -c \"import numpy\" 2>&1 | head -1",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "sed -n '295,305p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 62011,
+ "completion_tokens": 1912,
+ "context_truncated": false,
+ "context_words": 89,
+ "submitted": true,
+ "patch_bytes": 486,
+ "wall_s": 41.8
+}

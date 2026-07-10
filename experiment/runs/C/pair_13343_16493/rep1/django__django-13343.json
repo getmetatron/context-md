@@ -1,0 +1,50 @@
+{
+ "instance_id": "django__django-13343",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"storage\" django/db/models/fields/files.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '225,290p' django/db/models/fields/files.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nimport re\nf='django/db/models/fields/files.py'\ns=open(f).read()\ns=s.replace(\n'''        self.storage = storage or default_storage\n        if callable(self.storage):\n            self.storage = self.storage()\n            if not isinstance(self.storage, Storage):''',\n'''        self.storage = storage or default_storage\n        if callable(self.storage):\n            # Hold a reference to the callable for deconstruct().\n            self._storage_callable = self.storage\n            self.storage = self.storage()\n            if not isinstance(self.storage, Storage):''')\ns=s.replace(\n'''        if self.storage is not default_storage:\n            kwargs['storage'] = self.storage''',\n'''        if self.storage is not default_storage:\n            kwargs['storage'] = getattr(self, '_storage_callable', self.storage)''')\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '229,239p;280,290p' django/db/models/fields/files.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 10095,
+ "completion_tokens": 577,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 960,
+ "lessons_raw": [
+  "Field.deconstruct() must return the original callable arguments (e.g. storage) rather than resolved instances, so migrations reference the callable; stash the original callable in a private attribute during __init__ for later retrieval.",
+  "FileField in django/db/models/fields/files.py accepts a callable for `storage`, resolving it to a Storage instance in __init__ while validating it's a Storage subclass/instance."
+ ],
+ "lessons_promoted": [
+  "Field.deconstruct() must return the original callable arguments (e.g. storage) rather than resolved instances, so migrations reference the callable; stash the original callable in a private attribute during __init__ for later retrieval.",
+  "FileField in django/db/models/fields/files.py accepts a callable for `storage`, resolving it to a Storage instance in __init__ while validating it's a Storage subclass/instance."
+ ],
+ "wall_s": 24.3
+}

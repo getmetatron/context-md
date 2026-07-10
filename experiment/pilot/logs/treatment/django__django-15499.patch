@@ -1,0 +1,42 @@
+diff --git a/django/db/migrations/optimizer.py b/django/db/migrations/optimizer.py
+index 7e5dea2377..84bc6a2dc8 100644
+--- a/django/db/migrations/optimizer.py
++++ b/django/db/migrations/optimizer.py
+@@ -67,3 +67,37 @@ class MigrationOptimizer:
+             else:
+                 new_operations.append(operation)
+         return new_operations
++
++    def optimize_inner(self, operations, app_label):
++        """Inner optimization loop."""
++        new_operations = []
++        i = 0
++        while i < len(operations):
++            operation = operations[i]
++            reduced = False
++            # Compare it to each operation after it
++            for j in range(i + 1, len(operations)):
++                other = operations[j]
++                result = operation.reduce(other, app_label)
++
++                if isinstance(result, list):
++                    # Reduction occurred: operation + ... + other -> result
++                    # Replace operations[i:j+1] with result
++                    new_operations.extend(result)
++                    i = j + 1
++                    reduced = True
++                    break
++                elif result is not True:
++                    # Reduction occurred, result is a single operation instance
++                    # Replace operations[i:j+1] with result
++                    new_operations.append(result)
++                    i = j + 1
++                    reduced = True
++                    break
++            
++            if not reduced:
++                # No reduction found starting at i, just append the operation and move to the next
++                new_operations.append(operation)
++                i += 1
++                
++        return new_operations

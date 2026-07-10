@@ -1,0 +1,72 @@
+{
+ "instance_id": "django__django-17087",
+ "condition": "D",
+ "rep": 5,
+ "executor": "local",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 5,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"ArrayField\" .",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"default=\" tests/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"ArrayField.*default=\" .",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"Profile\" .",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -r \"ArrayField.*default=\" tests/",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -r \"default\" tests/model_forms/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nimport re\n\n# Read the content of the file\nwith open(\"tests/model_forms/models.py\", \"r\") as f:\n    content = f.read()\n\n# Regex to find 'default=function_name' and replace it with 'default=lambda: function_name()'\n# This is a heuristic fix based on the problem description.\ndef replace_default(match):\n    default_value = match.group(1).strip()\n    if default_value.startswith('default_'):\n        return f\"default=lambda: {default_value}()\"\n    return match.group(0)\n\nnew_content = re.sub(r\"(default\\s*=\\s*([a-zA-Z_]+))\", replace_default, content)\n\n# Write back the modified content\nwith open(\"tests/model_forms/models.py\", \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i 's/default=[a-zA-Z_]\\+/\\default=lambda: \\1()/g' tests/model_forms/models.py",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"tests/model_forms/models.py\"\n\ntry:\n    with open(file_path, \"r\") as f:\n        content = f.read()\nexcept FileNotFoundError:\n    print(f\"Error: {file_path} not found.\")\n    exit(1)\n\n# Regex to find 'default=function_name' where function_name is alphanumeric/underscore\n# and replace it with 'default=lambda: function_name()'\ndef replace_default(match):\n    default_value = match.group(1).strip()\n    # Only replace if it looks like a function name reference\n    if re.fullmatch(r'[a-zA-Z_]+', default_value):\n        return f\"default=lambda: {default_value}()\"\n    return match.group(0)\n\n# Pattern: default= followed by one or more word characters (the function name)\nnew_content = re.sub(r\"(default\\s*=\\s*([a-zA-Z_]+))\", replace_default, content)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\n\nprint(\"Successfully updated default values in tests/model_forms/models.py\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 48125,
+ "completion_tokens": 2469,
+ "context_truncated": false,
+ "context_words": 100,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "wall_s": 82.8
+}

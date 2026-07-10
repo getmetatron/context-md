@@ -1,0 +1,50 @@
+{
+ "instance_id": "django__django-15278",
+ "condition": "A",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"add_field\\|UNIQUE\\|_remake_table\\|unique\" django/db/backends/sqlite3/schema.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '325,335p' django/db/backends/sqlite3/schema.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nimport re\nf=\"django/db/backends/sqlite3/schema.py\"\ns=open(f).read()\nold='''        # Fields with default values cannot by handled by ALTER TABLE ADD\n        # COLUMN statement because DROP DEFAULT is not supported in\n        # ALTER TABLE.\n        if not field.null or self.effective_default(field) is not None:\n            self._remake_table(model, create_field=field)'''\nnew='''        # Special-case implicit M2M tables.\n        if field.many_to_many and field.remote_field.through._meta.auto_created:\n            return self.create_model(field.remote_field.through)\n        # Fields with default values cannot by handled by ALTER TABLE ADD\n        # COLUMN statement because DROP DEFAULT is not supported in\n        # ALTER TABLE.\n        if (\n            not field.null\n            or self.effective_default(field) is not None\n            # Nullable UNIQUE columns cannot be added by ALTER TABLE ADD\n            # COLUMN statement on SQLite.\n            or field.unique\n        ):\n            self._remake_table(model, create_field=field)'''\nassert old in s\ns=s.replace(old,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -n \"many_to_many\\|create_model(field\" django/db/backends/base/schema.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/backends/sqlite3/schema.py\"\ns=open(f).read()\nold='''        # Special-case implicit M2M tables.\n        if field.many_to_many and field.remote_field.through._meta.auto_created:\n            return self.create_model(field.remote_field.through)\n        # Fields with default values cannot by handled by ALTER TABLE ADD'''\nnew='''        # Fields with default values cannot by handled by ALTER TABLE ADD'''\nassert old in s\ns=s.replace(old,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -n '325,345p' django/db/backends/sqlite3/schema.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 14219,
+ "completion_tokens": 1064,
+ "submitted": true,
+ "patch_bytes": 904,
+ "wall_s": 25.0
+}

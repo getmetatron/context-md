@@ -1,0 +1,42 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9602",
+ "condition": "E",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"Literal\" sphinx/domains/python.py",
+   "exit": 1
+  },
+  {
+   "turn": 1,
+   "cmd": "cat sphinx/domains/python.py | grep -A 20 \"def _parse_annotation(\"",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i '/elif isinstance(node, ast.Constant):  # type: ignore/,/                return [nodes.Text(node.value)]/ s/                return [nodes.Text(node.value)]/                if node.value is Ellipsis:\n                    return [addnodes.desc_sig_punctuation('', \"...\")]\n                elif isinstance(node.value, (bool, int, str)):\n                    return [nodes.Text(str(node.value))]\n                else:\n                    return [nodes.Text(str(node.value))]/' sphinx/domains/python.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sphinx/domains/python.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The target block is inside unparse(node: ast.AST)\n# Original:\n# elif isinstance(node, ast.Constant):  # type: ignore\n#     if node.value is Ellipsis:\n#         return [addnodes.desc_sig_punctuation('', \"...\")]\n#     else:\n#         return [nodes.Text(node.value)]\n\n# Replacement logic:\nnew_content = content.replace(\n    \"        elif isinstance(node, ast.Constant):  # type: ignore\\n            if node.value is Ellipsis:\\n                return [addnodes.desc_sig_punctuation('', \\\"...\\\")]\\n            else:\\n                return [nodes.Text(node.value)]\",\n    \"\"\"        elif isinstance(node, ast.Constant):  # type: ignore\n            if node.value is Ellipsis:\n                return [addnodes.desc_sig_punctuation('', \"...\")]\n            elif isinstance(node.value, (bool, int, str)):\n                return [nodes.Text(str(node.value))]\n            else:\n                return [nodes.Text(str(node.value))]\"\"\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 14242,
+ "completion_tokens": 1516,
+ "context_truncated": false,
+ "context_words": 665,
+ "submitted": true,
+ "patch_bytes": 793,
+ "wall_s": 36.5
+}

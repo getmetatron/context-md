@@ -1,0 +1,48 @@
+{
+ "instance_id": "django__django-15499",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"AlterModelOptions\\|AlterModelManagers\\|def reduce\\|class CreateModel\" django/db/migrations/operations/models.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '155,200a' django/db/migrations/operations/models.py | sed -n '1,50p'",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '155,205p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/operations/models.py\"\ns=open(f).read()\nanchor='''        elif (\n            isinstance(operation, AlterTogetherOptionOperation)\n            and self.name_lower == operation.name_lower\n        ):'''\nnew='''        elif (\n            isinstance(operation, AlterModelManagers)\n            and self.name_lower == operation.name_lower\n        ):\n            return [\n                CreateModel(\n                    self.name,\n                    fields=self.fields,\n                    options=self.options,\n                    bases=self.bases,\n                    managers=operation.managers,\n                ),\n            ]\n        elif (\n            isinstance(operation, AlterTogetherOptionOperation)\n            and self.name_lower == operation.name_lower\n        ):'''\nassert anchor in s\ns=s.replace(anchor,new,1)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 5845,
+ "completion_tokens": 594,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 937,
+ "lessons_raw": [
+  "Migration operation squashing/optimization is implemented via `reduce()` methods in `django/db/migrations/operations/models.py`; `CreateModel.reduce()` folds subsequent Alter* operations (options, managers, together) back into a new CreateModel by matching `self.name_lower == operation.name_lower`."
+ ],
+ "lessons_promoted": [
+  "Migration operation squashing/optimization is implemented via `reduce()` methods in `django/db/migrations/operations/models.py`; `CreateModel.reduce()` folds subsequent Alter* operations (options, managers, together) back into a new CreateModel by matching `self.name_lower == operation.name_lower`."
+ ],
+ "wall_s": 17.9
+}

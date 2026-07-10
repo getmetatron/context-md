@@ -1,0 +1,50 @@
+{
+ "instance_id": "django__django-15499",
+ "condition": "B",
+ "rep": 5,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 5,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"CreateModel\" .",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"AlterModelManagers\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"CreateModel\" django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '/    def deconstruct(self):/,/        return (self.__class__.__qualname__, [], kwargs)/ s/        if self.managers and self.managers != [(\"objects\", models.Manager())]:\\n            kwargs[\"managers\"] = self.managers/        if self.managers:\n            kwargs[\"managers\"] = self.managers/' django/db/migrations/operations/models.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/migrations/operations/models.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target modification: Simplify manager serialization in deconstruct\n# Original: if self.managers and self.managers != [(\"objects\", models.Manager())]:\n#            kwargs[\"managers\"] = self.managers\n# New: if self.managers:\n#        kwargs[\"managers\"] = self.managers\n\nnew_content = content.replace(\n    \"        if self.managers and self.managers != [(\\\"objects\\\", models.Manager())]:\\n            kwargs[\\\"managers\\\"] = self.managers\",\n    \"        if self.managers:\\n            kwargs[\\\"managers\\\"] = self.managers\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 17538,
+ "completion_tokens": 2352,
+ "submitted": true,
+ "patch_bytes": 645,
+ "wall_s": 57.5
+}

@@ -1,0 +1,50 @@
+{
+ "instance_id": "django__django-16819",
+ "condition": "A",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"reduce\" django/db/migrations/operations/models.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"class AddIndex\\|class RemoveIndex\\|class RenameIndex\\|def reduce\\|def deconstruct\" django/db/migrations/operations/models.py | sed -n '1,40p'",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '860,905p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport re\nf=\"django/db/migrations/operations/models.py\"\ns=open(f).read()\n\n# AddIndex: add reduce after its deconstruct\nanchor_add='''    def describe(self):\n        if self.index.expressions:\n            return \"Create index %s on %s on model %s\" % ('''\nadd_reduce='''    def reduce(self, operation, app_label):\n        if isinstance(operation, RemoveIndex) and self.index.name == operation.name:\n            return []\n        return super().reduce(operation, app_label)\n\n'''\nassert anchor_add in s\ns=s.replace(anchor_add, add_reduce+anchor_add,1)\n\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '836,862p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfrom django.db.migrations.optimizer import MigrationOptimizer\nfrom django.db.migrations.operations.models import AddIndex, RemoveIndex\nfrom django.db.models import Index\nops=[AddIndex(\"Foo\", Index(fields=[\"a\"], name=\"idx\")), RemoveIndex(\"Foo\",\"idx\")]\nprint(MigrationOptimizer().optimize(ops, \"app\"))\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 21523,
+ "completion_tokens": 2784,
+ "submitted": true,
+ "patch_bytes": 648,
+ "wall_s": 38.6
+}

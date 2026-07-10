@@ -1,0 +1,60 @@
+{
+ "instance_id": "pydata__xarray-4687",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"def where\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '1730,1820p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"dask=\\\"allowed\\\",\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf=\"xarray/core/computation.py\"\ns=open(f).read()\nold='''        join=\"exact\",\n        dataset_join=\"exact\",\n        dask=\"allowed\",\n    )'''\nnew='''        join=\"exact\",\n        dataset_join=\"exact\",\n        dask=\"allowed\",\n        keep_attrs=True,\n    )'''\n# only replace the last occurrence (the where function)\nidx=s.rfind(old)\ns=s[:idx]+new+s[idx+len(old):]\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 -c \"\nimport numpy as np, xarray as xr\nda = xr.DataArray(1); da.attrs['foo']='bar'\nprint(xr.where(da==0,-1,da).attrs)\nd = xr.DataArray(np.ones([3,3]),attrs={'a':'1'})\nprint(xr.where(d==1,5,0).attrs)\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -n '1810,1822p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 29561,
+ "completion_tokens": 1651,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 328,
+ "lessons_raw": [
+  "In xarray/core/computation.py, high-level functions like `where` are implemented via `apply_ufunc`; attribute propagation is controlled by passing `keep_attrs=True`.",
+  "The dev environment may lack numpy/xarray installed, so runtime verification of xarray code changes via `python3` may fail with ModuleNotFoundError."
+ ],
+ "lessons_promoted": [
+  "In xarray/core/computation.py, high-level functions like `where` are implemented via `apply_ufunc`; attribute propagation is controlled by passing `keep_attrs=True`.",
+  "The dev environment may lack numpy/xarray installed, so runtime verification of xarray code changes via `python3` may fail with ModuleNotFoundError."
+ ],
+ "wall_s": 37.4
+}

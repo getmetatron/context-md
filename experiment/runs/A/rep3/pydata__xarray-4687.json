@@ -1,0 +1,65 @@
+{
+ "instance_id": "pydata__xarray-4687",
+ "condition": "A",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"^def where\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '1730,1820p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nimport re\nf=\"xarray/core/computation.py\"\ns=open(f).read()\ns=s.replace(\"def where(cond, x, y):\",\"def where(cond, x, y, keep_attrs=None):\",1)\nold=\"\"\"    # alignment for three arguments is complicated, so don't support it yet\n    return apply_ufunc(\n        duck_array_ops.where,\n        cond,\n        x,\n        y,\n        join=\"exact\",\n        dataset_join=\"exact\",\n        dask=\"allowed\",\n    )\"\"\"\nnew=\"\"\"    if keep_attrs is None:\n        keep_attrs = _get_keep_attrs(default=False)\n\n    if keep_attrs is True:\n        # keep the attributes of x, the second parameter, by default to\n        # be consistent with the `where` method of `DataArray` and `Dataset`\n        keep_attrs = lambda attrs, context: attrs[1]\n\n    # alignment for three arguments is complicated, so don't support it yet\n    return apply_ufunc(\n        duck_array_ops.where,\n        cond,\n        x,\n        y,\n        join=\"exact\",\n        dataset_join=\"exact\",\n        dask=\"allowed\",\n        keep_attrs=keep_attrs,\n    )\"\"\"\nassert old in s\ns=s.replace(old,new,1)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '25,40p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -n \"keep_attrs\" xarray/core/computation.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -n \"def merge_attrs\\|combine_attrs\" xarray/core/merge.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -n '1116,1128p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "cd /tmp && python3 -c \"\nimport numpy as np, xarray as xr\nda = xr.DataArray(1); da.attrs['foo']='bar'\nprint(xr.where(da==0,-1,da,keep_attrs=True).attrs)\nwith xr.set_options(keep_attrs=True):\n    print(xr.where(da==0,-1,da).attrs)\nprint(xr.where(da==0,-1,da).attrs)\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "cd \"$OLDPWD\" && python -c \"\nimport numpy as np, xarray as xr\nda = xr.DataArray(1); da.attrs['foo']='bar'\nprint(xr.where(da==0,-1,da,keep_attrs=True).attrs)\nwith xr.set_options(keep_attrs=True):\n    print(xr.where(da==0,-1,da).attrs)\nprint(xr.where(da==0,-1,da).attrs)\n\"",
+   "exit": 127
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 45888,
+ "completion_tokens": 1641,
+ "submitted": true,
+ "patch_bytes": 1225,
+ "wall_s": 44.2
+}

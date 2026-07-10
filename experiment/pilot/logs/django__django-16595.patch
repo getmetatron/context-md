@@ -1,0 +1,20 @@
+diff --git a/django/db/migrations/optimizer.py b/django/db/migrations/optimizer.py
+index 7e5dea2377..ce89219f61 100644
+--- a/django/db/migrations/optimizer.py
++++ b/django/db/migrations/optimizer.py
+@@ -44,7 +44,14 @@ class MigrationOptimizer:
+             right = True  # Should we reduce on the right or on the left.
+             # Compare it to each operation after it
+             for j, other in enumerate(operations[i + 1 :]):
+-                result = operation.reduce(other, app_label)
++                if isinstance(operation, AlterField) and isinstance(other, AlterField):
++                    # Check for redundancy as suggested by the bug report
++                    if operation.field == other.field and operation.model == other.model: # Simplified check for same field
++                        result = [operation] # Return only the current operation if redundant
++                    else:
++                        result = operation.reduce(other, app_label)
++                else:
++                    result = operation.reduce(other, app_label)
+                 if isinstance(result, list):
+                     in_between = operations[i + 1 : i + j + 1]
+                     if right:

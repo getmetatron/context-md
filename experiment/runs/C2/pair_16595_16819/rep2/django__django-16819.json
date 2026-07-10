@@ -1,0 +1,57 @@
+{
+ "instance_id": "django__django-16819",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"class AddIndex\\|class RemoveIndex\\|def reduce\\|def deconstruct\\|self.name\\|self.index\" django/db/migrations/operations/models.py | head -60",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"class AddIndex\\|class RemoveIndex\\|class RenameIndex\\|class IndexOperation\" django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '803,910p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/operations/models.py\"\ns=open(f).read()\nanchor='''    @property\n    def migration_name_fragment(self):\n        return \"%s_%s\" % (self.model_name_lower, self.index.name.lower())\n\n\nclass RemoveIndex(IndexOperation):'''\nnew='''    @property\n    def migration_name_fragment(self):\n        return \"%s_%s\" % (self.model_name_lower, self.index.name.lower())\n\n    def reduce(self, operation, app_label):\n        if isinstance(operation, RemoveIndex) and (\n            self.model_name_lower == operation.model_name_lower\n            and self.index.name == operation.name\n        ):\n            return []\n        return super().reduce(operation, app_label)\n\n\nclass RemoveIndex(IndexOperation):'''\nassert anchor in s\ns=s.replace(anchor,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '860,880p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 -m pytest tests/migrations/test_optimizer.py -k \"index\" -q 2>&1 | tail -20 || python3 tests/runtests.py migrations.test_optimizer -v1 2>&1 | tail -20",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "cd tests && python3 runtests.py migrations.test_optimizer -v1 2>&1 | tail -20",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 23539,
+ "completion_tokens": 905,
+ "context_truncated": false,
+ "context_words": 99,
+ "submitted": true,
+ "patch_bytes": 784,
+ "wall_s": 21.4
+}

@@ -1,0 +1,52 @@
+{
+ "instance_id": "django__django-11815",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"class EnumSerializer\" django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "python3 - <<'EOF'\nimport re\nf='django/db/migrations/serializer.py'\ns=open(f).read()\nold='''        enum_class = self.value.__class__\n        module = enum_class.__module__\n        v_string, v_imports = serializer_factory(self.value.value).serialize()\n        imports = {'import %s' % module: set(v_imports)}\n        return \"%s.%s(%s)\" % (module, enum_class.__name__, v_string), imports'''\nnew='''        enum_class = self.value.__class__\n        module = enum_class.__module__\n        return (\n            '%s.%s[%r]' % (module, enum_class.__qualname__, self.value.name),\n            {'import %s' % module},\n        )'''\ns=s.replace(old,new)\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '119,130p' django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf='django/db/migrations/serializer.py'\ns=open(f).read()\nold='''        enum_class = self.value.__class__\n        module = enum_class.__module__\n        v_string, v_imports = serializer_factory(self.value.value).serialize()\n        imports = {'import %s' % module, *v_imports}\n        return \"%s.%s(%s)\" % (module, enum_class.__name__, v_string), imports'''\nnew='''        enum_class = self.value.__class__\n        module = enum_class.__module__\n        return (\n            '%s.%s[%r]' % (module, enum_class.__qualname__, self.value.name),\n            {'import %s' % module},\n        )'''\ns=s.replace(old,new)\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 7550,
+ "completion_tokens": 1049,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 779,
+ "lessons_raw": [
+  "Migration serializers live in `django/db/migrations/serializer.py`, each a `BaseSerializer` subclass whose `serialize()` returns a `(code_string, imports_set)` tuple; imports are strings like `'import module'`.",
+  "Serialize enum members by name (`EnumClass[name]`) rather than by value, so renaming/reordering enum values doesn't break serialization; use `__qualname__` for nested classes.",
+  "Use `serializer_factory(value).serialize()` to recursively serialize nested values within a serializer."
+ ],
+ "lessons_promoted": [
+  "Migration serializers live in `django/db/migrations/serializer.py`, each a `BaseSerializer` subclass whose `serialize()` returns a `(code_string, imports_set)` tuple; imports are strings like `'import module'`.",
+  "Serialize enum members by name (`EnumClass[name]`) rather than by value, so renaming/reordering enum values doesn't break serialization; use `__qualname__` for nested classes.",
+  "Use `serializer_factory(value).serialize()` to recursively serialize nested values within a serializer."
+ ],
+ "wall_s": 25.4
+}

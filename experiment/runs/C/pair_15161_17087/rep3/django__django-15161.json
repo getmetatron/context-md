@@ -1,0 +1,67 @@
+{
+ "instance_id": "django__django-15161",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"@deconstructible\\|_path\\|class F\\b\\|django.db.models\" django/db/models/expressions.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"^class \\|@deconstructible\" django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"'\" django/db/models/__init__.py | grep -iE \"func|value|exists|subquery|expressionwrapper|outerref|case|when|orderby|window|rowrange|valuerange|windowframe\"",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '393,395p;654,655p;734,735p;956,957p;988,989p;1055,1056p;1136,1137p;1193,1194p;1228,1229p;1310,1311p;1415,1416p;1474,1482p' django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport re\nf='django/db/models/expressions.py'\ns=open(f).read()\n\n# Expression: add path\ns=s.replace(\"@deconstructible\\nclass Expression(BaseExpression, Combinable):\",\n            \"@deconstructible(path='django.db.models.Expression')\\nclass Expression(BaseExpression, Combinable):\")\n\nrepls=[\n(\"class Func(SQLiteNumericMixin, Expression):\", \"django.db.models.Func\"),\n(\"class Value(SQLiteNumericMixin, Expression):\", \"django.db.models.Value\"),\n(\"class ExpressionList(Func):\", \"django.db.models.ExpressionList\"),\n(\"class ExpressionWrapper(SQLiteNumericMixin, Expression):\", \"django.db.models.ExpressionWrapper\"),\n(\"class When(Expression):\", \"django.db.models.When\"),\n(\"class Case(SQLiteNumericMixin, Expression):\", \"django.db.models.Case\"),\n(\"class Subquery(BaseExpression, Combinable):\", \"django.db.models.Subquery\"),\n(\"class Exists(Subquery):\", \"django.db.models.Exists\"),\n(\"class OrderBy(Expression):\", \"django.db.models.OrderBy\"),\n(\"class Window(SQLiteNumericMixin, Expression):\", \"django.db.models.Window\"),\n(\"class WindowFrame(Expression):\", \"django.db.models.WindowFrame\"),\n(\"class RowRange(WindowFrame):\", \"django.db.models.RowRange\"),\n(\"class ValueRange(WindowFrame):\", \"django.db.models.ValueRange\"),\n(\"class OuterRef(F):\", \"django.db.models.OuterRef\"),\n]\nfor cls,path in repls:\n    dec=\"@deconstructible(path='%s')\\n\"%path\n    assert s.count(cls)==1, cls\n    s=s.replace(cls, dec+cls)\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -n \"def deconstructible\\|path\" django/utils/deconstruct.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 tests/runtests.py expressions.tests -v1 2>&1 | tail -20",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 17115,
+ "completion_tokens": 1783,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 4151,
+ "lessons_raw": [
+  "`@deconstructible` in `django/utils/deconstruct.py` accepts a `path=` kwarg to override the reported import path; classes exported via `django/db/models/__init__.py` should use their public `django.db.models.X` path to keep migration serialization stable.",
+  "The `path` override only applies when `type(obj) is klass` (exact class), so each subclass needing a public deconstruct path must carry its own `@deconstructible(path=...)` decorator.",
+  "Running `tests/runtests.py` requires django to be importable in the environment; a bare invocation fails with `ModuleNotFoundError` unless django is installed/on the path."
+ ],
+ "lessons_promoted": [
+  "`@deconstructible` in `django/utils/deconstruct.py` accepts a `path=` kwarg to override the reported import path; classes exported via `django/db/models/__init__.py` should use their public `django.db.models.X` path to keep migration serialization stable.",
+  "The `path` override only applies when `type(obj) is klass` (exact class), so each subclass needing a public deconstruct path must carry its own `@deconstructible(path=...)` decorator.",
+  "Running `tests/runtests.py` requires django to be importable in the environment; a bare invocation fails with `ModuleNotFoundError` unless django is installed/on the path."
+ ],
+ "wall_s": 41.9
+}

@@ -1,0 +1,80 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8593",
+ "condition": "A",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"meta public\\|:meta\\|metadata\" sphinx/ext/autodoc/__init__.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '700,760pxxx' sphinx/ext/autodoc/__init__.py 2>/dev/null; sed -n '700,760p' sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '685,702p' sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf = \"sphinx/ext/autodoc/__init__.py\"\ns = open(f).read()\nold = \"\"\"            has_doc = bool(doc)\n\n            metadata = extract_metadata(doc)\"\"\"\nnew = \"\"\"            has_doc = bool(doc)\n\n            metadata = extract_metadata(doc)\n            if 'private' not in metadata and 'public' not in metadata:\n                # extract metadata from attribute comment docstring\n                if (namespace, membername) in attr_docs:\n                    metadata = extract_metadata('\\\\n'.join(attr_docs[namespace, membername]))\"\"\"\nassert old in s\ns = s.replace(old, new)\nopen(f, \"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '729,770p' sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -rln \"meta public\\|meta private\" tests/roots/ tests/ | head",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "cat tests/roots/test-ext-autodoc/target/private.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nf = \"tests/roots/test-ext-autodoc/target/private.py\"\ns = open(f).read()\ns += '''\n\nPRIVATE_CONSTANT = None  #: :meta private:\n_PUBLIC_CONSTANT = None  #: :meta public:\n'''\nopen(f, \"w\").write(s)\nprint(\"ok\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -n '1,80p' tests/test_ext_autodoc_private_members.py",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nprint(\"check\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "python -m pytest tests/test_ext_autodoc_private_members.py -q 2>&1 | tail -15",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "python3 -m pytest tests/test_ext_autodoc_private_members.py -q 2>&1 | tail -15",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 39928,
+ "completion_tokens": 1632,
+ "submitted": true,
+ "patch_bytes": 1166,
+ "wall_s": 57.4
+}

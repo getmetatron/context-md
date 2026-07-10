@@ -1,0 +1,65 @@
+{
+ "instance_id": "pydata__xarray-3095",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"def copy\" xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '1920,1975p' xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"class PandasIndexAdapter\" xarray/core/indexing.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf='xarray/core/variable.py'\ns=open(f).read()\nold=\"\"\"                data = PandasIndexAdapter(self._data.array.copy(deep=True))\n            else:\n                data = self._data\"\"\"\nnew=\"\"\"                # pandas.Index.copy(deep=True) casts unicode to object,\n                # so preserve the original dtype explicitly.\n                data = PandasIndexAdapter(self._data.array.copy(deep=True),\n                                          dtype=self._data.dtype)\n            else:\n                data = self._data\"\"\"\nassert old in s\ns=s.replace(old,new)\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 -c \"\nimport xarray\nds = xarray.Dataset(coords={'x': ['foo'], 'y': ('x', ['bar'])}, data_vars={'z': ('x', ['baz'])})\nprint(ds.copy(deep=True).x.dtype)\nprint(ds.z.copy().x.dtype)\nprint(ds.z.copy(deep=True).x.dtype)\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "which python && python -c \"import numpy\" 2>&1 | head -3",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "ls /Users/pavel/dev/getmetatron/rcl-experiment/runs/C2/pair_3095_7393/rep1/work/pydata__xarray-3095/../ 2>/dev/null; python3 -c \"import sys; print(sys.executable)\"; find / -name \"numpy\" -maxdepth 6 -type d 2>/dev/null | head -3",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 19462,
+ "completion_tokens": 1313,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 846,
+ "lessons_raw": [
+  "IndexVariable data is stored as PandasIndexAdapter (xarray/core/indexing.py) wrapping a pandas.Index; pandas.Index.copy(deep=True) casts unicode dtype to object, so pass the original dtype explicitly when reconstructing.",
+  "PandasIndexAdapter accepts a `dtype` argument to preserve the intended dtype independent of the underlying pandas.Index dtype."
+ ],
+ "lessons_promoted": [
+  "IndexVariable data is stored as PandasIndexAdapter (xarray/core/indexing.py) wrapping a pandas.Index; pandas.Index.copy(deep=True) casts unicode dtype to object, so pass the original dtype explicitly when reconstructing.",
+  "PandasIndexAdapter accepts a `dtype` argument to preserve the intended dtype independent of the underlying pandas.Index dtype."
+ ],
+ "wall_s": 37.4
+}

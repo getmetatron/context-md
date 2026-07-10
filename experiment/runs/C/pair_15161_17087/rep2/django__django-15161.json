@@ -1,0 +1,67 @@
+{
+ "instance_id": "django__django-15161",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"deconstruct\\|@deconstructible\\|_constructor_args\\|models.F\" django/db/models/expressions.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"^class \\|@deconstructible\" django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"expressions import\\|from .expressions\" django/db/models/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '13,25p' django/db/models/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -n \"@deconstructible\\|^class \\(Case\\|Exists\\|Expression\\|ExpressionList\\|ExpressionWrapper\\|Func\\|OrderBy\\|OuterRef\\|RowRange\\|Subquery\\|Value\\|When\\|Window\\|WindowFrame\\)\" django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport re\nf='django/db/models/expressions.py'\ns=open(f).read()\n# map class name -> path\ntargets={\n 'Expression':'django.db.models.Expression',\n 'Func':'django.db.models.Func',\n 'Value':'django.db.models.Value',\n 'ExpressionList':'django.db.models.ExpressionList',\n 'ExpressionWrapper':'django.db.models.ExpressionWrapper',\n 'When':'django.db.models.When',\n 'Case':'django.db.models.Case',\n 'Subquery':'django.db.models.Subquery',\n 'Exists':'django.db.models.Exists',\n 'OrderBy':'django.db.models.OrderBy',\n 'Window':'django.db.models.Window',\n 'WindowFrame':'django.db.models.WindowFrame',\n 'RowRange':'django.db.models.RowRange',\n 'ValueRange':'django.db.models.ValueRange',\n 'OuterRef':'django.db.models.OuterRef',\n}\nlines=s.split('\\n')\nout=[]\nfor i,line in enumerate(lines):\n    m=re.match(r'class (\\w+)\\(',line)\n    if m and m.group(1) in targets:\n        prev=out[-1] if out else ''\n        if prev.strip().startswith('@deconstructible'):\n            out[-1]=\"@deconstructible(path='%s')\"%targets[m.group(1)]\n        else:\n            out.append(\"@deconstructible(path='%s')\"%targets[m.group(1)])\n    out.append(line)\nopen(f,'w').write('\\n'.join(out))\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "grep -n \"@deconstructible\" django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 15992,
+ "completion_tokens": 1628,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 4151,
+ "lessons_raw": [
+  "`@deconstructible(path='...')` sets a class's public import path in migration deconstruction; the path should match the canonical export in `django/db/models/__init__.py` (e.g. `django.db.models.F`).",
+  "Expression classes live in `django/db/models/expressions.py` and are re-exported from `django/db/models/__init__.py`; keep the two in sync when adding/exposing expressions.",
+  "`@deconstructible` can be applied bare or with keyword arguments like `path`; the decorator supports both call styles."
+ ],
+ "lessons_promoted": [
+  "`@deconstructible(path='...')` sets a class's public import path in migration deconstruction; the path should match the canonical export in `django/db/models/__init__.py` (e.g. `django.db.models.F`).",
+  "Expression classes live in `django/db/models/expressions.py` and are re-exported from `django/db/models/__init__.py`; keep the two in sync when adding/exposing expressions.",
+  "`@deconstructible` can be applied bare or with keyword arguments like `path`; the decorator supports both call styles."
+ ],
+ "wall_s": 39.5
+}

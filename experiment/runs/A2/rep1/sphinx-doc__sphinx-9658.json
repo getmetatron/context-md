@@ -1,0 +1,116 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9658",
+ "condition": "A",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat sphinx/ext/autodoc/mock.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"qualname\\|__name__\" sphinx/util/typing.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 -c \"\nfrom sphinx.ext.autodoc.mock import _make_subclass\ncls = _make_subclass('Module', 'torch.nn')\nprint(repr(cls.__qualname__), repr(cls.__name__), repr(cls.__module__))\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "pip install setuptools -q 2>&1 | tail -1",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 -c \"\nimport types\ndef _make_subclass(name, module, superclass=object, attributes=None):\n    attrs = {'__module__': module, '__display_name__': module + '.' + name}\n    attrs.update(attributes or {})\n    return type(name, (superclass,), attrs)\ncls = _make_subclass('Module', 'torch.nn')\nprint(repr(cls.__qualname__), repr(cls.__name__))\n\"",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "PYTHONPATH=. python3 -c \"\nimport sys\nsys.modules['pkg_resources'] = type(sys)('pkg_resources')\nsys.modules['pkg_resources'].iter_entry_points = lambda *a,**k: []\nfrom sphinx.ext.autodoc.mock import _MockObject, _make_subclass\nmod_attr = _make_subclass('Module', 'torch.nn', _MockObject)()\nclass Deep(mod_attr):\n    pass\nbase = Deep.__bases__[0]\nprint('qualname=', repr(base.__qualname__), 'name=', repr(base.__name__), 'module=', repr(base.__module__))\n\" 2>&1 | tail -5",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "PYTHONPATH=. python3 -c \"\nimport sys\nsys.modules['pkg_resources'] = type(sys)('pkg_resources')\nsys.modules['pkg_resources'].iter_entry_points = lambda *a,**k: []\nfrom sphinx.ext.autodoc.mock import _MockModule\nfrom sphinx.util.typing import restify\nnn = _MockModule('torch.nn')\nclass Deep(nn.Module):\n    pass\nbase = Deep.__bases__[0]\nprint('qualname=', repr(base.__qualname__))\nprint('restify=', restify(base))\n\" 2>&1 | tail -5",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "grep -rn \"Bases\\|__bases__\\|restify\\|bases\" sphinx/ext/autodoc/__init__.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "PYTHONPATH=. python3 -c \"\nimport sys\nsys.modules['pkg_resources'] = type(sys)('pkg_resources')\nsys.modules['pkg_resources'].iter_entry_points = lambda *a,**k: []\nfrom sphinx.ext.autodoc.mock import _MockModule\nfrom sphinx.util.typing import restify\nnn = _MockModule('torch.nn')\nclass Deep(nn.Module):\n    pass\nfor b in Deep.__orig_bases__:\n    print('orig qualname=', repr(getattr(b,'__qualname__',None)), 'display=', getattr(b,'__display_name__',None))\n    print('restify=', restify(b))\n\" 2>&1 | tail -5",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "sed -n '108,135p' sphinx/util/typing.py; echo ---; grep -n \"def ismock\" sphinx/ext/autodoc/mock.py",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "sed -n '155,175p' sphinx/ext/autodoc/mock.py",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "grep -n \"def restify\\|def stringify\\|ismock\\|__display_name__\" sphinx/util/typing.py",
+   "exit": 0
+  },
+  {
+   "turn": 13,
+   "cmd": "sed -n '301,340p' sphinx/util/typing.py",
+   "exit": 0
+  },
+  {
+   "turn": 14,
+   "cmd": "python3 - <<'EOF'\nimport re\np='sphinx/util/typing.py'\ns=open(p).read()\n\n# remove stray debug print\ns=s.replace(\"                print(cls, type(cls), dir(cls))\\n\",\"\")\n\n# add ismock import + branch in restify\ns=s.replace(\n\"\"\"    from sphinx.util import inspect  # lazy loading\n\n    try:\n        if cls is None or cls is NoneType:\n            return ':py:obj:`None`'\n        elif cls is Ellipsis:\n            return '...'\n        elif isinstance(cls, str):\n            return cls\n\"\"\",\n\"\"\"    from sphinx.util import inspect  # lazy loading\n\n    try:\n        if cls is None or cls is NoneType:\n            return ':py:obj:`None`'\n        elif cls is Ellipsis:\n            return '...'\n        elif isinstance(cls, str):\n            return cls\n        elif ismockmodule(cls):\n            return ':py:class:`%s`' % cls.__name__\n        elif ismock(cls):\n            return ':py:class:`%s.%s`' % (cls.__module__, cls.__name__)\n\"\"\")\n\n# add ismock branch in stringify (after str handling, before TypeVar)\ns=s.replace(\n\"\"\"    from sphinx.util import inspect  # lazy loading\n\n    if isinstance(annotation, str):\n        if annotation.startswith(\"'\") and annotation.endswith(\"'\"):\n            # might be a double Forward-ref'ed type.  Go unquoting.\n            return annotation[1:-1]\n        else:\n            return annotation\n    elif isinstance(annotation, TypeVar):\"\"\",\n\"\"\"    from sphinx.util import inspect  # lazy loading\n\n    if isinstance(annotation, str):\n        if annotation.startswith(\"'\") and annotation.endswith(\"'\"):\n            # might be a double Forward-ref'ed type.  Go unquoting.\n            return annotation[1:-1]\n        else:\n            return annotation\n    elif ismockmodule(annotation):\n        return module_prefix + annotation.__name__\n    elif ismock(annotation):\n        return module_prefix + '%s.%s' % (annotation.__module__, annotation.__name__)\n    elif isinstance(annotation, TypeVar):\"\"\")\n\nopen(p,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 15,
+   "cmd": "grep -n \"module_prefix\\|from sphinx.util import inspect\" sphinx/util/typing.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 16,
+   "cmd": "grep -n \"module_prefix\" sphinx/util/typing.py; grep -n \"^import\\|^from\" sphinx/util/typing.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 17,
+   "cmd": "Wait, need to see _stringify_py37 for prefix convention.",
+   "exit": 127
+  },
+  {
+   "turn": 18,
+   "cmd": "sed -n '175,200p' sphinx/ext/autodoc/mock.py",
+   "exit": 0
+  },
+  {
+   "turn": 19,
+   "cmd": "python3 - <<'EOF'\np='sphinx/util/typing.py'\ns=open(p).read()\ns=s.replace(\n\"\"\"        elif ismock(cls):\n            return ':py:class:`%s.%s`' % (cls.__module__, cls.__name__)\"\"\",\n\"\"\"        elif ismock(cls):\n            modname = getattr(cls, '__module__', '')\n            if isinstance(cls, type):\n                qualname = getattr(cls, '__qualname__', cls.__name__)\n            else:\n                qualname = type(cls).__qualname__\n                modname = type(cls).__module__\n            return ':py:class:`%s.%s`' % (modname, qualname)\"\"\")\ns=s.replace(\n\"\"\"    elif ismock(annotation):\n        return '%s.%s' % (annotation.__module__, annotation.__name__)\"\"\",\n\"\"\"    elif ismock(annotation):\n        if isinstance(annotation, type):\n            return '%s.%s' % (annotation.__module__,\n                              getattr(annotation, '__qualname__', annotation.__name__))\n        else:\n            return '%s.%s' % (type(annotation).__module__, type(annotation).__qualname__)\"\"\")\nopen(p,'w').write(s)\nprint(\"ok\")\nEOF",
+   "exit": 0
+  }
+ ],
+ "prompt_tokens": 146035,
+ "completion_tokens": 7536,
+ "submitted": false,
+ "patch_bytes": 1701,
+ "wall_s": 134.8
+}

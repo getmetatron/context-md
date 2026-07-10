@@ -1,0 +1,57 @@
+{
+ "instance_id": "django__django-15278",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"UNIQUE\\|unique\\|add_field\\|_remake_table\\|effective_default\" django/db/backends/sqlite3/schema.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '325,335p' django/db/backends/sqlite3/schema.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf = \"django/db/backends/sqlite3/schema.py\"\ns = open(f).read()\nold = '''        if not field.null or self.effective_default(field) is not None:\n            self._remake_table(model, create_field=field)\n        else:\n            super().add_field(model, field)'''\nnew = '''        # Fields with default values cannot by handled by ALTER TABLE ADD\n        # COLUMN statement because DROP DEFAULT is not supported in\n        # ALTER TABLE.\n        if not field.null or self.effective_default(field) is not None or field.unique:\n            self._remake_table(model, create_field=field)\n        else:\n            super().add_field(model, field)'''\nassert old in s\ns = s.replace(old, new)\nopen(f, \"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '325,338p' django/db/backends/sqlite3/schema.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '325,336p' django/db/backends/sqlite3/schema.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nf = \"django/db/backends/sqlite3/schema.py\"\nlines = open(f).readlines()\n# find the duplicated comment lines around add_field\nfor i in range(len(lines)-5):\n    if lines[i].strip().startswith(\"# Fields with default\") and \\\n       lines[i+3].strip().startswith(\"# Fields with default\"):\n        del lines[i+3:i+6]\n        break\nopen(f, \"w\").writelines(lines)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -n '325,336p' django/db/backends/sqlite3/schema.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 21319,
+ "completion_tokens": 1492,
+ "context_truncated": false,
+ "context_words": 61,
+ "submitted": true,
+ "patch_bytes": 734,
+ "wall_s": 29.9
+}

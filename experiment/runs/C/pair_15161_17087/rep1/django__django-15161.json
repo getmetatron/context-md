@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-15161",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"deconstruct\\|@deconstructible\\|_path\\|django.db.models\" django/db/models/expressions.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"^class \\|@deconstructible\" django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"Func\\|Value\\|ExpressionWrapper\\|Case\\|When\\|Subquery\\|Exists\\|OrderBy\\|Window\\|RowRange\\|ValueRange\" django/db/models/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport re\nf='django/db/models/expressions.py'\ns=open(f).read()\n\n# map class name -> line def replacement\nmapping={\n 'Expression(BaseExpression, Combinable)':'django.db.models.Expression',\n 'Func(SQLiteNumericMixin, Expression)':'django.db.models.Func',\n 'Value(SQLiteNumericMixin, Expression)':'django.db.models.Value',\n 'ExpressionWrapper(SQLiteNumericMixin, Expression)':'django.db.models.ExpressionWrapper',\n 'When(Expression)':'django.db.models.When',\n 'Case(SQLiteNumericMixin, Expression)':'django.db.models.Case',\n 'Subquery(BaseExpression, Combinable)':'django.db.models.Subquery',\n 'Exists(Subquery)':'django.db.models.Exists',\n 'OrderBy(Expression)':'django.db.models.OrderBy',\n 'Window(SQLiteNumericMixin, Expression)':'django.db.models.Window',\n 'WindowFrame(Expression)':'django.db.models.WindowFrame',\n 'RowRange(WindowFrame)':'django.db.models.RowRange',\n 'ValueRange(WindowFrame)':'django.db.models.ValueRange',\n}\nfor cls,path in mapping.items():\n    old='\\nclass '+cls+':'\n    new=\"\\n@deconstructible(path='%s')\\nclass %s:\"%(path,cls)\n    assert s.count(old)==1, cls\n    s=s.replace(old,new)\n\n# remove the now-redundant bare @deconstructible before Expression\ns=s.replace(\"@deconstructible\\n@deconstructible(path='django.db.models.Expression')\\nclass Expression\",\n            \"@deconstructible(path='django.db.models.Expression')\\nclass Expression\")\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -n \"@deconstructible\\|^class \" django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 10853,
+ "completion_tokens": 1359,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 3732,
+ "lessons_raw": [
+  "The `@deconstructible` decorator (django.utils.deconstruct) accepts a `path=` kwarg to override the import path used in migrations/serialization, letting internal classes deconstruct to their public API location.",
+  "Public model expression classes live in django/db/models/expressions.py but are re-exported via django/db/models/__init__.py; their canonical public path is `django.db.models.<ClassName>`."
+ ],
+ "lessons_promoted": [
+  "The `@deconstructible` decorator (django.utils.deconstruct) accepts a `path=` kwarg to override the import path used in migrations/serialization, letting internal classes deconstruct to their public API location.",
+  "Public model expression classes live in django/db/models/expressions.py but are re-exported via django/db/models/__init__.py; their canonical public path is `django.db.models.<ClassName>`."
+ ],
+ "wall_s": 32.1
+}

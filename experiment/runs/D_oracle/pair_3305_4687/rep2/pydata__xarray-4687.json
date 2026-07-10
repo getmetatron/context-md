@@ -1,0 +1,57 @@
+{
+ "instance_id": "pydata__xarray-4687",
+ "condition": "D",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"xr.where\" xarray/",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"where\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat xarray/core/computation.py | sed -n '/def where(cond, x, y):/,/        res = res.where(~allna, fill_value)/p'",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '/def where(cond, x, y):/,/        dask=\"allowed\",/s/def where(cond, x, y):/def where(cond, x, y, *, keep_attrs=True):/' xarray/core/computation.py\nsed -i '/        dask=\"allowed\",/s/        dask=\"allowed\",/        dask=\"allowed\", keep_attrs=keep_attrs/' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i 's/def where(cond, x, y):/def where(cond, x, y, *, keep_attrs=True):/' xarray/core/computation.py\nsed -i 's/        dask=\"allowed\",/        dask=\"allowed\", keep_attrs=keep_attrs/' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"xarray/core/computation.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# 1. Update function signature\ncontent = content.replace(\"def where(cond, x, y):\", \"def where(cond, x, y, *, keep_attrs=True):\")\n\n# 2. Update apply_ufunc call\ncontent = content.replace(\"        dask=\\\"allowed\\\",\", \"        dask=\\\"allowed\\\", keep_attrs=keep_attrs\")\n\nwith open(file_path, 'w') as f:\n    f.write(content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 34036,
+ "completion_tokens": 1315,
+ "context_truncated": false,
+ "context_words": 94,
+ "submitted": true,
+ "patch_bytes": 870,
+ "wall_s": 39.2
+}

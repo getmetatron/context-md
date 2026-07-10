@@ -1,0 +1,77 @@
+{
+ "instance_id": "django__django-15252",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat django/db/migrations/recorder.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '80,120p' django/db/migrations/recorder.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf='django/db/migrations/recorder.py'\ns=open(f).read()\ns=s.replace(\n\"from django.apps.registry import Apps\\nfrom django.db import DatabaseError, models\",\n\"from django.apps.registry import Apps\\nfrom django.db import DatabaseError, models, router\")\n\ns=s.replace(\n'''    def has_table(self):\n        \"\"\"Return True if the django_migrations table exists.\"\"\"\n        with self.connection.cursor() as cursor:\n            tables = self.connection.introspection.table_names(cursor)\n        return self.Migration._meta.db_table in tables\n\n    def ensure_schema(self):\n        \"\"\"Ensure the table exists and has the correct schema.\"\"\"\n        # If the table's there, that's fine - we've never changed its schema\n        # in the codebase.\n        if self.has_table():\n            return''',\n'''    def has_table(self):\n        \"\"\"Return True if the django_migrations table exists.\"\"\"\n        with self.connection.cursor() as cursor:\n            tables = self.connection.introspection.table_names(cursor)\n        return self.Migration._meta.db_table in tables\n\n    def ensure_schema(self):\n        \"\"\"Ensure the table exists and has the correct schema.\"\"\"\n        # If the table's there, that's fine - we've never changed its schema\n        # in the codebase.\n        if self.has_table():\n            return\n        # If the router doesn't allow migrating the Migration model, don't\n        # create the table.\n        if not router.allow_migrate(self.connection.alias, self.Migration):\n            return''')\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -n \"def allow_migrate\" django/db/utils.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '286,300p' django/db/utils.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i.bak 's/router.allow_migrate(self.connection.alias, self.Migration)/router.allow_migrate_model(self.connection.alias, self.Migration)/' django/db/migrations/recorder.py && rm django/db/migrations/recorder.py.bak",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nf='django/db/migrations/recorder.py'\ns=open(f).read()\ns=s.replace(\n'''    def has_table(self):\n        \"\"\"Return True if the django_migrations table exists.\"\"\"\n        with self.connection.cursor() as cursor:\n            tables = self.connection.introspection.table_names(cursor)\n        return self.Migration._meta.db_table in tables\n\n    def ensure_schema(self):\n        \"\"\"Ensure the table exists and has the correct schema.\"\"\"\n        # If the table's there, that's fine - we've never changed its schema\n        # in the codebase.\n        if self.has_table():\n            return\n        # If the router doesn't allow migrating the Migration model, don't\n        # create the table.\n        if not router.allow_migrate_model(self.connection.alias, self.Migration):\n            return''',\n'''    def has_table(self):\n        \"\"\"Return True if the django_migrations table exists.\"\"\"\n        with self.connection.cursor() as cursor:\n            tables = self.connection.introspection.table_names(cursor)\n        return self.Migration._meta.db_table in tables\n\n    def ensure_schema(self):\n        \"\"\"Ensure the table exists and has the correct schema.\"\"\"\n        # If the table's there, that's fine - we've never changed its schema\n        # in the codebase.\n        if self.has_table():\n            return''')\nopen(f,'w').write(s)\nprint(\"ok\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -n '52,96p' django/db/migrations/recorder.py",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nf='django/db/migrations/recorder.py'\ns=open(f).read()\ns=s.replace(\n'''    def has_table(self):\n        \"\"\"Return True if the django_migrations table exists.\"\"\"\n        with self.connection.cursor() as cursor:\n            tables = self.connection.introspection.table_names(cursor)\n        return self.Migration._meta.db_table in tables\n\n    def ensure_schema(self):\n        pass  # placeholder replaced below\n        return self.Migration._meta.db_table in tables''',\n'''    def has_table(self):\n        \"\"\"Return True if the django_migrations table exists.\"\"\"\n        with self.connection.cursor() as cursor:\n            tables = self.connection.introspection.table_names(cursor)\n        return self.Migration._meta.db_table in tables''')\n# guard record methods and ensure_schema\ns=s.replace(\n'''    def ensure_schema(self):\n        \"\"\"Ensure the table exists and has the correct schema.\"\"\"\n        # If the table's there, that's fine - we've never changed its schema\n        # in the codebase.\n        if self.has_table():\n            return''',\n'''    def ensure_schema(self):\n        \"\"\"Ensure the table exists and has the correct schema.\"\"\"\n        # If the table's there, that's fine - we've never changed its schema\n        # in the codebase.\n        if self.has_table():\n            return\n        # If the router disallows migrating this connection, don't create the\n        # table.\n        if not router.allow_migrate_model(self.connection.alias, self.Migration):\n            return''')\ns=s.replace(\n'''    def record_applied(self, app, name):\n        \"\"\"Record that a migration was applied.\"\"\"\n        self.ensure_schema()\n        self.migration_qs.create(app=app, name=name)\n\n    def record_unapplied(self, app, name):\n        \"\"\"Record that a migration was unapplied.\"\"\"\n        self.ensure_schema()\n        self.migration_qs.filter(app=app, name=name).delete()''',\n'''    def record_applied(self, app, name):\n        \"\"\"Record that a migration was applied.\"\"\"\n        self.ensure_schema()\n        if not router.allow_migrate_model(self.connection.alias, self.Migration):\n            return\n        self.migration_qs.create(app=app, name=name)\n\n    def record_unapplied(self, app, name):\n        \"\"\"Record that a migration was unapplied.\"\"\"\n        self.ensure_schema()\n        if not router.allow_migrate_model(self.connection.alias, self.Migration):\n            return\n        self.migration_qs.filter(app=app, name=name).delete()''')\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "The fix looks good. Let me verify the import line is correct.",
+   "exit": 127
+  },
+  {
+   "turn": 10,
+   "cmd": "head -6 django/db/migrations/recorder.py",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 47086,
+ "completion_tokens": 3661,
+ "context_truncated": false,
+ "context_words": 65,
+ "submitted": true,
+ "patch_bytes": 1509,
+ "wall_s": 55.1
+}
