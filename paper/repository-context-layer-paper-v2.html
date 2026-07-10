@@ -163,7 +163,7 @@
 
 <div class="columns">
 
-<p class="abstract"><span class="lead">Abstract.</span> AI coding agents now perform multi-step engineering work, yet every session begins without the operating knowledge that shapes a codebase: the decisions taken, the alternatives rejected, the constraints discovered during execution. Existing mechanisms (documentation, architecture decision records, retrieval-augmented generation, IDE memories, agent instruction files) each address a fragment of the problem; none provides a store that is versioned with the code, consulted by contract, and writable by agents under human review. This paper formalizes the <em>Repository Context Layer</em> (RCL), an architecture pattern in which a repository carries its own agent-facing context through a defined consult&ndash;execute&ndash;update&ndash;commit lifecycle. We separate the pattern into four independent layers: the architecture, a deterministic discovery specification, a minimal file format (<code>context.md</code>), and implementations. We give branch, merge, and rollback semantics inherited from Git, analyze the contested design choices (single file versus many, append-only semantics, conflict handling, hierarchy, and the limits of agent self-modification), and report on Metatron, a reference implementation. We then evaluate the pattern in a pre-registered experiment on SWE-bench Verified: a frontier agent running the consult&ndash;execute&ndash;learn&ndash;promote lifecycle resolves held-out tasks sharing a constraint 14.6 percentage points more often than the same agent without it (72.9% vs 58.3%, paired p&nbsp;=&nbsp;0.041), and the benefit a context layer confers on a small local model is monotonic in the capability of whoever authored the context &mdash; a frontier-authored file helps (+16.7&nbsp;pp localization), the small model's own lessons do not. Repository context should be treated as a first-class, versioned artifact of software projects, alongside code, tests, and documentation.</p>
+<p class="abstract"><span class="lead">Abstract.</span> AI coding agents repeatedly rediscover project constraints, because repositories version code but not operating knowledge: the decisions taken, the alternatives rejected, the constraints found during execution. We introduce the <em>Repository Context Layer</em> (RCL), an architecture pattern in which a repository carries its own agent-facing context &mdash; versioned with the code, deterministically discoverable, consulted by contract, and writable by agents only under human review. The pattern separates into four independently adoptable layers (the architecture, a discovery specification, a minimal file format <code>context.md</code>, and implementations), with branch, merge, and rollback semantics inherited from Git. We evaluate the pattern in a pre-registered experiment on SWE-bench Verified. A frontier agent running the consult&ndash;execute&ndash;learn&ndash;promote lifecycle resolves held-out tasks sharing a constraint 14.6 percentage points more often than the same agent without it (72.9% vs 58.3%, paired p&nbsp;=&nbsp;0.041); the benefit the layer confers on a small local model is monotonic in the capability of the context's author &mdash; frontier-written context helps, the model's own lessons do not. Repository context should be treated as a first-class, versioned artifact of software projects, alongside code, tests, and documentation.</p>
 
 <p class="terms"><span class="lead">Index Terms.</span> repository context layer, agentic software development, context.md, architecture decision records, agent memory, human-in-the-loop review, self-improving repositories.</p>
 
@@ -209,44 +209,46 @@
 <p class="defn">A Repository Context Layer is a version-controlled, human-readable context store that lives alongside the codebase and serves as the authoritative operating context for AI agents working in it.</p>
 <p>The distinction from adjacent artifacts is one of question. Code captures <em>what</em> a system does; documentation explains <em>how</em> to use it; the Repository Context Layer records <em>why</em> future changes should or should not be made &mdash; the intent behind the design and the constraints that must survive it.</p>
 <figure class="arch">
-<svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif">
+<svg viewBox="0 0 720 232" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif">
   <defs>
-    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0 0L10 5L0 10z" fill="#222"/>
+    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#444"/>
     </marker>
   </defs>
-  <!-- Stage 1: existing repository -->
-  <rect x="6" y="58" width="168" height="150" rx="6" fill="#f6f6f6" stroke="#333"/>
-  <text x="90" y="80" text-anchor="middle" font-size="12" font-weight="700">Existing repository</text>
-  <text x="90" y="106" text-anchor="middle" font-size="11" fill="#333">README</text>
-  <text x="90" y="128" text-anchor="middle" font-size="11" fill="#333">docs/</text>
-  <text x="90" y="150" text-anchor="middle" font-size="11" fill="#333">ADR/</text>
-  <text x="90" y="172" text-anchor="middle" font-size="11" fill="#333">src/</text>
-  <!-- add arrow -->
-  <line x1="176" y1="133" x2="212" y2="133" stroke="#222" stroke-width="1.4" marker-end="url(#ah)"/>
-  <text x="194" y="124" text-anchor="middle" font-size="14" font-weight="700">+</text>
-  <!-- Stage 2: Repository Context Layer (highlighted) -->
-  <text x="320" y="34" text-anchor="middle" font-size="9.5" font-style="italic" fill="#555">the missing layer</text>
-  <rect x="216" y="42" width="208" height="178" rx="6" fill="#fff" stroke="#111" stroke-width="2"/>
-  <text x="320" y="62" text-anchor="middle" font-size="12" font-weight="700">Repository Context Layer</text>
-  <text x="320" y="78" text-anchor="middle" font-size="10" fill="#555" font-family="monospace">context.md</text>
-  <line x1="232" y1="90" x2="408" y2="90" stroke="#ddd"/>
-  <text x="320" y="118" text-anchor="middle" font-size="11.5">Intent</text>
-  <text x="320" y="150" text-anchor="middle" font-size="11.5">Constraints</text>
-  <text x="320" y="182" text-anchor="middle" font-size="11.5">Evolved Context</text>
-  <!-- arrows to agent -->
-  <line x1="426" y1="92" x2="484" y2="92" stroke="#222" stroke-width="1.4" marker-end="url(#ah)"/>
-  <text x="455" y="84" text-anchor="middle" font-size="9.5" fill="#333">consult</text>
-  <line x1="484" y1="170" x2="426" y2="170" stroke="#222" stroke-width="1.4" marker-end="url(#ah)"/>
-  <text x="452" y="185" text-anchor="middle" font-size="9.5" fill="#333">update</text>
-  <!-- Stage 3: AI agent -->
-  <rect x="486" y="58" width="228" height="150" rx="6" fill="#f6f6f6" stroke="#333"/>
-  <text x="600" y="80" text-anchor="middle" font-size="12" font-weight="700">AI agent</text>
-  <text x="600" y="104" text-anchor="middle" font-size="11" fill="#333">consult</text>
-  <text x="600" y="124" text-anchor="middle" font-size="11" fill="#333">plan</text>
-  <text x="600" y="144" text-anchor="middle" font-size="11" fill="#333">execute</text>
-  <text x="600" y="164" text-anchor="middle" font-size="11" fill="#333">update</text>
-  <text x="600" y="184" text-anchor="middle" font-size="11" fill="#333">commit</text>
+  <!-- Repository -->
+  <rect x="20" y="56" width="150" height="130" rx="3" fill="none" stroke="#444" stroke-width="1"/>
+  <text x="95" y="44" text-anchor="middle" font-size="11" font-weight="700" fill="#111">Repository</text>
+  <text x="95" y="86" text-anchor="middle" font-size="10.5" fill="#444" font-family="monospace">src/</text>
+  <text x="95" y="110" text-anchor="middle" font-size="10.5" fill="#444" font-family="monospace">docs/  ADR/</text>
+  <!-- context.md inside the repo, emphasized -->
+  <rect x="38" y="128" width="114" height="40" rx="3" fill="#f2f2f2" stroke="#111" stroke-width="1.6"/>
+  <text x="95" y="145" text-anchor="middle" font-size="10.5" font-weight="700" font-family="monospace" fill="#111">context.md</text>
+  <text x="95" y="160" text-anchor="middle" font-size="8.5" fill="#555">intent &#183; constraints &#183; ledger</text>
+
+  <!-- consult arrow (layer -> agent) -->
+  <line x1="176" y1="92" x2="292" y2="92" stroke="#444" stroke-width="1.1" marker-end="url(#ah)"/>
+  <text x="234" y="82" text-anchor="middle" font-size="9.5" fill="#333" font-style="italic">consult</text>
+
+  <!-- Agent -->
+  <rect x="296" y="56" width="150" height="130" rx="3" fill="none" stroke="#444" stroke-width="1"/>
+  <text x="371" y="44" text-anchor="middle" font-size="11" font-weight="700" fill="#111">Agent session</text>
+  <text x="371" y="94" text-anchor="middle" font-size="10.5" fill="#444">plan</text>
+  <text x="371" y="118" text-anchor="middle" font-size="10.5" fill="#444">execute</text>
+  <text x="371" y="142" text-anchor="middle" font-size="10.5" fill="#444">observe</text>
+  <text x="371" y="166" text-anchor="middle" font-size="10.5" fill="#444">propose lessons</text>
+
+  <!-- propose arrow (agent -> review) -->
+  <line x1="452" y1="121" x2="536" y2="121" stroke="#444" stroke-width="1.1" stroke-dasharray="4 3" marker-end="url(#ah)"/>
+  <text x="494" y="111" text-anchor="middle" font-size="9.5" fill="#333" font-style="italic">propose</text>
+
+  <!-- Review gate -->
+  <rect x="540" y="91" width="140" height="60" rx="3" fill="none" stroke="#111" stroke-width="1.6"/>
+  <text x="610" y="115" text-anchor="middle" font-size="11" font-weight="700" fill="#111">Human review</text>
+  <text x="610" y="132" text-anchor="middle" font-size="9" fill="#555">same gate as code (P5)</text>
+
+  <!-- commit arrow (review -> repo), routed underneath -->
+  <path d="M 610 155 L 610 208 L 95 208 L 95 192" fill="none" stroke="#444" stroke-width="1.1" marker-end="url(#ah)"/>
+  <text x="352" y="200" text-anchor="middle" font-size="9.5" fill="#333" font-style="italic">context diff commits with the code change</text>
 </svg>
 <figcaption>Figure 1. The Repository Context Layer is added alongside a repository&rsquo;s existing artifacts. An agent consults it before planning and proposes updates after executing; every update travels through the same review as the code that motivated it.</figcaption>
 </figure>
@@ -389,7 +391,7 @@ Optimize for offline use over feature breadth.
 
 <h2>13. Conclusion</h2>
 <p>Software repositories already version their code, their tests, their documentation, and their infrastructure. This paper has argued &mdash; and now measured &mdash; that they should also version their operating context: a small, human-readable, review-gated store that agents consult before planning and improve after executing. The architecture asks for no new infrastructure, reuses the trust machinery of Git and code review, and degrades gracefully to a single Markdown file maintained by hand. Its contested choices (one file, an append-only ledger, human-routed conflicts, deferred hierarchy, propose-but-not-enact agents) all follow from one principle: the layer must remain small enough to read, legible enough to review, and trustworthy enough to obey. The pre-registered evaluation of Section 11 gives the pattern its first controlled evidence: the lifecycle converts an agent's failure experience into transferable operating knowledge, and the layer's value scales with the capability of its authors. Whether the pattern earns the status of a standard repository primitive remains, ultimately, a question of adoption.</p>
-<p>Source code became a versioned artifact because code is organizational knowledge. The operating context around that code &mdash; the intent it serves, the constraints it must honor, the lessons its history taught &mdash; is organizational knowledge too, and deserves the same treatment.</p>
+<p>Source code became a versioned artifact because code is shared organizational knowledge. The operating context around that code &mdash; the intent it serves, the constraints it must honor, the lessons its history taught &mdash; is shared knowledge too. Software engineering standardized version control for code; AI-native software engineering will require versioning shared operating knowledge as well.</p>
 
 <h2>References</h2>
 <div class="refs">
