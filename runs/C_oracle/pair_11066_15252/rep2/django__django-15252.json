@@ -1,0 +1,67 @@
+{
+ "instance_id": "django__django-15252",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat django/db/migrations/recorder.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '80,120p' django/db/migrations/recorder.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf='django/db/migrations/recorder.py'\ns=open(f).read()\ns=s.replace(\n\"from django.db import DatabaseError, models\",\n\"from django.db import DatabaseError, models, router\")\ns=s.replace(\n'''    def has_table(self):\n        \"\"\"Return True if the django_migrations table exists.\"\"\"\n        with self.connection.cursor() as cursor:\n            tables = self.connection.introspection.table_names(cursor)\n        return self.Migration._meta.db_table in tables\n\n    def ensure_schema(self):\n        \"\"\"Ensure the table exists and has the correct schema.\"\"\"\n        # If the table's there, that's fine - we've never changed its schema\n        # in the codebase.\n        if self.has_table():\n            return''',\n'''    def has_table(self):\n        \"\"\"Return True if the django_migrations table exists.\"\"\"\n        with self.connection.cursor() as cursor:\n            tables = self.connection.introspection.table_names(cursor)\n        return self.Migration._meta.db_table in tables\n\n    def ensure_schema(self):\n        \"\"\"Ensure the table exists and has the correct schema.\"\"\"\n        # If the table's there, that's fine - we've never changed its schema\n        # in the codebase.\n        if self.has_table():\n            return\n        # If migrations aren't allowed on this database, don't create the table.\n        if not router.allow_migrate(\n            self.connection.alias, self.Migration._meta.app_label, model_name=self.Migration._meta.model_name\n        ):\n            return''')\nassert \"router.allow_migrate\" in s\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf='django/db/migrations/recorder.py'\ns=open(f).read()\n\ns=s.replace(\n'''    def ensure_schema(self):\n        \"\"\"Ensure the table exists and has the correct schema.\"\"\"\n        # If the table's there, that's fine - we've never changed its schema\n        # in the codebase.\n        if self.has_table():\n            return''',\n'''    def ensure_schema(self):\n        \"\"\"Ensure the table exists and has the correct schema.\"\"\"\n        # If the table's there, that's fine - we've never changed its schema\n        # in the codebase.\n        if self.has_table():\n            return\n        # If migrations aren't allowed on this database, don't create the table.\n        if not self._migration_allowed():\n            return''')\n\ns=s.replace(\n'''        for all applied migrations.\n        \"\"\"\n        if self.has_table():''',\n'''        for all applied migrations.\n        \"\"\"\n        if not self._migration_allowed():\n            return {}\n        if self.has_table():''')\n\ns=s.replace(\n'''    def record_applied(self, app, name):\n        \"\"\"Record that a migration was applied.\"\"\"\n        self.ensure_schema()''',\n'''    def record_applied(self, app, name):\n        \"\"\"Record that a migration was applied.\"\"\"\n        if not self._migration_allowed():\n            return\n        self.ensure_schema()''')\n\ns=s.replace(\n'''    def record_unapplied(self, app, name):\n        \"\"\"Record that a migration was unapplied.\"\"\"\n        self.ensure_schema()''',\n'''    def record_unapplied(self, app, name):\n        \"\"\"Record that a migration was unapplied.\"\"\"\n        if not self._migration_allowed():\n            return\n        self.ensure_schema()''')\n\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '55,110p' django/db/migrations/recorder.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -n \"router\\|_migration_allowed\\|import\" django/db/migrations/recorder.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -n '59,78p' django/db/migrations/recorder.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '67,73d' django/db/migrations/recorder.py && sed -n '59,76p' django/db/migrations/recorder.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nf='django/db/migrations/recorder.py'\nlines=open(f).read().splitlines(keepends=True)\n# find the duplicate comment lines\nout=[]\ni=0\nwhile i < len(lines):\n    if lines[i].strip()==\"# If migrations aren't allowed on this database, don't create the table.\" and i+1<len(lines) and \"self._migration_allowed\" in lines[i+1]:\n        out.append(lines[i]); out.append(lines[i+1])\n        i+=2\n        # now skip subsequent duplicate router block if present\n        if i<len(lines) and lines[i].strip()==\"return\":\n            out.append(lines[i]); i+=1\n        # skip duplicate comment + router.allow_migrate block\n        if i<len(lines) and lines[i].strip()==\"# If migrations aren't allowed on this database, don't create the table.\":\n            # skip until the closing \"return\" of that block\n            while i<len(lines) and lines[i].strip()!=\"return\":\n                i+=1\n            if i<len(lines):\n                i+=1  # skip the return\n        continue\n    out.append(lines[i]); i+=1\nopen(f,'w').write(\"\".join(out))\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 42762,
+ "completion_tokens": 3395,
+ "context_truncated": false,
+ "context_words": 83,
+ "submitted": true,
+ "patch_bytes": 1738,
+ "wall_s": 47.8
+}

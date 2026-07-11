@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-15278",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"UNIQUE\\|add_field\\|_remake_table\\|effective_default\\|unique\" django/db/backends/sqlite3/schema.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "def add_field(self, model, field):\n        \"\"\"Create a field on a model.\"\"\"\n        # Fields with default values cannot by handled by ALTER TABLE ADD\n        # COLUMN statement because DROP DEFAULT is not supported in\n        # ALTER TABLE.\n        if not field.null or self.effective_default(field) is not None:\n            self._remake_table(model, create_field=field)\n        else:\n            super().add_field(model, field)",
+   "exit": 2
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nimport re\np=\"django/db/backends/sqlite3/schema.py\"\ns=open(p).read()\nold='''        # Fields with default values cannot by handled by ALTER TABLE ADD\n        # COLUMN statement because DROP DEFAULT is not supported in\n        # ALTER TABLE.\n        if not field.null or self.effective_default(field) is not None:\n            self._remake_table(model, create_field=field)\n        else:\n            super().add_field(model, field)'''\nnew='''        # Special-case implicit M2M tables.\n        # Fields with default values cannot by handled by ALTER TABLE ADD\n        # COLUMN statement because DROP DEFAULT is not supported in\n        # ALTER TABLE.\n        if (\n            not field.null or\n            self.effective_default(field) is not None or\n            # A unique column cannot be added via ALTER TABLE ADD COLUMN.\n            field.unique\n        ):\n            self._remake_table(model, create_field=field)\n        else:\n            super().add_field(model, field)'''\nassert old in s\ns=s.replace(old,new)\nopen(p,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '/# Special-case implicit M2M tables\\./d' django/db/backends/sqlite3/schema.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "def add_field(self, model, field):\n        \"\"\"Create a field on a model.\"\"\"\n        # Fields with default values cannot by handled by ALTER TABLE ADD\n        # COLUMN statement because DROP DEFAULT is not supported in\n        # ALTER TABLE.\n        if (\n            not field.null or\n            self.effective_default(field) is not None or\n            # A unique column cannot be added via ALTER TABLE ADD COLUMN.\n            field.unique\n        ):\n            self._remake_table(model, create_field=field)\n        else:\n            super().add_field(model, field)",
+   "exit": 2
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 12268,
+ "completion_tokens": 1362,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 992,
+ "lessons_raw": [
+  "SQLite's `add_field` in django/db/backends/sqlite3/schema.py must fall back to `_remake_table` for fields that ALTER TABLE ADD COLUMN can't handle: primary keys, unique fields, non-null fields, and fields with defaults (SQLite lacks DROP DEFAULT).",
+  "When editing Python source via shell, use a heredoc-driven Python script with exact string `assert ... in` matching; avoid `sed` for multiline edits and never paste raw Python into a bash prompt."
+ ],
+ "lessons_promoted": [
+  "SQLite's `add_field` in django/db/backends/sqlite3/schema.py must fall back to `_remake_table` for fields that ALTER TABLE ADD COLUMN can't handle: primary keys, unique fields, non-null fields, and fields with defaults (SQLite lacks DROP DEFAULT).",
+  "When editing Python source via shell, use a heredoc-driven Python script with exact string `assert ... in` matching; avoid `sed` for multiline edits and never paste raw Python into a bash prompt."
+ ],
+ "wall_s": 29.1
+}

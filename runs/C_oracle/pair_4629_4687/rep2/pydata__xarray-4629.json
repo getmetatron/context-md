@@ -1,0 +1,65 @@
+{
+ "instance_id": "pydata__xarray-4629",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n 'variable_attrs\\[0\\]' xarray/core/merge.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -i '504s/return variable_attrs\\[0\\]/return dict(variable_attrs[0])/' xarray/core/merge.py && sed -n '502,506p' xarray/core/merge.py",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "rm -f xarray/core/merge.py.bak && submit",
+   "exit": 127
+  },
+  {
+   "turn": 3,
+   "cmd": "submit"
+  },
+  {
+   "turn": 4,
+   "cmd": "git diff xarray/core/merge.py; sed -n '502,506p' xarray/core/merge.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '504s/.*/        return dict(variable_attrs[0])/' xarray/core/merge.py && git diff xarray/core/merge.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\np='xarray/core/merge.py'\ns=open(p).read()\ns=s.replace('    elif combine_attrs == \"override\":\\n        return variable_attrs[0]\\n',\n            '    elif combine_attrs == \"override\":\\n        return dict(variable_attrs[0])\\n',1)\nopen(p,'w').write(s)\nEOF\ngit diff xarray/core/merge.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 16785,
+ "completion_tokens": 594,
+ "context_truncated": false,
+ "context_words": 15,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 503,
+ "lessons_raw": [
+  "In `xarray/core/merge.py`, attribute merging lives in `merge_attrs(variable_attrs, combine_attrs)`; when returning a source dict (e.g. `combine_attrs=\"override\"`), wrap it with `dict(...)` to avoid returning a shared reference that later mutations would corrupt.",
+  "When sed's `-i` behaves oddly (treating the filename as a command argument on BSD/macOS sed), fall back to an inline Python script using `str.replace` for reliable in-place edits."
+ ],
+ "lessons_promoted": [
+  "In `xarray/core/merge.py`, attribute merging lives in `merge_attrs(variable_attrs, combine_attrs)`; when returning a source dict (e.g. `combine_attrs=\"override\"`), wrap it with `dict(...)` to avoid returning a shared reference that later mutations would corrupt.",
+  "When sed's `-i` behaves oddly (treating the filename as a command argument on BSD/macOS sed), fall back to an inline Python script using `str.replace` for reliable in-place edits."
+ ],
+ "wall_s": 24.2
+}

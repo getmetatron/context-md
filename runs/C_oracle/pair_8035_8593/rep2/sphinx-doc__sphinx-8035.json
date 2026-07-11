@@ -1,0 +1,52 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8035",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"private_members\\|private-members\\|members_option\\|members_set_option\" sphinx/ext/autodoc/__init__.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '70,95p;620,675p' sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf = \"sphinx/ext/autodoc/__init__.py\"\ns = open(f).read()\n\n# 1. Change option spec (two occurrences)\ns = s.replace(\"'private-members': bool_option, 'special-members': members_option,\",\n              \"'private-members': members_option, 'special-members': members_option,\")\n\n# 2. attr_docs branch\nold1 = \"\"\"                if want_all and isprivate:\n                    # ignore members whose name starts with _ by default\n                    keep = self.options.private_members\n                else:\"\"\"\nnew1 = \"\"\"                if want_all and isprivate:\n                    # ignore members whose name starts with _ by default\n                    if self.options.private_members is ALL:\n                        keep = True\n                    else:\n                        keep = membername in self.options.private_members\n                else:\"\"\"\nassert old1 in s\ns = s.replace(old1, new1)\n\n# 3. general private branch\nold2 = \"\"\"            elif want_all and isprivate:\n                # ignore members whose name starts with _ by default\n                keep = self.options.private_members and \\\\\n                    (has_doc or self.options.undoc_members)\"\"\"\nnew2 = \"\"\"            elif want_all and isprivate:\n                # ignore members whose name starts with _ by default\n                if has_doc or self.options.undoc_members:\n                    if self.options.private_members is None:\n                        keep = False\n                    elif self.options.private_members is ALL:\n                        keep = True\n                    else:\n                        keep = membername in self.options.private_members\n                else:\n                    keep = False\"\"\"\nassert old2 in s\ns = s.replace(old2, new2)\n\nopen(f, \"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '640,672p' sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 11372,
+ "completion_tokens": 878,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 2665,
+ "lessons_raw": [
+  "In sphinx/ext/autodoc, directive options are converted via option-spec functions like members_option/members_set_option/bool_option; changing an option from boolean to list-valued means switching its spec to members_option, which returns the sentinel ALL (no arg) or a list of names.",
+  "autodoc uses module-level sentinels (ALL, UNINITIALIZED_ATTR, etc.) as option values; distinguish None (unset), ALL (all), and an explicit name list with identity checks (`is ALL`, `is None`), not truthiness.",
+  "When one option's values should also be documented as members, merge them into the `members` option (see merge_members_option) rather than filtering separately; deprecate superseded helpers with RemovedInSphinxXXWarning instead of deleting them."
+ ],
+ "lessons_promoted": [
+  "In sphinx/ext/autodoc, directive options are converted via option-spec functions like members_option/members_set_option/bool_option; changing an option from boolean to list-valued means switching its spec to members_option, which returns the sentinel ALL (no arg) or a list of names.",
+  "autodoc uses module-level sentinels (ALL, UNINITIALIZED_ATTR, etc.) as option values; distinguish None (unset), ALL (all), and an explicit name list with identity checks (`is ALL`, `is None`), not truthiness.",
+  "When one option's values should also be documented as members, merge them into the `members` option (see merge_members_option) rather than filtering separately; deprecate superseded helpers with RemovedInSphinxXXWarning instead of deleting them."
+ ],
+ "wall_s": 26.4
+}

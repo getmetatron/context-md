@@ -1,0 +1,70 @@
+{
+ "instance_id": "sphinx-doc__sphinx-7889",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"_make_subclass\" sphinx/ext/autodoc/mock.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '71,80p' sphinx/ext/autodoc/mock.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '25,60p' sphinx/ext/autodoc/mock.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf='sphinx/ext/autodoc/mock.py'\ns=open(f).read()\nold=\"    attrs = {'__module__': module, '__display_name__': module + '.' + name}\"\nnew=\"    attrs = {'__module__': module, '__display_name__': module + '.' + name}\"\n# Instead, coerce name to str at start\nold_sig=\"                   attributes: Any = None) -> Any:\\n    attrs\"\nnew_sig=\"                   attributes: Any = None) -> Any:\\n    attrs\"\ns=s.replace(\n\"    attrs = {'__module__': module, '__display_name__': module + '.' + name}\\n    attrs.update(attributes or {})\\n\\n    return type(name, (superclass,), attrs)\",\n\"    attrs = {'__module__': module, '__display_name__': module + '.' + name}\\n    attrs.update(attributes or {})\\n\\n    return type(name, (superclass,), attrs)\"\n)\nopen(f,'w').write(s)\nprint(\"noop\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '54,60p' sphinx/ext/autodoc/mock.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '56s/_make_subclass(key,/_make_subclass(str(key),/' sphinx/ext/autodoc/mock.py && sed -n '55,56p' sphinx/ext/autodoc/mock.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nf='sphinx/ext/autodoc/mock.py'\nlines=open(f).read().split('\\n')\nfor i,l in enumerate(lines):\n    if 'return _make_subclass(key, self.__display_name__, self.__class__)()' in l and '__getitem__' in lines[i-1]:\n        lines[i]=l.replace('_make_subclass(key,','_make_subclass(str(key),')\nopen(f,'w').write('\\n'.join(lines))\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -n '55,60p' sphinx/ext/autodoc/mock.py",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 22713,
+ "completion_tokens": 1818,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 590,
+ "lessons_raw": [
+  "In sphinx/ext/autodoc/mock.py, `_make_subclass(name, ...)` passes `name` to `type()`, which requires a `str`; callers whose key may be non-string (e.g. `__getitem__` with subscript arguments) must coerce with `str()`.",
+  "When a dunder like `__getitem__` can receive non-string keys (subscripts such as ints or tuples), annotate the parameter as `Any` rather than `str` to reflect actual runtime inputs."
+ ],
+ "lessons_promoted": [
+  "In sphinx/ext/autodoc/mock.py, `_make_subclass(name, ...)` passes `name` to `type()`, which requires a `str`; callers whose key may be non-string (e.g. `__getitem__` with subscript arguments) must coerce with `str()`.",
+  "When a dunder like `__getitem__` can receive non-string keys (subscripts such as ints or tuples), annotate the parameter as `Any` rather than `str` to reflect actual runtime inputs."
+ ],
+ "wall_s": 35.2
+}

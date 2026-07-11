@@ -1,0 +1,55 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8459",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"autodoc_type_aliases\\|get_type_hints\" sphinx/ext/autodoc/typehints.py sphinx/ext/autodoc/__init__.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat sphinx/ext/autodoc/typehints.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf = \"sphinx/ext/autodoc/typehints.py\"\ns = open(f).read()\ns = s.replace(\n    \"            sig = inspect.signature(obj)\\n\"\n    \"            for param in sig.parameters.values():\\n\"\n    \"                if param.annotation is not param.empty:\\n\"\n    \"                    annotation[param.name] = typing.stringify(param.annotation)\\n\"\n    \"            if sig.return_annotation is not sig.empty:\\n\"\n    \"                annotation['return'] = typing.stringify(sig.return_annotation)\",\n    \"            sig = inspect.signature(obj, type_aliases=app.config.autodoc_type_aliases)\\n\"\n    \"            for param in sig.parameters.values():\\n\"\n    \"                if param.annotation is not param.empty:\\n\"\n    \"                    annotation[param.name] = typing.stringify(param.annotation)\\n\"\n    \"            if sig.return_annotation is not sig.empty:\\n\"\n    \"                annotation['return'] = typing.stringify(sig.return_annotation)\"\n)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -n \"def signature\" sphinx/util/inspect.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '471,475p' sphinx/util/inspect.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 15226,
+ "completion_tokens": 666,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 767,
+ "lessons_raw": [
+  "`sphinx.util.inspect.signature` accepts a `type_aliases` dict; pass `app.config.autodoc_type_aliases` so annotation-extraction paths honor configured aliases consistently.",
+  "In autodoc, callable signature extraction happens in multiple places (`sphinx/ext/autodoc/__init__.py` and `sphinx/ext/autodoc/typehints.py`); config options like `autodoc_type_aliases` must be threaded into all of them for consistent behavior."
+ ],
+ "lessons_promoted": [
+  "`sphinx.util.inspect.signature` accepts a `type_aliases` dict; pass `app.config.autodoc_type_aliases` so annotation-extraction paths honor configured aliases consistently.",
+  "In autodoc, callable signature extraction happens in multiple places (`sphinx/ext/autodoc/__init__.py` and `sphinx/ext/autodoc/typehints.py`); config options like `autodoc_type_aliases` must be threaded into all of them for consistent behavior."
+ ],
+ "wall_s": 22.5
+}

@@ -1,0 +1,77 @@
+{
+ "instance_id": "django__django-14580",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"models.Model\\|import_path\\|class TypeSerializer\\|def serialize\" django/db/migrations/serializer.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/serializer.py\"\ns=open(f).read()\nold='''        special_cases = [\n            (models.Model, \"models.Model\", []),\n            (type(None), 'type(None)', []),\n        ]\n        for case, string, imports in special_cases:\n            if case is self.value:\n                return string, set(imports)\n        for case, string, imports in special_cases:\n            if case is self.value:\n                return string, set(imports)\n        return string, set(imports)'''\nnew='''        special_cases = [\n            (models.Model, \"models.Model\", ['from django.db import models']),\n            (type(None), 'type(None)', []),\n        ]\n        for case, string, imports in special_cases:\n            if case is self.value:\n                return string, set(imports)\n        if hasattr(self.value, \"__module__\"):\n            module = self.value.__module__\n            if module == builtins.__name__:\n                return self.value.__name__, set()\n            else:\n                return \"%s.%s\" % (module, self.value.__qualname__), {\"import %s\" % module}'''\nassert old in s\ns=s.replace(old,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '273,330p' django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 -c \"\nfrom django.db.migrations.serializer import serializer_factory\nfrom django.db import models\ns = serializer_factory(models.Model)\nprint(s.serialize())\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  },
+  {
+   "turn": 5,
+   "cmd": "git diff && echo \"---\" && sed -n '277,278p' django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "grep -n \"models.Model\\\", \" django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i 's|(models.Model, \"models.Model\", \\[\\]),|(models.Model, \"models.Model\", [\"from django.db import models\"]),|' django/db/migrations/serializer.py && git diff",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/serializer.py\"\ns=open(f).read()\nold='(models.Model, \"models.Model\", []),'\nnew='(models.Model, \"models.Model\", [\"from django.db import models\"]),'\nassert old in s\ns=s.replace(old,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF\ngit diff",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 37607,
+ "completion_tokens": 1626,
+ "context_truncated": false,
+ "context_words": 15,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 599,
+ "lessons_raw": [
+  "In django/db/migrations/serializer.py, each serializer's serialize() returns a (string, imports_set) tuple; any dotted name emitted in the string (e.g. \"models.Model\") must include a matching import in the imports set, or generated migrations will fail.",
+  "When a serializer special-cases a value to a shorthand name, verify the shorthand's namespace is imported; missing import statements in the returned set are a recurring pitfall.",
+  "Prefer applying source edits via a Python script that asserts the exact old substring exists before replacing; sed with paths/quotes is error-prone for multi-line or special-character edits."
+ ],
+ "lessons_promoted": [
+  "In django/db/migrations/serializer.py, each serializer's serialize() returns a (string, imports_set) tuple; any dotted name emitted in the string (e.g. \"models.Model\") must include a matching import in the imports set, or generated migrations will fail.",
+  "When a serializer special-cases a value to a shorthand name, verify the shorthand's namespace is imported; missing import statements in the returned set are a recurring pitfall.",
+  "Prefer applying source edits via a Python script that asserts the exact old substring exists before replacing; sed with paths/quotes is error-prone for multi-line or special-character edits."
+ ],
+ "wall_s": 45.9
+}

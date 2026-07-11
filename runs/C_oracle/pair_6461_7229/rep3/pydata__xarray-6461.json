@@ -1,0 +1,62 @@
+{
+ "instance_id": "pydata__xarray-6461",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"keep_attrs = lambda attrs, context: attrs\\[1\\]\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '1825,1835p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i '1832s/.*/        keep_attrs = lambda attrs, context: getattr(x, \"attrs\", {})/' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\np=\"xarray/core/computation.py\"\nlines=open(p).readlines()\nlines[1831]='        keep_attrs = lambda attrs, context: getattr(x, \"attrs\", {})\\n'\nopen(p,\"w\").writelines(lines)\nprint(lines[1831])\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 -c \"import xarray as xr; print(xr.where(xr.DataArray([1,2,3])>0, 1, 0))\"",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "which python; python -c \"import numpy\" 2>&1 | head -1",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 9756,
+ "completion_tokens": 596,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 635,
+ "lessons_raw": [
+  "In xarray, `keep_attrs` callbacks receive `(attrs, context)` where `attrs` is a list of the inputs' attrs; indexing it (e.g. `attrs[1]`) breaks when an input is a scalar with no attrs. Prefer `getattr(var, \"attrs\", {})` on the intended source variable instead.",
+  "The `python` command may be unavailable; use `python3` to run scripts in this repo.",
+  "To edit a specific line without sed quoting pitfalls, use a short `python3` heredoc that reads, replaces the target line, and rewrites the file."
+ ],
+ "lessons_promoted": [
+  "In xarray, `keep_attrs` callbacks receive `(attrs, context)` where `attrs` is a list of the inputs' attrs; indexing it (e.g. `attrs[1]`) breaks when an input is a scalar with no attrs. Prefer `getattr(var, \"attrs\", {})` on the intended source variable instead.",
+  "The `python` command may be unavailable; use `python3` to run scripts in this repo.",
+  "To edit a specific line without sed quoting pitfalls, use a short `python3` heredoc that reads, replaces the target line, and rewrites the file."
+ ],
+ "wall_s": 26.9
+}

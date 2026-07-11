@@ -1,0 +1,92 @@
+{
+ "instance_id": "pydata__xarray-3095",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"def copy\" xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '1920,1970p' xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"class PandasIndexAdapter\" xarray/core/indexing.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '1229,1260p' xarray/core/indexing.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport re\nf='xarray/core/variable.py'\ns=open(f).read()\nold='''                data = PandasIndexAdapter(self._data.array.copy(deep=True))'''\nnew='''                data = PandasIndexAdapter(\n                    self._data.array.copy(deep=True), dtype=self.dtype)'''\nassert old in s\ns=s.replace(old,new)\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 -c \"\nimport xarray\nds = xarray.Dataset(coords={'x': ['foo'], 'y': ('x', ['bar'])}, data_vars={'z': ('x', ['baz'])})\nprint(ds.copy(deep=True).x.dtype)\nprint(ds.z.copy().x.dtype)\nprint(ds.z.copy(deep=True).x.dtype)\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "which python || ls /Users/pavel/dev/getmetatron/rcl-experiment/runs/C_oracle/pair_3095_7393/rep3/work/pydata__xarray-3095/.tox 2>/dev/null; python -c \"import numpy\" 2>&1 | head -1",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "for p in python3.7 python3.8 python3.9 python3.6; do $p -c \"import numpy; print('$p ok')\" 2>/dev/null && break; done",
+   "exit": 127
+  },
+  {
+   "turn": 8,
+   "cmd": "ls /opt/*/bin/python* /usr/local/bin/python* ~/miniconda*/bin/python* ~/anaconda*/bin/python* 2>/dev/null; find / -name \"numpy\" -maxdepth 6 -type d 2>/dev/null | head",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "sed -n '1961,1965p' xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "grep -n \"PandasIndexAdapter(\" xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "sed -n '1948,1953p' xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 60823,
+ "completion_tokens": 3543,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 683,
+ "lessons_raw": [
+  "`PandasIndexAdapter` (xarray/core/indexing.py) preserves a wrapped index's dtype; recreating one from `array.copy()` without passing `dtype` loses the original dtype. Prefer giving wrapper classes a `copy(deep=...)` method rather than reconstructing them at call sites.",
+  "xarray copy semantics distinguish deep vs shallow; a shallow copy should share the underlying array while deep copies duplicate it. Note shallow numpy arrays can become deep copies upon pickling.",
+  "`IndexVariable._data` is a `PandasIndexAdapter` wrapping a pandas Index (immutable), so its `deep` copy flag affects only the underlying array, not attrs/dims/encoding which are always copied."
+ ],
+ "lessons_promoted": [
+  "`PandasIndexAdapter` (xarray/core/indexing.py) preserves a wrapped index's dtype; recreating one from `array.copy()` without passing `dtype` loses the original dtype. Prefer giving wrapper classes a `copy(deep=...)` method rather than reconstructing them at call sites.",
+  "xarray copy semantics distinguish deep vs shallow; a shallow copy should share the underlying array while deep copies duplicate it. Note shallow numpy arrays can become deep copies upon pickling.",
+  "`IndexVariable._data` is a `PandasIndexAdapter` wrapping a pandas Index (immutable), so its `deep` copy flag affects only the underlying array, not attrs/dims/encoding which are always copied."
+ ],
+ "wall_s": 63.8
+}

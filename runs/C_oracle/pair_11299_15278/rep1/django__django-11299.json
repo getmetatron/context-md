@@ -1,0 +1,44 @@
+{
+ "instance_id": "django__django-11299",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"SimpleCol\\|simple_col\" django/db/models/sql/query.py | head -20",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '1327,1360px;1329,1360p' django/db/models/sql/query.py",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf='django/db/models/sql/query.py'\ns=open(f).read()\nold='''                child_clause, needed_inner = self._add_q(\n                    child, used_aliases, branch_negated,\n                    current_negated, allow_joins, split_subq)'''\nnew='''                child_clause, needed_inner = self._add_q(\n                    child, used_aliases, branch_negated,\n                    current_negated, allow_joins, split_subq, simple_col)'''\nassert old in s\ns=s.replace(old,new)\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 10415,
+ "completion_tokens": 958,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 668,
+ "lessons_raw": [
+  "In django/db/models/sql/query.py, the `simple_col` flag (choosing SimpleCol vs Col via `_get_col`) must be threaded through the full filter-building chain: `resolve_lookup_value`, `build_filter`, and recursive `_add_q` calls, or nested Q objects will silently lose it.",
+  "When a keyword argument is added to a recursive method, verify every recursive self-call also forwards it; the recursive branch is an easy place to drop propagated flags."
+ ],
+ "lessons_promoted": [
+  "When a keyword argument is added to a recursive method, verify every recursive self-call also forwards it; the recursive branch is an easy place to drop propagated flags."
+ ],
+ "wall_s": 22.7
+}

@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-16819",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat django/db/migrations/operations/models.py | grep -n \"class AddIndex\\|class RemoveIndex\\|class RenameIndex\\|def reduce\" | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '811,910p' django/db/migrations/operations/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/operations/models.py\"\ns=open(f).read()\nanchor='''    def describe(self):\n        if self.index.expressions:'''\nnew='''    def reduce(self, operation, app_label):\n        if isinstance(operation, RemoveIndex) and self.index.name == operation.name:\n            return []\n        return super().reduce(operation, app_label)\n\n    def describe(self):\n        if self.index.expressions:'''\nassert s.count(anchor)==1\ns=s.replace(anchor,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 6194,
+ "completion_tokens": 871,
+ "context_truncated": false,
+ "context_words": 64,
+ "submitted": true,
+ "patch_bytes": 648,
+ "wall_s": 15.0
+}

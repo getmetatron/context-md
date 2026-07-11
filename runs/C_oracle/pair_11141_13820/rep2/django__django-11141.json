@@ -1,0 +1,57 @@
+{
+ "instance_id": "django__django-11141",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"__file__\" django/db/migrations/loader.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '80,120p' django/db/migrations/loader.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "submit"
+  },
+  {
+   "turn": 3,
+   "cmd": "git diff django/db/migrations/loader.py; sed -n '86,100p' django/db/migrations/loader.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'PYEOF'\np = 'django/db/migrations/loader.py'\ns = open(p).read()\nold = \"\"\"            else:\n                # Empty directories are namespaces.\n                # getattr() needed on PY36 and older (replace w/attribute access).\n                if getattr(module, '__file__', None) is None:\n                    self.unmigrated_apps.add(app_config.label)\n                    continue\n                # Module is not a package (e.g. migrations.py).\n                if not hasattr(module, '__path__'):\n                    self.unmigrated_apps.add(app_config.label)\n                    continue\n\"\"\"\nnew = \"\"\"            else:\n                # Module is not a package (e.g. migrations.py).\n                if not hasattr(module, '__path__'):\n                    self.unmigrated_apps.add(app_config.label)\n                    continue\n                # Empty directories are namespaces. Namespace packages have no\n                # __file__ and don't use a list for __path__. See\n                # https://docs.python.org/3/reference/import.html#namespace-packages\n                if (\n                    getattr(module, '__file__', None) is None and\n                    not isinstance(module.__path__, list)\n                ):\n                    self.unmigrated_apps.add(app_config.label)\n                    continue\n\"\"\"\nif old not in s:\n    print(\"OLD NOT FOUND\")\nelse:\n    open(p,'w').write(s.replace(old, new))\n    print(\"WROTE\")\nPYEOF\ngit diff --stat\nPYEOF",
+   "exit": 127
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 10691,
+ "completion_tokens": 1319,
+ "context_truncated": false,
+ "context_words": 15,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 1446,
+ "lessons_raw": [
+  "In `django/db/migrations/loader.py`, a migrations directory should be treated as unmigrated when it contains no actual migration files, rather than relying on `__file__`/`__path__` heuristics to distinguish namespace vs regular packages.",
+  "Namespace packages (`__file__` is None) are legitimately used for migration directories; don't reject them\u2014inspect actual migration module contents via `pkgutil.iter_modules(module.__path__)` instead.",
+  "Distinguishing migrated vs unmigrated apps: check whether real migration files exist (respecting `ignore_no_migrations`), not merely whether the package/module is loadable."
+ ],
+ "lessons_promoted": [
+  "In `django/db/migrations/loader.py`, a migrations directory should be treated as unmigrated when it contains no actual migration files, rather than relying on `__file__`/`__path__` heuristics to distinguish namespace vs regular packages.",
+  "Namespace packages (`__file__` is None) are legitimately used for migration directories; don't reject them\u2014inspect actual migration module contents via `pkgutil.iter_modules(module.__path__)` instead.",
+  "Distinguishing migrated vs unmigrated apps: check whether real migration files exist (respecting `ignore_no_migrations`), not merely whether the package/module is loadable."
+ ],
+ "wall_s": 27.6
+}

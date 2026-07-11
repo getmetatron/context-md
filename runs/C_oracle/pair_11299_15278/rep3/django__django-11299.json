@@ -1,0 +1,50 @@
+{
+ "instance_id": "django__django-11299",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"SimpleCol\\|simple_col\\|as_sql_for_where\\|resolve_expression\" django/db/models/sql/query.py django/db/models/expressions.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "Something is odd. Let me see the exact lines cleanly.",
+   "exit": 127
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '1339,1362p' django/db/models/sql/query.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf='django/db/models/sql/query.py'\ns=open(f).read()\nold=\"\"\"                child_clause, needed_inner = self._add_q(\n                    child, used_aliases, branch_negated,\n                    current_negated, allow_joins, split_subq)\n                joinpromoter.add_votes(needed_inner)\n            else:\"\"\"\nnew=\"\"\"                child_clause, needed_inner = self._add_q(\n                    child, used_aliases, branch_negated,\n                    current_negated, allow_joins, split_subq, simple_col)\n                joinpromoter.add_votes(needed_inner)\n            else:\"\"\"\nassert old in s\nopen(f,'w').write(s.replace(old,new))\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 16821,
+ "completion_tokens": 945,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 668,
+ "lessons_raw": [
+  "In django/db/models/sql/query.py, column resolution can produce either Col or SimpleCol via `_get_col(target, field, alias, simple_col)`; SimpleCol is used for check-constraint/WHERE contexts without table aliases.",
+  "When adding a parameter to filter-building methods like `build_filter`, propagate it through recursive `_add_q` calls too, since `_add_q` recurses into nested Q Node children and must forward flags like `simple_col`."
+ ],
+ "lessons_promoted": [
+  "In django/db/models/sql/query.py, column resolution can produce either Col or SimpleCol via `_get_col(target, field, alias, simple_col)`; SimpleCol is used for check-constraint/WHERE contexts without table aliases.",
+  "When adding a parameter to filter-building methods like `build_filter`, propagate it through recursive `_add_q` calls too, since `_add_q` recurses into nested Q Node children and must forward flags like `simple_col`."
+ ],
+ "wall_s": 24.2
+}

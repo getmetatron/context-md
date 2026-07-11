@@ -1,0 +1,82 @@
+{
+ "instance_id": "django__django-15161",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"deconstruct\\|_migration_name\\|@deconstructible\\|class .*Expression\\|^class \" django/db/models/expressions.py | head -60",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"Expression\\|Func\\|Value\\|Case\\|When\\|Subquery\\|Exists\\|OrderBy\\|Window\\|RowRange\\|ValueRange\\|Col\\|Ref\\|Star\\|OuterRef\\|CombinedExpression\" django/db/models/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nimport re\nf='django/db/models/expressions.py'\ns=open(f).read()\nmapping={\n'class Expression(BaseExpression, Combinable):':'django.db.models.Expression',\n'class Func(SQLiteNumericMixin, Expression):':'django.db.models.Func',\n'class Value(SQLiteNumericMixin, Expression):':'django.db.models.Value',\n'class ExpressionList(Func):':'django.db.models.ExpressionList',\n'class ExpressionWrapper(SQLiteNumericMixin, Expression):':'django.db.models.ExpressionWrapper',\n'class When(Expression):':'django.db.models.When',\n'class Case(SQLiteNumericMixin, Expression):':'django.db.models.Case',\n'class Subquery(BaseExpression, Combinable):':'django.db.models.Subquery',\n'class Exists(Subquery):':'django.db.models.Exists',\n'class OrderBy(Expression):':'django.db.models.OrderBy',\n'class Window(SQLiteNumericMixin, Expression):':'django.db.models.Window',\n'class WindowFrame(Expression):':'django.db.models.WindowFrame',\n}\n# remove old @deconstructible above Expression class\ns=s.replace(\"@deconstructible\\nclass Expression(BaseExpression, Combinable):\",\"class Expression(BaseExpression, Combinable):\")\nfor cls,path in mapping.items():\n    assert cls in s, cls\n    s=s.replace(cls, f\"@deconstructible(path='{path}')\\n{cls}\",1)\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '393,396p;654,656p;734,736p;915,917p;936,938p;956,958p;988,990p;1055,1057p;1136,1138p;1193,1195p;1228,1230p;1310,1312p;1415,1417p' django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "OrderByList is not a public class in django.db.models, so its path is wrong. Let me fix that one.",
+   "exit": 127
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nf='django/db/models/expressions.py'\ns=open(f).read()\ns=s.replace(\"@deconstructible(path='django.db.models.OrderByList')\",\"@deconstructible\")\nopen(f,'w').write(s)\nprint(\"ok\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -n '934,938p' django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "grep -n \"@deconstructible\\|class OrderByList\" django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 tests/runtests.py expressions.tests -v1 2>&1 | tail -20",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "PYTHONPATH=. python3 tests/runtests.py expressions.tests -v1 2>&1 | tail -15",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 33867,
+ "completion_tokens": 2364,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 3479,
+ "lessons_raw": [
+  "The `@deconstructible` decorator (from `django.utils.deconstruct`) accepts a `path=` kwarg to set the import path used when serializing objects into migrations; use it for publicly-exported classes.",
+  "Only decorate classes that are actually public API (exported in `django/db/models/__init__.py`) with an explicit `path=`; internal helper classes like `OrderByList`/`ExpressionList` should not get a public path.",
+  "Run Django's test suite via `PYTHONPATH=. python3 tests/runtests.py <label>` from the repo root, since `django` isn't installed as an importable module."
+ ],
+ "lessons_promoted": [
+  "The `@deconstructible` decorator (from `django.utils.deconstruct`) accepts a `path=` kwarg to set the import path used when serializing objects into migrations; use it for publicly-exported classes.",
+  "Only decorate classes that are actually public API (exported in `django/db/models/__init__.py`) with an explicit `path=`; internal helper classes like `OrderByList`/`ExpressionList` should not get a public path.",
+  "Run Django's test suite via `PYTHONPATH=. python3 tests/runtests.py <label>` from the repo root, since `django` isn't installed as an importable module."
+ ],
+ "wall_s": 55.8
+}

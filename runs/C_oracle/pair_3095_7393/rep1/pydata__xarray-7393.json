@@ -1,0 +1,62 @@
+{
+ "instance_id": "pydata__xarray-7393",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"from_product\\|from_arrays\\|stack\" xarray/core/indexes.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"level_coords_dtype\\|def create_variables\\|_replace\" xarray/core/indexes.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '718,760p' xarray/core/indexes.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -n \"def create_variables\\|class PandasMultiIndexingAdapter\\|class PandasIndexingAdapter\\|self._dtype\\|def dtype\" xarray/core/indexes.py xarray/core/indexing.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '818,870p' xarray/core/indexes.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nf=\"xarray/core/indexing.py\"\ns=open(f).read()\nold='''        if self.level is not None:\n            return self.array.get_level_values(self.level).values\n        else:\n            return super().__array__(dtype)'''\nnew='''        if self.level is not None:\n            return self.array.get_level_values(self.level).values.astype(dtype)\n        else:\n            return super().__array__(dtype)'''\nassert old in s\ns=s.replace(old,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "cd /tmp 2>/dev/null; python3 -c \"\nimport xarray as xr, numpy as np\nds = xr.Dataset(coords={'a': np.array([0], dtype='i4')})\nprint(ds['a'].values.dtype, ds.stack(b=('a',))['a'].values.dtype)\nprint(ds['a'].values.dtype == ds.stack(b=('a',))['a'].values.dtype)\n\" 2>&1 | tail -5",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "cd - >/dev/null 2>&1; python3 -c \"\nimport xarray as xr, numpy as np\nds = xr.Dataset(coords={'a': np.array([0], dtype='i4')})\nprint(ds['a'].values.dtype, ds.stack(b=('a',))['a'].values.dtype)\nprint(ds['a'].values.dtype == ds.stack(b=('a',))['a'].values.dtype)\n\" 2>&1 | tail -5",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 46072,
+ "completion_tokens": 3181,
+ "context_truncated": false,
+ "context_words": 65,
+ "submitted": true,
+ "patch_bytes": 547,
+ "wall_s": 58.0
+}

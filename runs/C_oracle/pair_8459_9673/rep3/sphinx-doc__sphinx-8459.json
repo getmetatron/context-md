@@ -1,0 +1,67 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8459",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat sphinx/ext/autodoc/typehints.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"def stringify\" sphinx/util/typing.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -rn \"type_aliases\\|typehints_formatter\\|autodoc_type_aliases\" sphinx/ext/autodoc/__init__.py sphinx/util/inspect.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -n \"type_aliases\\|def signature\\|stringify\\|evaluate\" sphinx/util/inspect.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nf = \"sphinx/ext/autodoc/typehints.py\"\ns = open(f).read()\ns = s.replace(\n    \"            sig = inspect.signature(obj)\",\n    \"            sig = inspect.signature(obj, type_aliases=app.config.autodoc_type_aliases)\"\n)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -n '500,520p' sphinx/util/inspect.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -n '24,36p' sphinx/ext/autodoc/typehints.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 26737,
+ "completion_tokens": 1193,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 767,
+ "lessons_raw": [
+  "`sphinx.util.inspect.signature()` accepts a `type_aliases` dict; autodoc call sites should pass `app.config.autodoc_type_aliases` so type-alias resolution stays consistent across all signature/annotation processing.",
+  "Config values in autodoc are accessed via `app.config.<name>` (or `self.config.<name>` in Documenter classes); ensure every code path that reads signatures honors the same config options.",
+  "Type annotations are rendered to strings via `sphinx.util.typing.stringify`; annotations are resolved through `typing.get_type_hints(subject, None, type_aliases)` in `sphinx/util/inspect.py`."
+ ],
+ "lessons_promoted": [
+  "`sphinx.util.inspect.signature()` accepts a `type_aliases` dict; autodoc call sites should pass `app.config.autodoc_type_aliases` so type-alias resolution stays consistent across all signature/annotation processing.",
+  "Config values in autodoc are accessed via `app.config.<name>` (or `self.config.<name>` in Documenter classes); ensure every code path that reads signatures honors the same config options.",
+  "Type annotations are rendered to strings via `sphinx.util.typing.stringify`; annotations are resolved through `typing.get_type_hints(subject, None, type_aliases)` in `sphinx/util/inspect.py`."
+ ],
+ "wall_s": 35.4
+}

@@ -1,0 +1,57 @@
+{
+ "instance_id": "pydata__xarray-7229",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"keep_attrs\" xarray/core/computation.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '1855,1880p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf=\"xarray/core/computation.py\"\ns=open(f).read()\nold='        keep_attrs = lambda attrs, context: getattr(x, \"attrs\", {})'\nnew='''        keep_attrs = lambda attrs, context: getattr(x, \"attrs\", {})\n\n        # x, y, and cond share the coordinates, so the attrs will be preserved\n        # by the following, while the variable attrs of x are used\n        keep_attrs = lambda attrs, context: attrs[1]'''\nassert old in s\ns=s.replace(old,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nf=\"xarray/core/computation.py\"\ns=open(f).read()\nold='''        keep_attrs = lambda attrs, context: getattr(x, \"attrs\", {})\n\n        # x, y, and cond share the coordinates, so the attrs will be preserved\n        # by the following, while the variable attrs of x are used\n        keep_attrs = lambda attrs, context: attrs[1]'''\nnew='''        # keep the attributes of x, the second parameter, by default to\n        # be consistent with the `where` method of `DataArray` and `Dataset`\n        # rebuild attrs from x in a way that avoids overwriting coord attrs\n        keep_attrs = lambda attrs, context: attrs[1]'''\nassert old in s\ns=s.replace(old,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "Plan: Clean up the duplicate comment lines.",
+   "exit": 127
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nf=\"xarray/core/computation.py\"\ns=open(f).read()\nold='''    if keep_attrs is True:\n        # keep the attributes of x, the second parameter, by default to\n        # be consistent with the `where` method of `DataArray` and `Dataset`\n        # keep the attributes of x, the second parameter, by default to\n        # be consistent with the `where` method of `DataArray` and `Dataset`\n        # rebuild attrs from x in a way that avoids overwriting coord attrs\n        keep_attrs = lambda attrs, context: attrs[1]'''\nnew='''    if keep_attrs is True:\n        # keep the attributes of x, the second parameter, by default to\n        # be consistent with the `where` method of `DataArray` and `Dataset`\n        keep_attrs = lambda attrs, context: attrs[1]'''\nassert old in s\ns=s.replace(old,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -n '1858,1864p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 29193,
+ "completion_tokens": 1877,
+ "context_truncated": false,
+ "context_words": 99,
+ "submitted": true,
+ "patch_bytes": 635,
+ "wall_s": 29.7
+}

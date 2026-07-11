@@ -65,6 +65,10 @@ def main():
             if "A" in args.arms:  # frontier control on B-side
                 adir = str(ROOT / "runs" / f"A{R}" / f"rep{rep}")
                 plan.append((f"A{R}", ["--condition", "A", "--instances", p["b"], "--rep", str(rep), "--run-dir", adir], None))
+            if "Co" in args.arms:  # C-oracle (§4.3): frontier labeled upper bound
+                codir = str(ROOT / "runs" / f"C_oracle{R}" / f"pair_{tag}" / f"rep{rep}")
+                plan.append((f"Co{R}/pair_{tag}", ["--condition", "C", "--oracle", "--instances", p["a"], "--rep", str(rep), "--run-dir", codir], tag))
+                plan.append((f"Co{R}/pair_{tag}", ["--condition", "C", "--instances", p["b"], "--rep", str(rep), "--no-learning", "--run-dir", codir], tag))
             if "Do" in args.arms:  # D-oracle (§4.3): labeled upper bound, local
                 odir = str(ROOT / "runs" / f"D_oracle{R}" / f"pair_{tag}" / f"rep{rep}")
                 plan.append((f"Do/pair_{tag}", ["--condition", "D", "--oracle", "--instances", p["a"], "--rep", str(rep), "--run-dir", odir], tag))
