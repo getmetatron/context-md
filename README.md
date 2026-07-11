@@ -10,6 +10,25 @@ A proposed standard for AI project context: one markdown file, versioned with th
   <img src="whitepaper/repository-context-layer-figure1.png" alt="The Repository Context Layer: a git-native context store an agent consults before planning and updates after executing, under human review. It sits alongside a repository's existing artifacts (README, docs, ADRs, src); the agent consults it and proposes reviewed updates." width="100%" />
 </p>
 
+## Does it work? Measured.
+
+A pre-registered evaluation on SWE-bench Verified (protocol frozen and timestamped before any run — see [`experiment/`](experiment/)):
+
+<table>
+<tr>
+<td width="50%" align="center">
+  <img src="whitepaper/figure2-lifecycle-effect.png" alt="Slopegraph: a frontier agent resolves 72.9% of held-out constraint-sharing tasks with the consult-execute-learn-promote lifecycle vs 58.3% without it (+14.6pp, p=0.041), across 11 constraint groups." width="96%"/><br/>
+  <sub>A frontier agent running the lifecycle resolves <b>72.9%</b> of held-out tasks vs <b>58.3%</b> without it (+14.6&nbsp;pp, p&nbsp;=&nbsp;0.041).</sub>
+</td>
+<td width="50%" align="center">
+  <img src="whitepaper/figure3-capability-gradient.png" alt="Bar chart: an 8B local model's localization improves +26.1pp with frontier-authored context and +21.7pp with gold-distilled context (both p<0.0001), but +0.0pp with its own self-authored lessons." width="96%"/><br/>
+  <sub>Context helps a small model only when its <b>author</b> is more capable: frontier-written context +26.1&nbsp;pp (p&nbsp;&lt;&nbsp;0.0001); the model's own lessons +0.0.</sub>
+</td>
+</tr>
+</table>
+
+Every number is reproducible from the released data: `cd experiment && make docker-reproduce` → `15/15 claims reproduced`. Full protocol, transcripts, and verdicts in [`experiment/`](experiment/); details in the [paper](whitepaper/repository-context-layer-paper.pdf).
+
 ## The file
 
 ```markdown
