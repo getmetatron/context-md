@@ -1,0 +1,128 @@
+{
+ "instance_id": "django__django-12125",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"__qualname__\\|__name__\" django/db/models/fields/__init__.py | head -20",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -rn \"class DeconstructableSerializer\\|def _serialize_path\\|__module__\\|rsplit\" django/db/migrations/serializer.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '485,500p' django/db/models/fields/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -n \"rsplit\\|import %s\\|name = path\\|module ==\\|else:\" django/db/migrations/serializer.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "cd /tmp && python3 -c \"\nimport django\nprint(django.get_version())\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -n '91,99p' django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "awk 'NR>=140 && NR<=160' django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/serializer.py\"\ns=open(f).read()\nold='''        else:\n            imports = {\"import %s\" % module}\n            name = path'''\nnew='''        else:\n            imports = {\"import %s\" % module.split(\".\")[0]}\n            name = path'''\nassert old in s, \"pattern not found\"\ns=s.replace(old,new,1)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/serializer.py\"\ns=open(f).read()\ns=s.replace('imports = {\"import %s\" % module.split(\".\")[0]}','imports = {\"import %s\" % module}',1)\nopen(f,\"w\").write(s)\nprint(\"reverted\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "git log --oneline -5 -- django/db/migrations/serializer.py 2>/dev/null | head",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "grep -rn \"import\\b\\|split\" django/db/migrations/writer.py | head -20",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "grep -rn \"Outer\\|qualname\\|Inner\" tests/migrations/test_writer.py | head",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "grep -n \"_serialize_path\\|def serialize\\|class Deconstruct\" django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 13,
+   "cmd": "submit"
+  },
+  {
+   "turn": 14,
+   "cmd": "grep -n \"enum_class.__name__\\|enum_class.__qualname__\" django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 15,
+   "cmd": "sed -n '188,192p' django/db/models/fields/__init__.py; sed -n '118,126p' django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 16,
+   "cmd": "grep -n \"def deconstruct\\|__class__.__module__, self.__class__\" django/db/models/fields/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 17,
+   "cmd": "sed -n '90,100p' django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 18,
+   "cmd": "grep -rn \"self.__class__.__name__\\|klass.__name__\" django/db/migrations/serializer.py",
+   "exit": 0
+  },
+  {
+   "turn": 19,
+   "cmd": "git diff",
+   "exit": 0
+  }
+ ],
+ "prompt_tokens": 118290,
+ "completion_tokens": 5952,
+ "context_truncated": false,
+ "context_words": 15,
+ "empty_submit_nudged": true,
+ "submitted": false,
+ "patch_bytes": 0,
+ "lessons_raw": [
+  "Migration serialization lives in django/db/migrations/serializer.py, with a separate BaseSerializer subclass per value type; TypeSerializer.serialize handles class references.",
+  "For nested/inner classes, use `__qualname__` (not `__name__`) when building serialized paths so the enclosing class is included; `__name__` drops the outer class prefix.",
+  "Django field deconstruction (django/db/models/fields/__init__.py) already uses `__qualname__` in path construction; follow that convention for consistency when emitting import paths."
+ ],
+ "lessons_promoted": [
+  "Migration serialization lives in django/db/migrations/serializer.py, with a separate BaseSerializer subclass per value type; TypeSerializer.serialize handles class references.",
+  "For nested/inner classes, use `__qualname__` (not `__name__`) when building serialized paths so the enclosing class is included; `__name__` drops the outer class prefix.",
+  "Django field deconstruction (django/db/models/fields/__init__.py) already uses `__qualname__` in path construction; follow that convention for consistency when emitting import paths."
+ ],
+ "wall_s": 111.8
+}

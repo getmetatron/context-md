@@ -1,0 +1,91 @@
+{
+ "instance_id": "pydata__xarray-3095",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"def copy\" xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '1920,1980p' xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"class PandasIndexAdapter\\|_dtype\\|def __init__\\|dtype\" xarray/core/indexing.py | head -30",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -n \"class PandasIndexAdapter\" xarray/core/indexing.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '1229,1330p' xarray/core/indexing.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -n \"def copy\\|import copy\\|from copy\\|__copy__\\|__deepcopy__\" xarray/core/indexing.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nimport re\nf='xarray/core/variable.py'\ns=open(f).read()\nold=\"\"\"                # of the underlying `pandas.MultiIndex` and create a new\n                # `PandasIndexAdapter` instance with it.\n                data = PandasIndexAdapter(self._data.array.copy(deep=True))\n            else:\n                data = self._data\"\"\"\nnew=\"\"\"                # of the underlying `pandas.MultiIndex` and create a new\n                # `PandasIndexAdapter` instance with it.\n                data = PandasIndexAdapter(\n                    self._data.array.copy(deep=True), dtype=self._data.dtype)\n            else:\n                data = self._data\"\"\"\nassert old in s\ns=s.replace(old,new)\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -n '1050,1062p' xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "grep -n \"__copy__\\|__deepcopy__\" xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "cd /tmp && python3 -c \"\nimport xarray\nds = xarray.Dataset(coords={'x': ['foo'], 'y': ('x', ['bar'])}, data_vars={'z': ('x', ['baz'])})\nprint(ds.copy(deep=True).x.dtype)\nprint(ds.z.copy().x.dtype)\nprint(ds.z.copy(deep=True).x.dtype)\nimport copy\nprint(copy.deepcopy(ds).x.dtype)\nprint(copy.copy(ds).x.dtype)\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 10,
+   "cmd": "python3 -c \"\nimport xarray\nds = xarray.Dataset(coords={'x': ['foo'], 'y': ('x', ['bar'])}, data_vars={'z': ('x', ['baz'])})\nprint(ds.copy(deep=True).x.dtype)\nprint(ds.z.copy().x.dtype)\nprint(ds.z.copy(deep=True).x.dtype)\nimport copy\nprint(copy.deepcopy(ds).x.dtype)\nprint(copy.copy(ds).x.dtype)\n\"",
+   "exit": 1
+  },
+  {
+   "turn": 11,
+   "cmd": "sed -n '1938,1962p' xarray/core/variable.py",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 83361,
+ "completion_tokens": 5819,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 689,
+ "lessons_raw": [
+  "`PandasIndexAdapter` in xarray/core/indexing.py preserves a custom `_dtype`; when re-wrapping its `.array`, always pass `dtype=self._dtype` or the dtype is lost. Prefer giving the adapter its own `copy(deep=...)` method so callers don't reconstruct it manually and drop metadata.",
+  "Shallow-copying a pandas Index (`.copy(deep=False)`) can cause its underlying numpy arrays to become deep copies upon pickling, bloating size; use `deep=True` when a true shared reference isn't needed.",
+  "xarray type hints use `DTypeLike` from `xarray/core/npcompat`, not numpy directly."
+ ],
+ "lessons_promoted": [
+  "`PandasIndexAdapter` in xarray/core/indexing.py preserves a custom `_dtype`; when re-wrapping its `.array`, always pass `dtype=self._dtype` or the dtype is lost. Prefer giving the adapter its own `copy(deep=...)` method so callers don't reconstruct it manually and drop metadata.",
+  "xarray type hints use `DTypeLike` from `xarray/core/npcompat`, not numpy directly."
+ ],
+ "wall_s": 87.9
+}

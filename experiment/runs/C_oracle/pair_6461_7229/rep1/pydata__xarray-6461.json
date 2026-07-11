@@ -1,0 +1,51 @@
+{
+ "instance_id": "pydata__xarray-6461",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -rn \"keep the attributes of x, the second parameter\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '1825,1840p' xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf=\"xarray/core/computation.py\"\ns=open(f).read()\nold=\"        keep_attrs = lambda attrs, context: attrs[1]\"\nnew=\"        keep_attrs = lambda attrs, context: getattr(x, \\\"attrs\\\", {})\"\ns=s.replace(old,new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 -c \"import xarray as xr; print(xr.where(xr.DataArray([1,2,3])>0,1,0, keep_attrs=True))\"",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "python -c \"import xarray as xr; print(xr.where(xr.DataArray([1,2,3])>0,1,0, keep_attrs=True))\"",
+   "exit": 127
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 8243,
+ "completion_tokens": 614,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 635,
+ "lessons_raw": [
+  "In xarray, `keep_attrs` callbacks passed to `apply_ufunc` receive `(attrs, context)` where `attrs` is a list of per-argument attribute dicts; indexing it (e.g. `attrs[1]`) breaks when scalar/non-labeled args are passed, so prefer `getattr(arg, \"attrs\", {})` on the intended source object."
+ ],
+ "lessons_promoted": [],
+ "wall_s": 19.2
+}

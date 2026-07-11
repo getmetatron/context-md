@@ -1,0 +1,44 @@
+{
+ "instance_id": "django__django-16595",
+ "condition": "C",
+ "rep": 3,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"class AlterField\" django/db/migrations/operations/fields.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '198,270p' django/db/migrations/operations/fields.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/operations/fields.py\"\ns=open(f).read()\nold='''    def reduce(self, operation, app_label):\n        if isinstance(operation, RemoveField) and self.is_same_field_operation(\n            operation\n        ):\n            return [operation]\n        elif ('''\nnew='''    def reduce(self, operation, app_label):\n        if isinstance(operation, RemoveField) and self.is_same_field_operation(\n            operation\n        ):\n            return [operation]\n        elif (\n            isinstance(operation, AlterField)\n            and self.is_same_field_operation(operation)\n        ):\n            return [operation]\n        elif ('''\nassert old in s\ns=s.replace(old,new,1)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 6348,
+ "completion_tokens": 432,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 638,
+ "lessons_raw": [
+  "Migration operation squashing/optimization logic lives in each operation class's `reduce()` method in django/db/migrations/operations/*.py; consecutive same-field operations are collapsed there using `is_same_field_operation`.",
+  "In `reduce()`, when multiple operation types collapse identically, group them in a single `isinstance(operation, (A, B))` check rather than adding separate `elif` branches."
+ ],
+ "lessons_promoted": [
+  "Migration operation squashing/optimization logic lives in each operation class's `reduce()` method in django/db/migrations/operations/*.py; consecutive same-field operations are collapsed there using `is_same_field_operation`."
+ ],
+ "wall_s": 14.5
+}

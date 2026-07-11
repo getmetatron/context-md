@@ -1,0 +1,67 @@
+{
+ "instance_id": "django__django-15161",
+ "condition": "C",
+ "rep": 2,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"deconstruct\\|_constructor_args\\|django.db.models\" django/db/models/expressions.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"^class \\|@deconstructible\\|deconstructible\" django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"expressions import\\|from django.db.models.expressions\" django/db/models/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '13,25p' django/db/models/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport re\nf='django/db/models/expressions.py'\ns=open(f).read()\n\n# Expression at line 393\ns=s.replace(\"@deconstructible\\nclass Expression(BaseExpression, Combinable):\",\n            \"@deconstructible(path='django.db.models.Expression')\\nclass Expression(BaseExpression, Combinable):\")\n\n# Add decorators to other exported classes\nmapping = {\n    \"class Func(SQLiteNumericMixin, Expression):\": \"django.db.models.Func\",\n    \"class Value(SQLiteNumericMixin, Expression):\": \"django.db.models.Value\",\n    \"class ExpressionList(Func):\": \"django.db.models.ExpressionList\",\n    \"class ExpressionWrapper(SQLiteNumericMixin, Expression):\": \"django.db.models.ExpressionWrapper\",\n    \"class When(Expression):\": \"django.db.models.When\",\n    \"class Case(SQLiteNumericMixin, Expression):\": \"django.db.models.Case\",\n    \"class Subquery(BaseExpression, Combinable):\": \"django.db.models.Subquery\",\n    \"class Exists(Subquery):\": \"django.db.models.Exists\",\n    \"class OrderBy(Expression):\": \"django.db.models.OrderBy\",\n    \"class Window(SQLiteNumericMixin, Expression):\": \"django.db.models.Window\",\n    \"class WindowFrame(Expression):\": \"django.db.models.WindowFrame\",\n}\nfor cls, path in mapping.items():\n    s=s.replace(\"\\n\"+cls, \"\\n@deconstructible(path='%s')\\n%s\" % (path, cls))\n\nopen(f,'w').write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -n \"@deconstructible\\|^class OuterRef\\|^class RowRange\\|^class ValueRange\" django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nf='django/db/models/expressions.py'\ns=open(f).read()\ns=s.replace(\"\\nclass RowRange(WindowFrame):\",\n            \"\\n@deconstructible(path='django.db.models.RowRange')\\nclass RowRange(WindowFrame):\")\ns=s.replace(\"\\nclass ValueRange(WindowFrame):\",\n            \"\\n@deconstructible(path='django.db.models.ValueRange')\\nclass ValueRange(WindowFrame):\")\nopen(f,'w').write(s)\nprint(\"ok\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 15501,
+ "completion_tokens": 1727,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 3975,
+ "lessons_raw": [
+  "The `@deconstructible` decorator (django.utils.deconstruct) accepts a `path=` kwarg to set the import path used when serializing an object's deconstruction; use the public `django.db.models.X` path for classes re-exported there.",
+  "Public expression classes live in `django/db/models/expressions.py` and are re-exported via `django/db/models/__init__.py`; only classes actually exported/deconstructed need `@deconstructible` with a stable public path.",
+  "When adding `@deconstructible(path=...)` to public classes, avoid decorating internal-only classes (e.g. Ref, OrderByList, ResolvedOuterRef) and subclasses not meant for public deconstruction paths."
+ ],
+ "lessons_promoted": [
+  "The `@deconstructible` decorator (django.utils.deconstruct) accepts a `path=` kwarg to set the import path used when serializing an object's deconstruction; use the public `django.db.models.X` path for classes re-exported there.",
+  "Public expression classes live in `django/db/models/expressions.py` and are re-exported via `django/db/models/__init__.py`; only classes actually exported/deconstructed need `@deconstructible` with a stable public path.",
+  "When adding `@deconstructible(path=...)` to public classes, avoid decorating internal-only classes (e.g. Ref, OrderByList, ResolvedOuterRef) and subclasses not meant for public deconstruction paths."
+ ],
+ "wall_s": 40.5
+}

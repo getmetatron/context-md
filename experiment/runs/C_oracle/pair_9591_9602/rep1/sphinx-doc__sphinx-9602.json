@@ -1,0 +1,62 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9602",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"_parse_annotation\\|def unparse\\|Literal\\|addnodes.pending_xref\\|def _parse\" sphinx/domains/python.py | head -40",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '110,190p' sphinx/domains/python.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -n '190,215p' sphinx/domains/python.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '175,189p' sphinx/domains/python.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '78,110p' sphinx/domains/python.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport re\nf = \"sphinx/domains/python.py\"\ns = open(f).read()\n\n# Modify Constant branch to emit inner text via unparse but keep as Text.\n# Modify Subscript branch to special-case Literal.\nold = \"\"\"        elif isinstance(node, ast.Subscript):\n            result = unparse(node.value)\n            result.append(addnodes.desc_sig_punctuation('', '['))\n            result.extend(unparse(node.slice))\n            result.append(addnodes.desc_sig_punctuation('', ']'))\n            return result\"\"\"\nnew = \"\"\"        elif isinstance(node, ast.Subscript):\n            if getattr(node.value, 'id', '') in {'Optional', 'Union'}:\n                return _unparse_pep_604_annotation(node)\n            result = unparse(node.value)\n            result.append(addnodes.desc_sig_punctuation('', '['))\n            result.extend(unparse(node.slice))\n            result.append(addnodes.desc_sig_punctuation('', ']'))\n\n            # Wrap the Text nodes inside brackets by literal node if the subscript is a Literal\n            if result[0] in ('Literal', 'typing.Literal'):\n                for i, subnode in enumerate(result[1:], start=1):\n                    if isinstance(subnode, nodes.Text):\n                        result[i] = nodes.literal('', '', subnode)\n            return result\"\"\"\nassert old in s\ns = s.replace(old, new)\nopen(f,\"w\").write(s)\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nf = \"sphinx/domains/python.py\"\ns = open(f).read()\nbad = \"\"\"            if getattr(node.value, 'id', '') in {'Optional', 'Union'}:\n                return _unparse_pep_604_annotation(node)\n\"\"\"\nassert bad in s\ns = s.replace(bad, \"\")\nopen(f,\"w\").write(s)\nprint(\"removed\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 -c \"import ast; ast.parse(open('sphinx/domains/python.py').read())\" && sed -n '146,160p' sphinx/domains/python.py",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 33927,
+ "completion_tokens": 1912,
+ "context_truncated": false,
+ "context_words": 71,
+ "submitted": true,
+ "patch_bytes": 893,
+ "wall_s": 40.0
+}

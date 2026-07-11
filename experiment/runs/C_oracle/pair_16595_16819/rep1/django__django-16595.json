@@ -1,0 +1,46 @@
+{
+ "instance_id": "django__django-16595",
+ "condition": "C",
+ "rep": 1,
+ "executor": "frontier",
+ "context_mode": "emergent",
+ "oracle": true,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"class AlterField\\|def reduce\" django/db/migrations/operations/fields.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -n '249,275p' django/db/migrations/operations/fields.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nf=\"django/db/migrations/operations/fields.py\"\ns=open(f).read()\nold=\"\"\"        if isinstance(operation, RemoveField) and self.is_same_field_operation(\n            operation\n        ):\n            return [operation]\n        elif (\"\"\"\nnew=\"\"\"        if isinstance(operation, AlterField) and self.is_same_field_operation(\n            operation\n        ):\n            return [operation]\n        elif isinstance(operation, RemoveField) and self.is_same_field_operation(\n            operation\n        ):\n            return [operation]\n        elif (\"\"\"\nassert old in s\nopen(f,\"w\").write(s.replace(old,new,1))\nprint(\"done\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 5394,
+ "completion_tokens": 360,
+ "context_truncated": false,
+ "context_words": 15,
+ "submitted": true,
+ "patch_bytes": 784,
+ "lessons_raw": [
+  "Migration operation optimization lives in `reduce()` methods in django/db/migrations/operations/*.py; each operation collapses with a following same-target operation, using `is_same_field_operation`/`is_same_model_operation` helpers to confirm they target the same object.",
+  "In `reduce()`, prefer combining isinstance checks into a tuple (e.g. `isinstance(op, (AlterField, RemoveField))`) when multiple operation types collapse identically, rather than adding parallel elif branches returning the same result.",
+  "A consecutive AlterField on the same field should reduce to just the later AlterField, since the final field definition supersedes the earlier one."
+ ],
+ "lessons_promoted": [
+  "Migration operation optimization lives in `reduce()` methods in django/db/migrations/operations/*.py; each operation collapses with a following same-target operation, using `is_same_field_operation`/`is_same_model_operation` helpers to confirm they target the same object.",
+  "A consecutive AlterField on the same field should reduce to just the later AlterField, since the final field definition supersedes the earlier one."
+ ],
+ "wall_s": 17.8
+}
