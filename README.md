@@ -27,6 +27,12 @@ A pre-registered evaluation on SWE-bench Verified (protocol frozen and timestamp
 </tr>
 </table>
 
+<p align="center">
+  <img src="whitepaper/figure4-token-economics.png" alt="Bar chart: tokens consumed per resolved task drop from 81.8K without context to 55.7K with the context lifecycle (−32%). Successful fixes cost the same in both arms; the saving comes from fewer doomed explorations." width="72%"/>
+</p>
+
+And it pays for itself: **32% fewer tokens per fixed bug** — successful fixes cost the same; the saving is the doomed exploration that never happens.
+
 Every number is reproducible from the released data: `cd experiment && make docker-reproduce` → `15/15 claims reproduced`. Full protocol, transcripts, and verdicts in [`experiment/`](experiment/); details in the [paper](whitepaper/repository-context-layer-paper.pdf).
 
 ## The file
