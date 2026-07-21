@@ -29,8 +29,7 @@ to adopt in an afternoon.
   (I1-I4), design analysis, and the Metatron reference implementation.
   The spec now reserves both sharding forms (.repo/context/ and root
   context/), a change driven by the reference implementation's layout.
-- [2026-07-05] Paper gains a second author (Milana Kerbel) alongside Pavel
-  Kerbel; ORCID iDs recorded for both. PDF/HTML re-rendered. Added
+- [2026-07-05] Recorded author ORCID iDs; PDF/HTML re-rendered. Added
   .gitattributes marking binary assets so committed PDFs are never subject
   to EOL normalization.
 - [2026-07-05] Paper strengthened after review (still v0.1): added an
