@@ -37,3 +37,9 @@ to adopt in an afternoon.
   architecture figure (Fig. 1), a concrete failure example, the
   what/how/why framing, and a stronger close; trimmed implementation
   minutiae. ORCID display switched to name-first.
+- [2026-07-21] Paper author set expanded to four (Pavel Kerbel, Milana
+  Kerbel, Vitali Abramov, Liat Abramov) with ORCID iDs; affiliation changed
+  from Independent Researcher to Metatron Research; per-author contact moved
+  to getmetatron.com addresses. Conflicts-of-Interest statement updated to
+  disclose the shared affiliation. PDF/HTML re-rendered across the tex and
+  HTML builds.
