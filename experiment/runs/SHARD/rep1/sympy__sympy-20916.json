@@ -1,0 +1,71 @@
+{
+ "instance_id": "sympy__sympy-20916",
+ "condition": "SHARD",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat context/decisions/printing-and-latex-output-consistency.md",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"pprint\" sympy/printing/",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat sympy/printing/pretty/pretty.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/def _print_Symbol(self, e, bold_name=False):/def _print_Symbol(self, e, bold_name=False, is_subscript=False):/' sympy/printing/pretty/pretty.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i 's/def _print_Symbol(self, e, bold_name=False):/def _print_Symbol(self, e, bold_name=False, is_subscript=False):/' sympy/printing/pretty/pretty.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sympy/printing/pretty/pretty.py\"\nwith open(file_path, 'r') as f:\n    lines = f.readlines()\n\nnew_lines = []\nin_symbol_print = False\nfor line in lines:\n    if \"def _print_Symbol(self, e, bold_name=False):\" in line:\n        new_lines.append(\"    def _print_Symbol(self, e, bold_name=False, is_subscript=False):\\n\")\n        in_symbol_print = True\n    else:\n        new_lines.append(line)\n\nwith open(file_path, 'w') as f:\n    f.writelines(new_lines)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "cat sympy/printing/pretty/pretty.py",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sympy/printing/pretty/pretty.py\"\nwith open(file_path, 'r') as f:\n    lines = f.readlines()\n\nnew_lines = []\nin_symbol_print = False\nfor line in lines:\n    if \"def _print_Symbol(self, e, bold_name=False, is_subscript=False):\" in line:\n        new_lines.append(line)\n    elif \"symb = pretty_symbol(e.name, bold_name)\" in line:\n        new_lines.append(\"        symb = pretty_symbol(e.name, bold_name, is_subscript=is_subscript)\\n\")\n    elif \"return prettyForm(symb)\" in line and \"is_subscript\" not in line:\n        new_lines.append(\"        return prettyForm(symb)\\n\")\n    else:\n        new_lines.append(line)\n\nwith open(file_path, 'w') as f:\n    f.writelines(new_lines)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 31479,
+ "completion_tokens": 1466,
+ "context_files_written": 3,
+ "submitted": true,
+ "patch_bytes": 668,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 48.4
+}

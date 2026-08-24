@@ -1,0 +1,56 @@
+{
+ "instance_id": "pydata__xarray-4075",
+ "condition": "FILE",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"weighted\" xarray/core/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i 's/weighted_sum = self._weighted_sum(da, dim=dim, skipna=skipna)/weighted_sum = self._weighted_sum(da, dim=dim, skipna=skipna, weights=wgt)/' xarray/core/weighted.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -A 10 \"sum_of_weights\" xarray/core/weighted.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)/sum_of_weights = self._reduce(mask, self.weights.astype(float), dim=dim, skipna=False)/g' xarray/core/weighted.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"xarray/core/weighted.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target line: sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)\n# Replacement: sum_of_weights = self._reduce(mask, self.weights.astype(float), dim=dim, skipna=False)\nnew_content = content.replace(\n    \"sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)\",\n    \"sum_of_weights = self._reduce(mask, self.weights.astype(float), dim=dim, skipna=False)\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 22983,
+ "completion_tokens": 1472,
+ "context_files_written": 1,
+ "submitted": true,
+ "patch_bytes": 564,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 48.1
+}

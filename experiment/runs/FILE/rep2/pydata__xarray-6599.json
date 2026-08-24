@@ -1,0 +1,122 @@
+{
+ "instance_id": "pydata__xarray-6599",
+ "condition": "FILE",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"polyval\" xarray/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"timedelta64\" xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport xarray.core.computation\nimport numpy as np\nfrom xarray.core.computation import polyval\n\ndef fix_polyval(module):\n    original_polyval = module.polyval\n\n    def new_polyval(coord, coeffs, degree_dim=None):\n        if isinstance(coord, xarray.DataArray) and np.issubdtype(coord.dtype, np.datetime64) or np.issubdtype(coord.dtype, np.timedelta64):\n            # Convert datetime/timedelta coordinates to numeric representation\n            numeric_coord = xarray.core.computation.datetime_to_numeric(coord)\n            # Use the numeric coordinate for polyval\n            return original_polyval(numeric_coord, coeffs, degree_dim)\n        \n        # For other types, use the original implementation\n        return original_polyval(coord, coeffs, degree_dim)\n\n    module.polyval = new_polyval\n\nfix_polyval(xarray.core.computation)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport re\nimport xarray.core.computation\n\n# Backup original function\noriginal_polyval = xarray.core.computation.polyval\n\ndef new_polyval(coord, coeffs, degree_dim=None):\n    # Check if coord is a DataArray with datetime or timedelta dtype\n    if hasattr(coord, 'dtype') and (np.issubdtype(coord.dtype, np.datetime64) or np.issubdtype(coord.dtype, np.timedelta64)):\n        # Convert to numeric representation using the existing helper\n        numeric_coord = xarray.core.computation.datetime_to_numeric(coord)\n        # Call the original function with the numeric coordinate\n        return original_polyval(numeric_coord, coeffs, degree_dim)\n    \n    # Otherwise, use the original logic\n    return original_polyval(coord, coeffs, degree_dim)\n\n# Overwrite the function in the module\nxarray.core.computation.polyval = new_polyval\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '/def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:/ {\n    :a\n    N;s/\\(def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:\\)\\n\\(.*.*\\)/\\1\\n    if hasattr(coord, \"dtype\") and (np.issubdtype(coord.dtype, np.datetime64) or np.issubdtype(coord.dtype, np.timedelta64)):\n        numeric_coord = xarray.core.computation.datetime_to_numeric(coord)\n        return polyval(numeric_coord, coeffs, degree_dim)\n    return polyval(coord, coeffs, degree_dim)/g' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '/def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:/ {\n    :a\n    N;s/\\(def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:.*\\)\\n\\(.*.*\\)/\\1\\n    if hasattr(coord, \"dtype\") and (np.issubdtype(coord.dtype, np.datetime64) or np.issubdtype(coord.dtype, np.timedelta64)):\n        numeric_coord = xarray.core.computation.datetime_to_numeric(coord)\n        return polyval(numeric_coord, coeffs, degree_dim)\n    return polyval(coord, coeffs, degree_dim)/g' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nimport re\nimport xarray.core.computation\nimport numpy as np\n\nfilepath = \"xarray/core/computation.py\"\n\nwith open(filepath, 'r') as f:\n    content = f.read()\n\n# Target the DataArray -> DataArray case first, as it's the most direct match to the problem.\n# We look for the function signature and capture everything until the next function definition or end of file.\n# This regex is highly speculative but aims to capture the entire function body.\npattern = re.compile(\n    r\"(def polyval\\(coord: DataArray, coeffs: DataArray, degree_dim: Hashable\\) -> DataArray:.*?)(?=\\n\\s*def |\\Z)\", \n    re | re.DOTALL\n)\n\ndef replacer(match):\n    original_code = match.group(1)\n    # Extract the body content (everything after the signature line)\n    signature_line = original_code.split('\\n')[0]\n    body_content = \"\\n\".join(original_code.split('\\n')[1:]).strip()\n    \n    # Construct the wrapped function body\n    wrapped_body = f\"\"\"\n    if hasattr(coord, \"dtype\") and (np.issubdtype(coord.dtype, np.datetime64) or np.issubdtype(coord.dtype, np.timedelta64)):\n        numeric_coord = xarray.core.computation.datetime_to_numeric(coord)\n        return polyval(numeric_coord, coeffs, degree_dim)\n    return {body_content}\n\"\"\"\n    return f\"def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:\\n{wrapped_body}\"\n\nnew_content = pattern.sub(replacer, content)\n\nwith open(filepath, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nimport re\nimport xarray.core.computation\nimport numpy as np\n\nfilepath = \"xarray/core/computation.py\"\n\nwith open(filepath, 'r') as f:\n    content = f.read()\n\n# Target the DataArray -> DataArray case specifically.\n# This regex captures the signature and the entire body until the next function definition or end of file.\npattern = re.compile(\n    r\"(def polyval\\(coord: DataArray, coeffs: DataArray, degree_dim: Hashable\\) -> DataArray:.*?)(?=\\n\\s*def |\\Z)\", \n    re | re.DOTALL\n)\n\ndef replacer(match):\n    original_code = match.group(1)\n    # Extract the body content (everything after the signature line)\n    signature_line = original_code.split('\\n')[0]\n    body_content = \"\\n\".join(original_code.split('\\n')[1:]).strip()\n    \n    # Construct the wrapped function body\n    wrapped_body = f\"\"\"\n    if hasattr(coord, \"dtype\") and (np.issubdtype(coord.dtype, np.datetime64) or np.issubdtype(coord.dtype, np.timedelta64)):\n        numeric_coord = xarray.core.computation.datetime_to_numeric(coord)\n        return polyval(numeric_coord, coeffs, degree_dim)\n    return {body_content}\n\"\"\"\n    return f\"def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:\\n{wrapped_body}\"\n\nnew_content = pattern.sub(replacer, content)\n\nwith open(filepath, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 10,
+   "cmd": "sed -i '/def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:/ {\n    :a\n    N;s/\\(def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:.*\\)\\n\\(.*.*\\)/\\1\\n    if hasattr(coord, \"dtype\") and (np.issubdtype(coord.dtype, np.datetime64) or np.issubdtype(coord.dtype, np.timedelta64)):\n        numeric_coord = xarray.core.computation.datetime_to_numeric(coord)\n        return polyval(numeric_coord, coeffs, degree_dim)\n    return polyval(coord, coeffs, degree_dim)/g' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 11,
+   "cmd": "python3 - <<'EOF'\nimport re\nimport xarray.core.computation\nimport numpy as np\n\nfilepath = \"xarray/core/computation.py\"\n\nwith open(filepath, 'r') as f:\n    content = f.read()\n\n# Target the DataArray -> DataArray case.\n# We look for the signature and then replace the first line of the body.\npattern = re.compile(\n    r\"(def polyval\\(coord: DataArray, coeffs: DataArray, degree_dim: Hashable\\) -> DataArray:.*?)(?=\\n\\s*if |\\Z)\", \n    re | re.DOTALL\n)\n\ndef replacer(match):\n    original_code = match.group(1)\n    # This is a highly simplified replacement assuming the body starts immediately after the signature.\n    # We inject the check at the start of the body.\n    return f\"def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:\\n    if hasattr(coord, \\\"dtype\\\") and (np.issubdtype(coord.dtype, np.datetime64) or np.issubdtype(coord.dtype, np.timedelta64)):\n        numeric_coord = xarray.core.computation.datetime_to_numeric(coord)\n        return polyval(numeric_coord, coeffs, degree_dim)\n    {original_code.split('-> DataArray:')[1].strip()}\"\n\nnew_content = pattern.sub(replacer, content)\n\nwith open(filepath, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 12,
+   "cmd": "python3 - <<'EOF'\nimport re\nimport xarray.core.computation\nimport numpy as np\n\nfilepath = \"xarray/core/computation.py\"\n\nwith open(filepath, 'r') as f:\n    content = f.read()\n\n# Target the DataArray -> DataArray case.\npattern = re.compile(\n    r\"(def polyval\\(coord: DataArray, coeffs: DataArray, degree_dim: Hashable\\) -> DataArray:.*?)(?=\\n\\s*if |\\Z)\", \n    re | re.DOTALL\n)\n\ndef replacer(match):\n    original_code = match.group(1)\n    # Extract the body content (everything after the signature line)\n    signature_line = original_code.split('\\n')[0]\n    body_content = \"\\n\".join(original_code.split('\\n')[1:]).strip()\n    \n    # Construct the wrapped function body using raw string formatting for safety\n    wrapped_body = r\"\"\"\n    if hasattr(coord, \"dtype\") and (np.issubdtype(coord.dtype, np.datetime64) or np.issubdtype(coord.dtype, np.timedelta64)):\n        numeric_coord = xarray.core.computation.datetime_to_numeric(coord)\n        return polyval(numeric_coord, coeffs, degree_dim)\n    return \"\"\" + body_content\n\n    return f\"def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:\\n{wrapped_body}\"\n\nnew_content = pattern.sub(replacer, content)\n\nwith open(filepath, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 13,
+   "cmd": "sed -i '/def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:/ {\n    :a\n    N;s/\\(def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:.*\\)\\n\\(.*.*\\)/\\1\\n    if hasattr(coord, \"dtype\") and (np.issubdtype(coord.dtype, np.datetime64) or np.issubdtype(coord.dtype, np.timedelta64)):\n        numeric_coord = xarray.core.computation.datetime_to_numeric(coord)\n        return polyval(numeric_coord, coeffs, degree_dim)\n    return polyval(coord, coeffs, degree_dim)/g' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 14,
+   "cmd": "sed -i '/def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:/ {\n    :a\n    N;s/\\(def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:.*\\)\\n\\(.*.*\\)/\\1\\n    if hasattr(coord, \"dtype\") and (np.issubdtype(coord.dtype, np.datetime64) or np.issubdtype(coord.dtype, np.timedelta64)):\n        numeric_coord = xarray.core.computation.datetime_to_numeric(coord)\n        return polyval(numeric_coord, coeffs, degree_dim)\n    return polyval(coord, coeffs, degree_dim)/g' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 15,
+   "cmd": "python3 - <<'EOF'\nimport re\nimport xarray.core.computation\nimport numpy as np\n\nfilepath = \"xarray/core/computation.py\"\n\nwith open(filepath, 'r') as f:\n    content = f.read()\n\n# Target the DataArray -> DataArray case.\npattern = re.compile(\n    r\"(def polyval\\(coord: DataArray, coeffs: DataArray, degree_dim: Hashable\\) -> DataArray:.*?)(?=\\n\\s*if |\\Z)\", \n    re | re.DOTALL\n)\n\ndef replacer(match):\n    original_code = match.group(1)\n    # Extract the body content (everything after the signature line)\n    signature_line = original_code.split('\\n')[0]\n    body_content = \"\\n\".join(original_code.split('\\n')[1:]).strip()\n    \n    # Construct the wrapped function body using raw string formatting for safety\n    wrapped_body = r\"\"\"\n    if hasattr(coord, \"dtype\") and (np.issubdtype(coord.dtype, np.datetime64) or np.issubdtype(coord.dtype, np.timedelta64)):\n        numeric_coord = xarray.core.computation.datetime_to_numeric(coord)\n        return polyval(numeric_coord, coeffs, degree_dim)\n    return \"\"\" + body_content\n\n    return f\"def polyval(coord: DataArray, coeffs: DataArray, degree_dim: Hashable) -> DataArray:\\n{wrapped_body}\"\n\nnew_content = pattern.sub(replacer, content)\n\nwith open(filepath, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 16,
+   "cmd": "sed -i '/numpy.polynomial.polynomial.polyval/ {\n    :a\n    N;s/\\(numpy.polynomial.polynomial.polyval\\([^)]*\\)\\)/if hasattr(coord, \"dtype\") and (np.issubdtype(coord.dtype, np.datetime64) or np.issubdtype(coord.dtype, np.timedelta64)):\n        numeric_coord = xarray.core.computation.datetime_to_numeric(coord)\n        return numpy.polynomial.polynomial.polyval(numeric_coord, coeffs, degree_dim)\n    else:\n        return numpy.polynomial.polynomial.polyval\\1/g' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 17,
+   "cmd": "python3 - <<'EOF'\nimport re\nimport xarray.core.computation\nimport numpy as np\n\nfilepath = \"xarray/core/computation.py\"\n\nwith open(filepath, 'r') as f:\n    content = f.read()\n\n# Target the specific call to numpy.polynomial.polynomial.polyval within the DataArray case.\n# This regex captures the call and assumes it's the primary calculation line.\npattern = re.compile(\n    r\"(numpy\\.polynomial\\.polynomial\\.polyval\\([^)]*\\))\", \n    re | re.DOTALL\n)\n\ndef replacer(match):\n    original_call = match.group(1)\n    # Inject the check around the original call\n    return f\"\"\"if hasattr(coord, \"dtype\") and (np.issubdtype(coord.dtype, np.datetime64) or np.issubdtype(coord.dtype, np.timedelta64)):\n        numeric_coord = xarray.core.computation.datetime_to_numeric(coord)\n        return {original_call.replace(\"polyval(\", \"polyval(numeric_coord, \") + \", degree_dim)\n    else:\n        return {original_call}\"\"\"\n\nnew_content = pattern.sub(replacer, content)\n\nwith open(filepath, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 18,
+   "cmd": "grep -n \"timedelta64\" xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 19,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 165934,
+ "completion_tokens": 6824,
+ "context_files_written": 1,
+ "empty_submit_nudged": true,
+ "submitted": false,
+ "patch_bytes": 0,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 205.3
+}

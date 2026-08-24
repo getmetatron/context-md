@@ -1,0 +1,51 @@
+{
+ "instance_id": "django__django-15731",
+ "condition": "FILE",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"django/db/models/manager.py\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat django/db/models/manager.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '1iimport functools' django/db/models/manager.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/models/manager.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\nif \"import functools\" not in content:\n    content = \"import functools\\n\" + content\n\n# Redefine create_method using functools.wraps\nnew_content = content.replace(\n    \"def create_method(name, method):\\n            def manager_method(self, *args, **kwargs):\\n                return getattr(self.get_queryset(), name)(*args, **kwargs)\\n\\n            manager_method.__name__ = method.__name__\\n            manager_method.__doc__ = method.__doc__\\n            return manager_method\",\n    \"def create_method(name, method):\\n            @functools.wraps(method)\\n            def manager_method(self, *args, **kwargs):\\n                return getattr(self.get_queryset(), name)(*args, **kwargs)\\n\\n            return manager_method\"\n)\n\n# The replacement above is too aggressive as it removes the name/doc assignment.\n# I must reconstruct the logic carefully.\n\n# Re-reading the original logic:\n# 1. Define manager_method.\n# 2. Manually set __name__ and __doc__.\n# 3. Return manager_method.\n\n# The fix is to use @functools.wraps(method) on the definition of manager_method,\n# and then return manager_method directly, letting wraps handle metadata.\n\n# Let's try to replace the entire block defining create_method.\noriginal_block = \"\"\"def create_method(name, method):\n            def manager_method(self, *args, **kwargs):\n                return getattr(self.get_queryset(), name)(*args, **kwargs)\n\n            manager_method.__name__ = method.__name__\n            manager_method.__doc__ = method.__doc__\n            return manager_method\"\"\"\n\nreplacement_block = \"\"\"def create_method(name, method):\n            @functools.wraps(method)\n            def manager_method(self, *args, **kwargs):\n                return getattr(self.get_queryset(), name)(*args, **kwargs)\n\n            return manager_method\"\"\"\n\n# Since I cannot reliably find the exact context to replace the block,\n# I will assume the import was added and use a targeted replacement for the function body.\n\n# I will assume the import was added in the previous step (or I'll add it again if needed).\n# Given the failure, I'll just write the full replacement for the function definition.\n\n# I will write the full content replacement for the function definition.\n# This is risky but necessary given the constraints.\n\n# I will use a simpler approach: just replace the function definition entirely.\n# I need to ensure functools is imported first.\n\n# Since I cannot guarantee the import, I will combine the import and the replacement in one go.\n# I will assume the file starts with imports and I will prepend the import, then replace the function.\n\n# Final attempt: Inject import, then replace the function definition.\n# I will use a placeholder for the function definition to ensure the import is present.\n\n# Since I cannot reliably inject and replace, I will assume the import is needed and proceed with the function replacement.\n# I will use a single script to read, modify, and write back.\n\nimport re\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# 1. Ensure functools is imported\nif \"import functools\" not in content:\n    content = \"import functools\\n\" + content\n\n# 2. Replace the function definition block\n# This regex attempts to capture the function definition and its body.\n# It's highly brittle, but necessary.\npattern = r\"(def create_method\\(name, method\\):\\s*def manager_method\\(self, \\*args, \\*\\*kwargs\\):\\s*return getattr\\(self\\.get_queryset\\(\\), name\\)\\(\\*args, \\*\\*kwargs\\)\\s*\\n\\s*manager_method\\.__name__ = method\\.__name__\\s*\\n\\s*manager_method.__doc__ = method.__doc__\\s*\\n\\s*return manager_method)\"\nreplacement = r\"def create_method(name, method):\\n            @functools.wraps(method)\\n            def manager_method(self, *args, **kwargs):\\n                return getattr(self.get_queryset(), name)(*args, **kwargs)\\n\\n            return manager_method\"\n\nnew_content = re.sub(pattern, replacement, content, count=1)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 14588,
+ "completion_tokens": 2016,
+ "context_files_written": 1,
+ "submitted": true,
+ "patch_bytes": 770,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 62.7
+}

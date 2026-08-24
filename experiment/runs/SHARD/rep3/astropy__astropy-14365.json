@@ -1,0 +1,66 @@
+{
+ "instance_id": "astropy__astropy-14365",
+ "condition": "SHARD",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"Unrecognized QDP line\" astropy/io/ascii/qdp.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat astropy/io/ascii/qdp.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport re\n\n# Original regex definition\n_command_re = r\"READ [TS]ERR(\\s+[0-9]+)+\"\n\n# Test case to see if IGNORECASE helps\ntest_line = \"read serr 1 2\"\nprint(re.search(r\"READ [TS]ERR(\\s+[0-9]+)+\", test_line, re.IGNORECASE))\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport re\nfrom astropy.io.ascii.qdp import _line_type\n\n# Read the original function definition to see where to apply the flag\n# We are modifying the regex compilation inside _line_type\n\n# The original code compiles _line_type_re without flags.\n# I need to change:\n# _line_type_re = re.compile(_type_re)\n# To:\n# _line_type_re = re.compile(_type_re, re.IGNORECASE)\n\n# I will use sed to perform this targeted replacement.\n# This assumes the structure is exactly as seen in the previous output.\nsed -i 's/    _line_type_re = re.compile(_type_re)/    _line_type_re = re.compile(_type_re, re.IGNORECASE)/g' astropy/io/ascii/qdp.py\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i 's/    _line_type_re = re.compile(_type_re)/    _line_type_re = re.compile(_type_re, re.IGNORECASE)/g' astropy/io/ascii/qdp.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i 's/    _line_type_re = re.compile(_type_re)/    _line_type_re = re.compile(_type_re, re.IGNORECASE)/g' astropy/io/ascii/qdp.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/ascii/qdp.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The target line is: _line_type_re = re.compile(_type_re)\n# The replacement line is: _line_type_re = re.compile(_type_re, re.IGNORECASE)\nnew_content = content.replace(\n    \"_line_type_re = re.compile(_type_re)\",\n    \"_line_type_re = re.compile(_type_re, re.IGNORECASE)\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 24979,
+ "completion_tokens": 1537,
+ "context_files_written": 3,
+ "submitted": true,
+ "patch_bytes": 619,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 50.8
+}

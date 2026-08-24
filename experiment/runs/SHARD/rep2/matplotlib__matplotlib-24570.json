@@ -1,0 +1,81 @@
+{
+ "instance_id": "matplotlib__matplotlib-24570",
+ "condition": "SHARD",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"HPacker\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat lib/matplotlib/offsetbox.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -A 20 \"align\" lib/matplotlib/offsetbox.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\ndef _get_aligned_offsets(hd_list, height, align=\"baseline\"):\n    \"\"\"\n    Align boxes each specified by their ``(height, descent)`` pair.\n\n    For simplicity of the description, the terminology used here assumes a\n    horizontal layout (i.e., vertical alignment), but the function works\n    equally for a vertical layout.\n\n    Parameters\n    ----------\n    hd_list\n        List of (height, xdescent) of boxes to be aligned.\n    height : float or None\n        Intended total height. If None, the maximum of the heights in *hd_list*\n        is used.\n    align : {'baseline', 'left', 'top', 'right', 'bottom', 'center'}\n        The alignment anchor of the boxes.\n\n    Returns\n    -------\n    height\n        The total height of the packing (if a value was originally passed in,\n        it is returned without checking that it is actually large enough).\n    descent\n        The descent of the packing.\n    offsets\n        The bottom offsets of the boxes.\n    \"\"\"\n\n    if height is None:\n        height = max(h for h, d in hd_list)\n    _api.check_in_list(\n        [\"baseline\", \"left\", \"top\", \"right\", \"bottom\", \"center\"], align=align)\n\n    if align == \"baseline\":\n        height_descent = max(h - d for h, d in hd_list)\n        descent = max(d for h, d in hd_list)\n        height = height_descent + descent\n        offsets = [0. for h, d in hd_list]\n    elif align in [\"left\", \"bottom\"]:\n        descent = 0.\n        offsets = [d for h, d in hd_list]\n    elif align in [\"right\", \"top\"]:\n        descent = 0.\n        offsets = [height - h + d for h, d in hd_list]\n    elif align == \"center\":\n        descent = 0.\n        offsets = [(height - h) * .5 + d for h, d in hd_list]\n\n    return height,\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '/elif align in [\"left\", \"top\"]:/,/{/elif align in [\"right\", \"bottom\"]:/ s/elif align in \\[\"left\", \"top\"\\]:/elif align in \\[\"left\", \"bottom\"\\]:/; s/elif align in \\[\"right\", \"bottom\"\\]:/elif align in \\[\"right\", \"top\"\\]:/}' lib/matplotlib/offsetbox.py\nsed -i '/elif align in [\"left\", \"top\"]:/,/{/elif align in [\"right\", \"bottom\"]:/ s/elif align in \\[\"left\", \"top\"\\]:/elif align in \\[\"left\", \"bottom\"\\]:/; s/elif align in \\[\"right\", \"bottom\"\\]:/elif align in \\[\"right\", \"top\"\\]:/}' lib/matplotlib/offsetbox.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"lib/matplotlib/offsetbox.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Original blocks:\n# 1. elif align in [\"left\", \"top\"]:\n# 2. elif align in [\"right\", \"bottom\"]:\n\n# Desired swap:\n# 'top' logic moves to the block that handles 'bottom' (now using [\"left\", \"bottom\"])\n# 'bottom' logic moves to the block that handles 'top' (now using [\"right\", \"top\"])\n\n# Block 1 replacement: Original [\"left\", \"top\"] -> New [\"left\", \"bottom\"]\ncontent = content.replace(\n    '    elif align in [\"left\", \"top\"]:',\n    '    elif align in [\"left\", \"bottom\"]:'\n)\ncontent = content.replace(\n    '        offsets = [d for h, d in hd_list]',\n    '        offsets = [d for h, d in hd_list]' # Logic remains the same for this block\n)\n\n# Block 2 replacement: Original [\"right\", \"bottom\"] -> New [\"right\", \"top\"]\ncontent = content.replace(\n    '    elif align in [\"right\", \"bottom\"]:',\n    '    elif align in [\"right\", \"top\"]:'\n)\ncontent = content.replace(\n    '        offsets = [height - h + d for h, d in hd_list]',\n    '        offsets = [height - h + d for h, d in hd_list]' # Logic remains the same for this block\n\n# Since the logic for the blocks themselves seems correct for the swap,\n# I must ensure the conditions are swapped correctly.\n\n# Re-evaluating the swap based on the provided code structure:\n# Original:\n# elif align in [\"left\", \"top\"]:  # Top logic\n#     ... offsets = [d for h, d in hd_list]\n# elif align in [\"right\", \"bottom\"]: # Bottom logic\n#     ... offsets = [height - h + d for h, d in hd_list]\n\n# Target Swap:\n# New Top logic should use the old Bottom logic:\n# elif align in [\"left\", \"top\"]:  # Should now use bottom logic\n#     ... offsets = [height - h + d for h, d in hd_list]\n# New Bottom logic should use the old Top logic:\n# elif align in [\"right\", \"bottom\"]: # Should now use top logic\n#     ... offsets = [d for h, d in hd_list]\n\n# Let's perform the direct replacement of the conditional blocks:\ncontent = content.replace(\n    '    elif align in [\"left\", \"top\"]:',\n    '    elif align in [\"left\", \"bottom\"]:'\n)\ncontent = content.replace(\n    '        offsets = [d for h, d in hd_list]',\n    '        offsets = [height - h + d for h, d in hd_list]' # Swapping logic here\n)\n\ncontent = content.replace(\n    '    elif align in [\"right\", \"bottom\"]:',\n    '    elif align in [\"right\", \"top\"]:'\n)\ncontent = content.replace(\n    '        offsets = [height - h + d for h, d in hd_list]',\n    '        offsets = [d for h, d in hd_list]' # Swapping logic here\n\n# This is too complex for simple string replacement due to surrounding context.\n# I will use a single, comprehensive replacement targeting the lines defining the blocks.\n\n# Final attempt using targeted replacement based on the structure:\ncontent = content.replace(\n    '    elif align in [\"left\", \"top\"]:',\n    '    elif align in [\"left\", \"bottom\"]:'\n)\ncontent = content.replace(\n    '        offsets = [d for h, d in hd_list]',\n    '        offsets = [height - h + d for h, d in hd_list]'\n)\ncontent = content.replace(\n    '    elif align in [\"right\", \"bottom\"]:',\n    '    elif align in [\"right\", \"top\"]:'\n)\ncontent = content.replace(\n    '        offsets = [height - h + d for h, d in hd_list]',\n    '        offsets = [d for h, d in hd_list]'\n\nwith open(file_path, 'w') as f:\n    f.write(content)\nprint(\"File updated.\")\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i '/elif align in [\"left\", \"top\"]:/,/elif align in [\"right\", \"bottom\"]:/ {\n    /elif align in [\"left\", \"top\"]:/ {\n        /        offsets = [d for h, d in hd_list]/ {\n            /elif align in [\"left\", \"top\"]:/r\\\n            \\    elif align in [\"left\", \"bottom\"]:\\\n            \\        offsets = [height - h + d for h, d in hd_list]\n        }\n    }\n    /elif align in [\"right\", \"bottom\"]:/ {\n        /        offsets = [height - h + d for h, d in hd_list]/ {\n            /elif align in [\"right\", \"bottom\"]:/r\\\n            \\    elif align in [\"right\", \"top\"]:\\\n            \\        offsets = [d for h, d in hd_list]\n        }\n    }\n}' lib/matplotlib/offsetbox.py",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"lib/matplotlib/offsetbox.py\"\nwith open(file_path, 'r') as f:\n    lines = f.readlines()\n\nnew_lines = []\nin_target_block = False\nblock_start_index = -1\n\n# State machine to find and replace the two blocks\nfor i, line in enumerate(lines):\n    if \"elif align in [\"left\", \"top\"]:\" in line:\n        # Found the first block start\n        block_start_index = i\n        in_target_block = True\n        new_lines.append(line)\n        continue\n    \n    if \"elif align in [\"right\", \"bottom\"]:\" in line:\n        # Found the second block start\n        block_start_index = i\n        in_target_block = True\n        new_lines.append(line)\n        continue\n\n    if in_target_block:\n        # Check if we are inside the block to be replaced\n        if \"offsets = [d for h, d in hd_list]\" in line and \"top\" in line:\n            # This is the 'top' block, we need to replace its body with the 'bottom' body\n            new_lines.append(\"    elif align in [\\\"left\\\", \\\"bottom\\\"]:\\n\")\n            new_lines.append(\"        descent = 0.\\n\")\n            new_lines.append(\"        offsets = [height - h + d for h, d in hd_list]\\n\")\n            in_target_block = False # Mark as replaced\n            continue\n        \n        elif \"offsets = [height - h + d for h, d in hd_list]\" in line and \"bottom\" in line:\n            # This is the 'bottom' block, we need to replace its body with the 'top' body\n            new_lines.append(\"    elif align in [\\\"right\\\", \\\"top\\\"]:\\n\")\n            new_lines.append(\"        descent = 0.\\n\")\n            new_lines.append(\"        offsets = [d for h, d in hd_list]\\n\")\n            in_target_block = False # Mark as replaced\n            continue\n        \n        # If we are in a block but haven't hit the replacement trigger, keep the line\n        new_lines.append(line)\n    else:\n        new_lines.append(line)\n\n# The logic above is too complex to reliably patch with line-by-line reading due to context.\n# I will use a direct string replacement on the whole content, assuming the structure is consistent.\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# 1. Replace the 'top' block (which should now behave like 'bottom')\ncontent = content.replace(\n    '    elif align in [\"left\", \"top\"]:',\n    '    elif align in [\"left\", \"bottom\"]:'\n)\ncontent = content.replace(\n    '        offsets = [d for h, d in hd_list]',\n    '        offsets = [height - h + d for h, d in hd_list]'\n)\n\n# 2. Replace the 'bottom' block (which should now behave like 'top')\ncontent = content.replace(\n    '    elif align in [\"right\", \"bottom\"]:',\n    '    elif align in [\"right\", \"top\"]:'\n)\ncontent = content.replace(\n    '        offsets = [height - h + d for h, d in hd_list]',\n    '        offsets = [d for h, d in hd_list]'\n)\n\nwith open(file_path, 'w') as f:\n    f.write(content)\nprint(\"File updated successfully.\")\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 10,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"lib/matplotlib/offsetbox.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Swap 1: 'top' block logic (originally in [\"left\", \"top\"]) gets 'bottom' logic\ncontent = content.replace(\n    '    elif align in [\"left\", \"top\"]:',\n    '    elif align in [\"left\", \"bottom\"]:'\n)\ncontent = content.replace(\n    '        offsets = [d for h, d in hd_list]',\n    '        offsets = [height - h + d for h, d in hd_list]'\n)\n\n# Swap 2: 'bottom' block logic (originally in [\"right\", \"bottom\"]) gets 'top' logic\ncontent = content.replace(\n    '    elif align in [\"right\", \"bottom\"]:',\n    '    elif align in [\"right\", \"top\"]:'\n)\ncontent = content.replace(\n    '        offsets = [height - h + d for h, d in hd_list]',\n    '        offsets = [d for h, d in hd_list]'\n)\n\nwith open(file_path, 'w') as f:\n    f.write(content)\nprint(\"File updated successfully.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 56766,
+ "completion_tokens": 4217,
+ "context_files_written": 3,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 843,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 124.7
+}

@@ -1,4 +1,4 @@
-# Title candidates (decision pending)
+# Title candidates — DECIDED 2026-07-11
 
 Subtitle in all cases carries the rigor signal, e.g.
 "Design and Pre-Registered Evaluation of a Git-Native Context Layer for Coding Agents".
@@ -21,6 +21,7 @@ Subtitle in all cases carries the rigor signal, e.g.
 9. **Don't Make Me Learn This Twice** — funniest; riskier with conservative venues.
 10. **Groundhog Day for Coding Agents** — names the failure mode; pop refs age poorly.
 
-Ranking for the post-rejection context (must read as serious research): 1 → 4 → 2; 9 as wildcard.
-Current title stands until decided: "The Repository Context Layer: Design and Pre-Registered
-Evaluation of a Git-Native Architecture for Agent Context".
+DECISION: keep the formal title — "The Repository Context Layer: Design and Pre-Registered
+Evaluation of a Git-Native Architecture for Agent Context". The pre-registration signal
+outweighs memorability for the venue submission. Fun names remain available for
+marketing surfaces (X article, talks, blog).

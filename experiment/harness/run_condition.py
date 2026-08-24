@@ -19,11 +19,12 @@ executor or learning prompts (oracle arm A-side excepted, flagged in the log).
 """
 from __future__ import annotations
 
-import argparse, json, re, subprocess, sys, time
+import argparse, json, os, re, subprocess, sys, time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from templates import SYSTEM, CONTEXT_BLOCK, LEARNING_PROMPT, ORACLE_SUFFIX, CONTEXT_TOKEN_CAP
+from templates_p2 import CONTRACT_BLOCK_P2, consultation, write_context_files
 from promote import promote
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -41,10 +42,16 @@ COND = {  # executor, context_mode, seed_author
     "C": ("frontier", "emergent", None), "D": ("local", "emergent", None),
     "E": ("local", "seeded", "frontier"), "F": ("local", "seeded", "local"),
     "G": ("local", "seeded", "human"),
+    # Paper 2 delivery arms (PREREGISTRATION-PAPER2 §1): content = frontier seed,
+    # delivery = files on disk + shipped 0.12.0 contract in the prompt. Arm I
+    # (injection ceiling) is condition E; arm B is condition B.
+    "FILE": ("local", "file", "frontier"), "SHARD": ("local", "sharded", "frontier"),
 }
 REPO_NAME = {"django/django": "django", "sphinx-doc/sphinx": "sphinx",
              "pydata/xarray": "xarray", "sympy/sympy": "sympy",
-             "scikit-learn/scikit-learn": "sklearn"}
+             "scikit-learn/scikit-learn": "scikit-learn",
+             "matplotlib/matplotlib": "matplotlib", "astropy/astropy": "astropy",
+             "pytest-dev/pytest": "pytest"}
 
 
 # ---------- executors ----------
@@ -70,9 +77,17 @@ def chat_frontier(messages, seed):
     if _CLIENT is None:
         import anthropic
         key = None
-        for line in Path("/Users/pavel/dev/getmetatron/metatron/.env").read_text().splitlines():
-            if line.startswith("ANTHROPIC_API_KEY="):
-                key = line.split("=", 1)[1].strip().strip('"')
+        # Artifact: read the key from the environment. A local .env is honored as
+        # a fallback so the original author workflow still works.
+        key = os.environ.get("ANTHROPIC_API_KEY")
+        if not key:
+            env = Path(os.environ.get("RCL_ENV_FILE", ".env"))
+            if env.exists():
+                for line in env.read_text().splitlines():
+                    if line.startswith("ANTHROPIC_API_KEY="):
+                        key = line.split("=", 1)[1].strip().strip('"')
+        if not key:
+            raise SystemExit("set ANTHROPIC_API_KEY (or RCL_ENV_FILE) to use the frontier executor")
         _CLIENT = anthropic.Anthropic(api_key=key)
     resp = _CLIENT.messages.create(model=FRONTIER_MODEL, max_tokens=2048,
                                    system=messages[0]["content"], messages=messages[1:])
@@ -138,10 +153,14 @@ def extract_cmd(text):
     return None
 
 
-def run_episode(inst, repo_dir, chat, seed, context_md, log):
+def run_episode(inst, repo_dir, chat, seed, context_md, log, contract=False):
     problem = " ".join(inst["problem_statement"].split())[:6000]
     ctx_block = ""
-    if context_md:
+    if contract:
+        # Paper 2 F/S arms: knowledge stays on disk; the prompt carries only the
+        # shipped consult-first contract (mimics AGENTS.md auto-loading).
+        ctx_block = CONTRACT_BLOCK_P2 + "\n"
+    elif context_md:
         ctx_text, truncated = truncate_context(context_md)
         ctx_block = CONTEXT_BLOCK.format(context_md=ctx_text) + "\n"
         log["context_truncated"] = truncated
@@ -177,14 +196,19 @@ def run_episode(inst, repo_dir, chat, seed, context_md, log):
                               "Run `git diff` to check, re-apply a minimal edit, verify, then submit."}]
                 log["turns"].append(rec); continue
             submitted = True; log["turns"].append(rec); break
-        p = subprocess.run(["bash", "-c", cmd], cwd=repo_dir, capture_output=True,
-                           text=True, timeout=CMD_TIMEOUT + 30, errors="replace")
-        out = (p.stdout + p.stderr)[:OUT_CAP]
-        rec["exit"] = p.returncode
-        transcript.append(f"$ {cmd}\n(exit {p.returncode}) {out[:500]}")
+        try:
+            p = subprocess.run(["bash", "-c", cmd], cwd=repo_dir, capture_output=True,
+                               text=True, timeout=CMD_TIMEOUT + 30, errors="replace")
+            out = (p.stdout + p.stderr)[:OUT_CAP]
+            rc = p.returncode
+        except subprocess.TimeoutExpired:
+            out = f"TIMEOUT: command exceeded {CMD_TIMEOUT + 30}s and was killed. Use a faster command."
+            rc = 124
+        rec["exit"] = rc
+        transcript.append(f"$ {cmd}\n(exit {rc}) {out[:500]}")
         log["turns"].append(rec)
         messages += [{"role": "assistant", "content": reply},
-                     {"role": "user", "content": f"exit={p.returncode}\n{out}"}]
+                     {"role": "user", "content": f"exit={rc}\n{out}"}]
     patch = subprocess.run(["git", "diff"], cwd=repo_dir, capture_output=True, text=True).stdout
     log["submitted"] = submitted
     log["patch_bytes"] = len(patch)
@@ -214,6 +238,8 @@ def main():
                     help="oracle-taught arm (§4.3): learning step sees gold patch. Labeled, never pooled.")
     ap.add_argument("--no-learning", action="store_true",
                     help="§4.7 pair B-side: consult the store but discard learning output (no chaining).")
+    ap.add_argument("--skip-existing", action="store_true",
+                    help="resume: skip instances whose episode log already exists (operational only; all Paper 2 arms are order-independent)")
     ap.add_argument("--run-dir", default=None,
                     help="override run directory (e.g. runs/D/pair_X_Y/rep1) for pair-scoped stores")
     args = ap.parse_args()
@@ -229,6 +255,8 @@ def main():
     preds = rep_dir / "predictions.jsonl"
 
     for iid in args.instances.split(","):
+        if args.skip_existing and (rep_dir / f"{iid}.json").exists():
+            continue
         inst = df.loc[iid].to_dict(); inst["instance_id"] = iid
         repo = REPO_NAME[inst["repo"]]
         bare = cache / f"{repo}.git"
@@ -245,8 +273,16 @@ def main():
                "executor": executor, "context_mode": ctx_mode, "oracle": args.oracle,
                "seed": args.rep, "turns": [], "prompt_tokens": 0, "completion_tokens": 0,
                "t0": time.time()}
-        context_md = load_context(args.condition, rep_dir, repo, seed_author)
-        patch, transcript = run_episode(inst, wd, chat, args.rep, context_md, log)
+        if ctx_mode in ("file", "sharded"):
+            seed_text = (SEEDS / repo / "context.md").read_text()
+            log["context_files_written"] = write_context_files(wd, seed_text, ctx_mode)
+            context_md, contract = None, True
+        else:
+            context_md, contract = load_context(args.condition, rep_dir, repo, seed_author), False
+        patch, transcript = run_episode(inst, wd, chat, args.rep, context_md, log,
+                                        contract=contract)
+        if ctx_mode in ("file", "sharded"):
+            log.update(consultation(log["turns"]))
 
         if ctx_mode == "emergent" and not args.no_learning:
             gold = inst["patch"] if args.oracle else None   # §4.3 A-side only

@@ -1,0 +1,66 @@
+{
+ "instance_id": "astropy__astropy-7671",
+ "condition": "SHARD",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat astropy/utils/introspection.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\n--- a/astropy/utils/introspection.py\n+++ b/astropy/utils/introspection.py\n@@ -3,6 +3,7 @@\n import inspect\n import types\n import importlib\n-from distutils.version import LooseVersion\n+from distutils.version import LooseVersion\n+from packaging.version import Version\n \n \n __all__ = ['resolve_name', 'minversion', 'find_current_module',\n@@ -54,11 +55,11 @@\n     Parameters\n     ----------\n \n     module : module or `str`\n         An imported module of which to check the version, or the name of\n         that module (in which case an import of that module is attempted--\n         if this fails `False` is returned).\n \n     version : `str`\n         The version as a string that this module must have at a minimum (e.g.\n         ``'0.12'``).\n \n     inclusive : `bool`\n         The specified\n@@ -73,8 +74,8 @@\n     if inclusive:\n-        return LooseVersion(have_version) >= LooseVersion(version)\n+        return Version(have_version) >= Version(version)\n     else:\n-        return LooseVersion(have_version) > LooseVersion(version)\n+        return Version(have_version) > Version(version)\n EOF",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '2s/from distutils.version import LooseVersion/from distutils.version import LooseVersion\\nfrom packaging.version import Version/' astropy/utils/introspection.py\nsed -i '30s/return LooseVersion(have_version) >= LooseVersion(version)/return Version(have_version) >= Version(version)/' astropy/utils/introspection.py\nsed -i '32s/return LooseVersion(have_version) > LooseVersion(version)/return Version(have_version) > Version(version)/' astropy/utils/introspection.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '2r /dev/stdin' astropy/utils/introspection.py <<EOF\nfrom packaging.version import Version\nEOF\nsed -i '30s/return LooseVersion(have_version) >= LooseVersion(version)/return Version(have_version) >= Version(version)/' astropy/utils/introspection.py\nsed -i '32s/return LooseVersion(have_version) > LooseVersion(version)/return Version(have_version) > Version(version)/' astropy/utils/introspection.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/utils/introspection.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\nnew_content = \"from packaging.version import Version\\n\\n\" + content\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '30s/return LooseVersion(have_version) >= LooseVersion(version)/return Version(have_version) >= Version(version)/' astropy/utils/introspection.py\nsed -i '32s/return LooseVersion(have_version) > LooseVersion(version)/return Version(have_version) > Version(version)/' astropy/utils/introspection.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/utils/introspection.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Replace >= comparison\ncontent = content.replace(\"return LooseVersion(have_version) >= LooseVersion(version)\", \"return Version(have_version) >= Version(version)\")\n\n# Replace > comparison\ncontent = content.replace(\"return LooseVersion(have_version) > LooseVersion(version)\", \"return Version(have_version) > Version(version)\")\n\nwith open(file_path, 'w') as f:\n    f.write(content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 30368,
+ "completion_tokens": 2335,
+ "context_files_written": 3,
+ "submitted": true,
+ "patch_bytes": 894,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 64.1
+}

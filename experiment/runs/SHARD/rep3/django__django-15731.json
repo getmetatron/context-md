@@ -1,0 +1,71 @@
+{
+ "instance_id": "django__django-15731",
+ "condition": "SHARD",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"django/db/models/manager.py\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat django/db/models/manager.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '1iimport functools' django/db/models/manager.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '1iimport functools' django/db/models/manager.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nwith open(\"django/db/models/manager.py\", \"r\") as f:\n    content = f.read()\n\nnew_content = \"import functools\\n\" + content\n\nwith open(\"django/db/models/manager.py\", \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"django/db/models/manager.py\"\n\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# Regex to find the definition of create_method and capture its body\n# This is complex, so I will use a targeted replacement based on the structure.\n# The original code snippet ends with:\n#             manager_method.__name__ = method.__name__\n#             manager_method.__doc__ = method.__doc__\n#             return manager_method\n\n# We need to replace the manual assignment with the use of @functools.wraps\n# and ensure the return statement is correct.\n\n# Since I cannot reliably parse the surrounding context with simple regex/sed,\n# I will use a targeted replacement block assuming the structure is consistent.\n\n# Find the block defining create_method and replace the manual assignment.\n# This assumes the function definition is intact and only the body needs fixing.\n\n# The change is:\n# 1. Remove:\n#    manager_method.__name__ = method.__name__\n#    manager_method.__doc__ = method.__doc__\n# 2. Add:\n#    @functools.wraps(method)\n#    def manager_method(self, *args, **kwargs):\n#        return getattr(self.get_queryset(), name)(*args, **kwargs)\n#    return manager_method\n\n# I will use a multi-step replacement approach focusing on the return value of create_method.\n\n# Step 1: Find the function definition and replace the body.\n# This is highly brittle, but necessary given the constraints.\n\n# I will search for the line containing 'def manager_method(self, *args, **kwargs):'\n# and replace everything until 'return manager_method'\n\n# A safer approach is to rewrite the function body entirely.\n\nnew_content = re.sub(\n    r\"(def manager_method\\(self, \\*args, \\*\\*kwargs\\):\\s*.*?)\\s*manager_method.__name__ = method.__name__\\s*manager_method.__doc__ = method.__doc__\\s*return manager_method\",\n    r\"\"\"\\\ndef manager_method(self, *args, **kwargs):\n    @functools.wraps(method)\n    return getattr(self.get_queryset(), name)(*args, **kwargs)\nreturn manager_method\"\"\",\n    content,\n    flags=re.DOTALL\n)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "grep -A 10 \"def create_method(name, method):\" django/db/models/manager.py",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"django/db/models/manager.py\"\n\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# Regex to capture the entire function definition of create_method\n# This pattern is designed to capture the function signature and its body until the return statement.\npattern = re.compile(\n    r\"(def create_method\\(name, method\\):\\s*.*?)(return manager_method)\",\n    re.DOTALL\n)\n\n# Replacement function to apply the fix\ndef replacer(match):\n    # match.group(1) is the definition up to the return statement\n    # match.group(2) is the final 'return manager_method'\n    \n    # The corrected body uses @functools.wraps(method)\n    fixed_body = r\"\"\"\\\ndef manager_method(self, *args, **kwargs):\n    @functools.wraps(method)\n    return getattr(self.get_queryset(), name)(*args, **kwargs)\nreturn manager_method\"\"\"\n    \n    return match.group(1)[:-1] + fixed_body\n\nnew_content = pattern.sub(replacer, content)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 24540,
+ "completion_tokens": 1885,
+ "context_files_written": 6,
+ "submitted": true,
+ "patch_bytes": 1096,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 61.5
+}

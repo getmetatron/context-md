@@ -1,0 +1,85 @@
+{
+ "instance_id": "matplotlib__matplotlib-20859",
+ "condition": "SHARD",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"legend\" context/decisions/",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "cat matplotlib/legend.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "find . -name \"legend.py\"",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "cat lib/matplotlib/legend.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": null
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '/def __init__(self, handles, labels, *, loc=\\'best\\', bbox_to_anchor=None, prop=None, title=None, fancybox=False, frameon=True, edgecolor=None, facecolor=\\'.\\', alpha=1.0, **kwargs):/ {\n    s/def __init__(self, handles, labels, *, loc=\\'best\\', bbox_to_anchor=None, prop=None, title=None, fancybox=False, frameon=True, edgecolor=None, facecolor=\\'.\\', alpha=1.0, **kwargs):/def __init__(self, handles, labels, *, loc=\\'best\\', bbox_to_anchor=None, prop=None, title=None, fancybox=False, frameon=True, edgecolor=None, facecolor=\\'.\\', alpha=1.0, **kwargs):/;\n    /self.ax = ax/ {\n        s/self.ax = ax/self.ax = ax if hasattr(ax, \"get_window_extent\") else None/;\n    }\n}' lib/matplotlib/legend.py",
+   "exit": 2
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '/def __init__(self, handles, labels, *, loc=\\'best\\', bbox_to_anchor=None, prop=None, title=None, fancybox=False, frameon=True, edgecolor=None, facecolor=\\'.\\', alpha=1.0, **kwargs):/ s/def __init__(self, handles, labels, *, loc=\\'best\\', bbox_to_anchor=None, prop=None, title=None, fancybox=False, frameon=True, edgecolor=None, facecolor=\\'.\\', alpha=1.0, **kwargs):/def __init__(self, handles, labels, *, loc=\\'best\\', bbox_to_anchor=None, prop=None, title=None, fancybox=False, frameon=True, edgecolor=None, facecolor=\\'.\\', alpha=1.0, **kwargs):/;\nsed -i '/self.ax = ax/ s/self.ax = ax/self.ax = ax if hasattr(ax, \"get_window_extent\") else None/' lib/matplotlib/legend.py",
+   "exit": 2
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"lib/matplotlib/legend.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# 1. Update __init__ signature (This is tricky, so I'll focus on the body first)\n# 2. Update self.ax assignment\nnew_content = content.replace(\"self.ax = ax\", \"self.ax = ax if hasattr(ax, \\\"get_window_extent\\\") else None\")\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"lib/matplotlib/legend.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Check and update _get_handles_and_labels to handle potential None/non-Axes parents\n# The original code likely assumes self.ax is always an Axes object.\n# We need to ensure that if self.ax is None or not an Axes, we handle it gracefully.\n\n# Since the bug is about subfigures, the parent might be a Figure or a SubFigure container.\n# I will modify the check to allow FigureBase if Axes fails.\n\n# Looking at the original code structure, the check is likely around self.ax.\n# I will search for the block that uses self.ax and generalize the check.\n\n# A safer bet is to check if the parent object (self.parent) supports the necessary methods,\n# or if self.ax is None, we should try to use the figure's axes if available.\n\n# Given the context, I will modify the check in _get_handles_and_labels to be more permissive.\n# I'll search for 'if self.ax is None:' and adjust it.\n\nnew_content = content.replace(\"if self.ax is None:\", \"if self.ax is None and hasattr(self.parent, \\\"get_axes\\\"):\")\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  },
+  {
+   "turn": 11,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"lib/matplotlib/legend.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Minimal fix attempt: Update __init__ to check for FigureBase compatibility if Axes fails.\n# This is a highly targeted replacement based on the bug report's suggestion.\n\n# Find the __init__ method definition and replace the logic block.\n# This is complex to do with simple string replacement, so I'll focus on the most likely failure point: self.ax assignment.\n\n# Re-applying the self.ax fix, as it was the most concrete change.\nnew_content = content.replace(\"self.ax = ax\", \"self.ax = ax if hasattr(ax, \\\"get_window_extent\\\") else None\")\n\n# Since the previous attempt failed to apply, I will only apply this one change again,\n# assuming it's the most critical part of the fix.\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 53464,
+ "completion_tokens": 4267,
+ "context_files_written": 3,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 121.6
+}

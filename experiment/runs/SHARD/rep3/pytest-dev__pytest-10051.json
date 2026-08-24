@@ -1,0 +1,86 @@
+{
+ "instance_id": "pytest-dev__pytest-10051",
+ "condition": "SHARD",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"caplog.get_records\" src/_pytest/",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "cat src/_pytest/logging.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -A 20 \"def clear(self):\" src/_pytest/logging.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -r \"caplog.\" src/_pytest/logging.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/def caplog/ { :a; n; /caplog.clear()/ { N; s/caplog.clear() -> clear captured records and formatted log output string/,/        self.caplog_handler.reset()/g; s/        self.caplog_handler.reset()/        self.caplog_handler.reset();\\n        item.stash[caplog_records_key] = {when: [] for when in item.stash[caplog_records_key]};/g; } ; :a; n; /        self.caplog_handler.reset()/ { N; s/        self.caplog_handler.reset()/        self.caplog_handler.reset();\\n        item.stash[caplog_records_key] = {when: [] for when in item.stash[caplog_records_key]};/g; }' src/_pytest/logging.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"src/_pytest/logging.py\"\ncontent = \"\"\n\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# Regex to find the block containing caplog.clear() and the state setup.\n# We are looking for the sequence where state is set up and then cleared.\n# The fix is to ensure that when clear() is called, the records dictionary is reset.\n\n# Since I cannot reliably find the function body with regex, I will use a simpler\n# approach: replacing the line that sets up the state after logging,\n# to ensure that the clear logic is robust.\n\n# Based on the context, the state is set up here:\n# item.stash[caplog_records_key][when] = caplog_handler.records\n\n# And the clear logic should reset this. I will search for the line that\n# seems to be the end of the setup/teardown block and inject the reset logic.\n\n# I will search for the line that seems to be the end of the context manager block\n# and inject the reset for caplog_records_key.\n\n# Looking at the provided context snippet, the setup/teardown is around:\n# item.stash[caplog_records_key][when] = caplog_handler.records\n# ...\n# item.stash[caplog_records_key] = empty\n# del item.stash[caplog_records_key]\n\n# I will modify the block that seems to handle cleanup after the context manager exits.\n# I'll replace the line that sets the empty state for records with a more explicit reset.\n\nnew_content = re.sub(\n    r\"(item\\.stash\\[caplog_records_key\\] = empty\\ndel item\\.stash\\[caplog_records_key\\])\",\n    r\"item.stash[caplog_records_key] = {when: [] for when in item.stash.get(caplog_records_key, {})}\\ndel item.stash[caplog_records_key]\",\n    content,\n    count=1\n)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i '/item.stash[caplog_records_key] = empty/ { :a; n; /del item.stash[caplog_records_key]/ { N; s/item.stash[caplog_records_key] = empty/item.stash[caplog_records_key] = {when: [] for when in item.stash.get(caplog_records_key, {})}/; s/del item.stash[caplog_records_key]/del item.stash[caplog_records_key]/; }' src/_pytest/logging.py",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"src/_pytest/logging.py\"\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# Target the block where state is cleaned up after the context manager exits.\n# Original lines seem to be:\n# item.stash[caplog_records_key] = empty\n# del item.stash[caplog_records_key]\n\n# We replace this with logic that resets the records dictionary for all 'when' keys.\n# We use a pattern that captures the lines to ensure we only modify the intended block.\npattern = r\"(item\\.stash\\[caplog_records_key\\] = empty\\n\\s*del item\\.stash\\[caplog_records_key\\])\"\nreplacement = r\"item.stash[caplog_records_key] = {when: [] for when in item.stash.get(caplog_records_key, {})}\\n\\s*del item.stash[caplog_records_key]\"\n\nnew_content = re.sub(pattern, replacement, content, count=1)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 10,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"src/_pytest/logging.py\"\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# Target the block where state is cleaned up after the context manager exits.\n# Original lines seem to be:\n# item.stash[caplog_records_key] = empty\n# del item.stash[caplog_records_key]\n\n# Escaping \\s in the replacement string to fix the re.PatternError.\npattern = r\"(item\\.stash\\[caplog_records_key\\] = empty\\n\\s*del item\\.stash\\[caplog_records_key\\])\"\nreplacement = r\"item.stash[caplog_records_key] = {when: [] for when in item.stash.get(caplog_records_key, {})}\\n\\s*del item.stash[caplog_records_key]\"\n\nnew_content = re.sub(pattern, replacement, content, count=1)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 11,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"src/_pytest/logging.py\"\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# Target the block where state is cleaned up after the context manager exits.\n# Original lines seem to be:\n# item.stash[caplog_records_key] = empty\n# del item.stash[caplog_records_key]\n\n# Using literal spaces and newlines instead of \\s for robustness.\npattern = r\"(item\\.stash\\[caplog_records_key\\] = empty\\n\\s*del item\\.stash\\[caplog_records_key\\])\"\nreplacement = r\"item.stash[caplog_records_key] = {when: [] for when in item.stash.get(caplog_records_key, {})}\\n del item.stash[caplog_records_key]\"\n\nnew_content = re.sub(pattern, replacement, content, count=1)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 48752,
+ "completion_tokens": 3074,
+ "context_files_written": 6,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 91.4
+}

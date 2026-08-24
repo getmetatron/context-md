@@ -1,0 +1,61 @@
+{
+ "instance_id": "sympy__sympy-12096",
+ "condition": "FILE",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"Function._eval_evalf\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat sympy/functions/special/error_functions.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport sympy\nfrom sympy.core.function import Function\n\n# Monkey patch Function._eval_evalf temporarily for testing the fix logic\n# In a real scenario, we'd patch the actual location, but here we modify the file directly.\n\n# Reading the file content to apply targeted edits\nwith open(\"sympy/functions/special/error_functions.py\", \"r\") as f:\n    content = f.read()\n\n# The changes are in the two lines calling Function._eval_evalf\n# Original lines:\n# return Function._eval_evalf(self, prec) + (I*pi)._eval_evalf(prec)\n# return Function._eval_evalf(self, prec)\n\n# Applying the fix: wrap the result of Function._eval_evalf(self, prec) in .evalf(prec)\nnew_content = content.replace(\n    \"return Function._eval_evalf(self, prec) + (I*pi)._eval_evalf(prec)\",\n    \"return Function._eval_evalf(self, prec).evalf(prec) + (I*pi).evalf(prec)\"\n).replace(\n    \"return Function._eval_evalf(self, prec)\",\n    \"return Function._eval_evalf(self, prec).evalf(prec)\"\n)\n\nwith open(\"sympy/functions/special/error_functions.py\", \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/return Function._eval_evalf(self, prec) + (I*pi)._eval_evalf(prec)/return Function._eval_evalf(self, prec).evalf(prec) + (I*pi).evalf(prec)/g' sympy/functions/special/error_functions.py\nsed -i 's/return Function._eval_evalf(self, prec)/return Function._eval_evalf(self, prec).evalf(prec)/g' sympy/functions/special/error_functions.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i 's/return Function._eval_evalf(self, prec) + (I*pi)._eval_evalf(prec)/return Function._eval_evalf(self, prec).evalf(prec) + (I*pi).evalf(prec)/g' sympy/functions/special/error_functions.py\nsed -i 's/return Function._eval_evalf(self, prec)/return Function._eval_evalf(self, prec).evalf(prec)/g' sympy/functions/special/error_functions.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sympy/functions/special/error_functions.py\"\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# Fix 1: For the line involving I*pi\ncontent = content.replace(\n    \"return Function._eval_evalf(self, prec) + (I*pi)._eval_evalf(prec)\",\n    \"return Function._eval_evalf(self, prec).evalf(prec) + (I*pi).evalf(prec)\"\n)\n\n# Fix 2: For the standalone call\ncontent = content.replace(\n    \"return Function._eval_evalf(self, prec)\",\n    \"return Function._eval_evalf(self, prec).evalf(prec)\"\n)\n\nwith open(file_path, \"w\") as f:\n    f.write(content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 22244,
+ "completion_tokens": 1344,
+ "context_files_written": 1,
+ "submitted": true,
+ "patch_bytes": 752,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 36.7
+}

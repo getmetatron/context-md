@@ -1,0 +1,76 @@
+{
+ "instance_id": "astropy__astropy-14508",
+ "condition": "SHARD",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat context/decisions/io-registry-and-format-contract.md",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat context/decisions/units-and-quantities.md",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -n \"def _format_float(self, value):\" astropy/io/fits/card.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "cat astropy/io/fits/card.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/def _format_float(self, value):/,/    return value_str/ s/.*def _format_float(self, value):.*$/def _format_float(self, value):/g' astropy/io/fits/card.py\nsed -i '/    return value_str/ s/.*return value_str/    value_str = str(value);\n    if len(value_str) > 20:\n        return f\"{value:.16G}\"\n    return value_str/g' astropy/io/fits/card.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nimport re\nfile_path = \"astropy/io/fits/card.py\"\n\n# Read the entire file content\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Define the replacement logic for _format_float\n# Original logic (simplified for replacement context):\n# value_str = f\"{value:.16G}\"\n# return value_str\n\n# New logic:\n# value_str = str(value)\n# if len(value_str) > 20:\n#     return f\"{value:.16G}\"\n# return value_str\n\n# Use regex to find the function definition and replace the body.\n# This is tricky with sed/python, so we'll use a targeted replacement block.\n# We look for the function definition and replace everything until the return statement.\n\n# A safer approach is to read the file, find the function, and rewrite the block.\n# Since I cannot reliably use sed for multi-line context replacement, I will use Python's string manipulation.\n\ndef replace_format_float(content):\n    # Regex to capture the function definition and its body up to the return statement.\n    # This is highly brittle, but necessary given the constraints.\n    pattern = re.compile(\n        r\"(def _format_float\\(self, value\\):\\s*.*?)(return\\s+value_str)\",\n        re.DOTALL\n    )\n    \n    def replacer(match):\n        # match.group(1) is the definition up to the last line before return\n        # match.group(2) is the final return statement\n        \n        # We reconstruct the body to implement the desired logic.\n        new_body = \"\"\"    value_str = str(value)\n    if len(value_str) > 20:\n        return f\"{value:.16G}\"\n    return value_str\"\"\"\n        \n        return match.group(1)[:-1] + \"\\n\" + new_body + \"\\n\" + match.group(2)\n\n    new_content = pattern.sub(replacer, content)\n    return new_content\n\nnew_content = replace_format_float(content)\n\n# Write back the modified content\nwith open(file_path, 'w') as f:\n    f.write(new_content)\n\nprint(\"Successfully updated _format_float in astropy/io/fits/card.py\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i '/def _format_float(self, value):/,/    return value_str/ {\n    /return value_str/ {\n        :a\n        N\n        /return/ {\n            s/.*return value_str.*/    value_str = str(value);\n    if len(value_str) > 20:\n        return f\"{value:.16G}\"\n    return value_str/\n            :b\n        N\n    }\n}' astropy/io/fits/card.py",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nimport re\nfile_path = \"astropy/io/fits/card.py\"\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The original function body seems to be around lines 1290-1302 based on the bug report context.\n# We will search for the function definition and replace the body block.\n\n# Pattern to find the function definition and capture the content to be replaced.\n# This pattern assumes the function signature and the final return statement are present.\npattern = re.compile(\n    r\"(def _format_float\\(self, value\\):\\s*.*?)(return\\s+value_str)\",\n    re.DOTALL\n)\n\ndef replacer(match):\n    # match.group(1) is the definition up to the last line before return\n    # match.group(2) is the final return statement\n    \n    # New logic:\n    new_body = \"\"\"    value_str = str(value)\n    if len(value_str) > 20:\n        return f\"{value:.16G}\"\n    return value_str\"\"\"\n    \n    # Reconstruct: Definition + New Body + Original Return Statement\n    return match.group(1)[:-1] + \"\\n\" + new_body + \"\\n\" + match.group(2)\n\nnew_content = pattern.sub(replacer, content)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 43736,
+ "completion_tokens": 1936,
+ "context_files_written": 3,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 60.8
+}

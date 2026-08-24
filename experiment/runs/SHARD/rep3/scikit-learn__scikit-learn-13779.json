@@ -1,0 +1,61 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-13779",
+ "condition": "SHARD",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"VotingClassifier\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "ls sklearn/ensemble/",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"sample_weight\" sklearn/ensemble/voting.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '/return super\\(\\)\\.fit\\(X, y, sample_weight\\)/ s/return super\\(\\)\\.fit\\(X, y, sample_weight\\)/if any(e is None for _, e in self.estimators_):\\n    raise AttributeError(\\'Cannot fit with None estimators.\\')\\nreturn super()\\.fit(X, y, sample_weight)/g' sklearn/ensemble/voting.py",
+   "exit": 2
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/return super\\(\\)\\.fit\\(X, y, sample_weight\\)/ {\n    :a\n    N\n    /return super\\(\\)\\.fit\\(X, y, sample_weight\\)/ {\n        s/return super\\(\\)\\.fit\\(X, y, sample_weight\\)/if any(e is None for _, e in self.estimators_):\\n    raise AttributeError(\\'Cannot fit with None estimators.\\')\\nreturn super()\\.fit(X, y, sample_weight)/\n    }\n    /return super\\(\\)\\.fit\\(X, y, sample_weight\\)/ {\n        N\n        /return super\\(\\)\\.fit\\(X, y, sample_weight\\)/ {\n            s/return super\\(\\)\\.fit\\(X, y, sample_weight\\)/if any(e is None for _, e in self.estimators_):\\n    raise AttributeError(\\'Cannot fit with None estimators.\\')\\nreturn super()\\.fit(X, y, sample_weight)/\n        }\n    }\n}' sklearn/ensemble/voting.py",
+   "exit": 2
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sklearn/ensemble/voting.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The target logic is in the fit method, specifically where sample_weight is handled.\n# We look for the line that returns super().fit(X, y, sample_weight)\n# We will prepend the check: if any(e is None for _, e in self.estimators_): raise AttributeError(...)\n\n# Using regex to find the block and inject the check before the return statement.\n# This regex assumes the structure is clean enough around the return statement.\n# We look for the return statement and replace it with the check + the original return.\nimport re\nnew_content = re.sub(\n    r\"(return super\\(\\)\\.fit\\(X, y, sample_weight\\))\",\n    r\"if any(e is None for _, e in self.estimators_):\\n    raise AttributeError(\\'Cannot fit with None estimators.\\')\\n\" + r\"\\1\",\n    content,\n    count=1\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 21868,
+ "completion_tokens": 2215,
+ "context_files_written": 3,
+ "submitted": true,
+ "patch_bytes": 581,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 91.5
+}

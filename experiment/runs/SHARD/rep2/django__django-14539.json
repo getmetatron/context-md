@@ -1,0 +1,71 @@
+{
+ "instance_id": "django__django-14539",
+ "condition": "SHARD",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"urlize(\" . | head -n 5",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat tests/template_tests/filter_tests/test_urlize.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"from django.template.defaultfilters import urlize\" .",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "cat django/template/defaultfilters.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -r \"urlize\" django/utils/html.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nimport re\nfrom urllib.parse import quote\n\ndef urlize(text, trim_url_limit=None, nofollow=False, autoescape=False):\n    \"\"\"\n    Converts a string to a URL-friendly format, wrapping it in an <a> tag.\n\n    :param text: The string to urlize.\n    :param trim_url_limit: If provided, only the first N characters of the\n        URL will be used for the href attribute.\n    :param nofollow: If True, adds rel=\"nofollow\" to the <a> tag.\n    :param autoescape: If True, escapes the text content of the <a> tag.\n    :return: The HTML string representation of the URL.\n    \"\"\"\n    if not text:\n        return \"\"\n\n    # Check if the text already looks like a URL (heuristic check)\n    # This is a simplified check; real implementation is more complex.\n    url_regex = re.compile(r'^(?:[a-zA-Z]:\\\\/|www\\.|[a-zA-Z0-9]+\\.[a-zA-Z]{2,})')\n    is_url = url_regex.match(text)\n\n    # Handle HTML escaped strings: if the input contains HTML entities,\n    # we should process it carefully to avoid double encoding/stripping.\n    # The core issue seems to be that trailing text after the URL part\n    # is being incorrectly processed or stripped.\n\n    # We will use the original logic structure but ensure that if autoescape\n    # is False, we don't strip trailing text that might be punctuation.\n\n    # The original logic likely uses quote() which handles basic encoding.\n    # The fix is to ensure that if the text is not purely a URL, we treat\n    # the non-URL part as literal text that should follow the link structure.\n\n    # Replicating the structure while fixing the trailing text issue:\n    if is_url:\n        href = quote(text)\n        html = f'<a href=\"{href}\" rel=\"nofollow\">{''.join(text.split())}</a>'\n        if nofollow:\n            html = html.replace('rel=\"nofollow\"', 'rel=\"nofollow\"') # Keep it simple for now\n        if autoescape:\n            # If autoescape is on, we rely on template engine escaping,\n            # but for this function, we assume we are generating raw HTML.\n            pass\n        return html\n    else:\n        # If it's not a clear URL, we just return the text, potentially escaped\n        # if autoescape is on, but since this function is for generating links,\n        # we return the text as is if it's not a link.\n        return text\n\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nimport re\nfrom urllib.parse import quote\n\ndef urlize(text, trim_url_limit=None, nofollow=False, autoescape=False):\n    \"\"\"\n    Converts a string to a URL-friendly format, wrapping it in an <a> tag.\n\n    :param text: The string to urlize.\n    :param trim_url_limit: If provided, only the first N characters of the\n        URL will be used for the href attribute.\n    :param nofollow: If True, adds rel=\"nofollow\" to the <a> tag.\n    :param autoescape: If True, escapes the text content of the <a> tag.\n    :return: The HTML string representation of the URL.\n    \"\"\"\n    if not text:\n        return \"\"\n\n    # Heuristic check for URL start\n    url_regex = re.compile(r'^(?:[a-zA-Z]:\\\\/|www\\.|[a-zA-Z0-9]+\\.[a-zA-Z]{2,})')\n    is_url = url_regex.match(text)\n\n    if is_url:\n        href = quote(text)\n        # The original logic likely used text.split() which strips punctuation.\n        # We must use the original text for the visible part, but ensure\n        # the href uses the quoted version.\n        # To fix the trailing punctuation, we use the original text for the visible part.\n        html = f'<a href=\"{href}\" rel=\"nofollow\">{text}</a>'\n        if nofollow:\n            html = html.replace('rel=\"nofollow\"', 'rel=\"nofollow\"')\n        return html\n    else:\n        # If it's not a clear URL, return the text as is, respecting autoescape if needed.\n        return text\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 32871,
+ "completion_tokens": 2824,
+ "context_files_written": 6,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 78.2
+}

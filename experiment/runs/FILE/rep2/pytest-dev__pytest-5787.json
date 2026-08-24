@@ -1,0 +1,81 @@
+{
+ "instance_id": "pytest-dev__pytest-5787",
+ "condition": "FILE",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"chained exception\" src/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat src/_pytest/_code/code.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"format_exception_only\" src/_pytest/",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport re\nimport sys\nimport traceback\nfrom inspect import CO_VARARGS\nfrom inspect import CO_VARKEYWORDS\nfrom traceback import format_exception_only\nfrom types import TracebackType\nfrom typing import Generic\nfrom typing import Optional\nfrom typing import Pattern\nfrom typing import Tuple\nfrom typing import TypeVar\nfrom typing import Union\nfrom weakref import ref\n\nimport attr\nimport pluggy\nimport py\n\nimport _pytest\nfrom _pytest._io.saferepr import safeformat\nfrom _pytest._io.saferepr import saferepr\n\nif False:  # TYPE_CHECKING\n    from typing import Type\n\n\nclass Code:\n    \"\"\" wrapper around Python code objects \"\"\"\n\n    def __init__(self, rawcode):\n        if not hasattr(rawcode, \"co_filename\"):\n            rawcode = getrawcode(rawcode)\n        try:\n            self.filename = rawcode.co_filename\n            self.firstlineno = rawcode.co_firstlineno - 1\n            self.name = rawcode.co_name\n        except AttributeError:\n            raise TypeError(\"not a code object: {!r}\".format(rawcode))\n        self.raw = rawcode\n\n    def __eq__(self, other):\n        return self.raw == other.raw\n\n    # Ignore type because of https://github.com/python/mypy/issues/4266.\n    __hash__ = None  # type: ignore\n\n    def __ne__(self, other):\n        return not self == other\n\n    @property\n    def path(self):\n        \"\"\" return a path object pointing to source code (note that it\n        might not point to an actually existing file). \"\"\"\n        try:\n            p = py.path.local(self.raw.co_filename)\n            # maybe don't try this checking\n            if not p.check():\n                raise OSError(\"py.path check failed.\")\n        except OSError:\n            # XXX maybe try harder like the weird logic\n            # in the standard lib [linecache.updatecache] does?\n            p = self.raw.co_filename\n\n        return p\n\n    @property\n    def fullsource(self):\n        \"\"\" return a _pytest._code.Source object for the full source file of the code\n        \"\"\"\n        from _pytest._code import source\n\n        full, _ = source.findsource(self.raw)\n        return full\n\n    def source(self):\n        \"\"\" return a _pytest._code.Source object for the code object's source only\n        \"\"\"\n        # return source only for that part of code\n        import _pytest._code\n\n        return _pytest._code.Source(self.raw)\n\n    def getargs(self, var=False):\n        \"\"\" return a tuple with the argument names for the code object\n\n            if 'var' is set True also return the names of the variable and\n            keyword arguments when present\n        \"\"\"\n        # handfull shortcut for getting args\n        raw = self.raw\n        argcount = raw.co_argcount\n        if var:\n            argcount += raw.co_flags & CO_VARARGS\n            argcount += raw.co_flags & CO_VARKEYWORDS\n        return raw.co_varnames[:argcount]\n\n\nclass Frame:\n    \"\"\"Wrapper around a Python frame holding f_locals and f_globals\n    in which expressions can be evaluated.\"\"\"\n\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "cat src/_pytest/_code/code.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nimport inspect\nimport re\nimport sys\nimport traceback\nfrom inspect import CO_VARARGS\nfrom inspect import CO_VARKEYWORDS\nfrom traceback import format_exception_only\nfrom types import TracebackType\nfrom typing import Generic\nfrom typing import Optional\nfrom typing import Pattern\nfrom typing import Tuple\nfrom typing import TypeVar\nfrom typing import Union\nfrom weakref import ref\n\nimport attr\nimport pluggy\nimport py\n\nimport _pytest\nfrom _pytest._io.saferepr import safeformat\nfrom _pytest._io.saferepr import saferepr\n\nif False:  # TYPE_CHECKING\n    from typing import Type\n\n\nclass Code:\n    \"\"\" wrapper around Python code objects \"\"\"\n\n    def __init__(self, rawcode):\n        if not hasattr(rawcode, \"co_filename\"):\n            rawcode = getrawcode(rawcode)\n        try:\n            self.filename = rawcode.co_filename\n            self.firstlineno = rawcode.co_firstlineno - 1\n            self.name = rawcode.co_name\n        except AttributeError:\n            raise TypeError(\"not a code object: {!r}\".format(rawcode))\n        self.raw = rawcode\n\n    def __eq__(self, other):\n        return self.raw == other.raw\n\n    # Ignore type because of https://github.com/python/mypy/issues/4266.\n    __hash__ = None  # type: ignore\n\n    def __ne__(self, other):\n        return not self == other\n\n    @property\n    def path(self):\n        \"\"\" return a path object pointing to source code (note that it\n        might not point to an actually existing file). \"\"\"\n        try:\n            p = py.path.local(self.raw.co_filename)\n            # maybe don't try this checking\n            if not p.check():\n                raise OSError(\"py.path check failed.\")\n        except OSError:\n            # XXX maybe try harder like the weird logic\n            # in the standard lib [linecache.updatecache] does?\n            p = self.raw.co_filename\n\n        return p\n\n    @property\n    def fullsource(self):\n        \"\"\" return a _pytest._code.Source object for the full source file of the code\n        \"\"\"\n        from _pytest._code import source\n\n        full, _ = source.findsource(self.raw)\n        return full\n\n    def source(self):\n        \"\"\" return a _pytest._code.Source object for the code object's source only\n        \"\"\"\n        # return source only for that part of code\n        import _pytest._code\n\n        return _pytest._code.Source(self.raw)\n\n    def getargs(self, var=False):\n        \"\"\" return a tuple with the argument names for the code object\n\n            if 'var' is set True also return the names of the variable and\n            keyword arguments when present\n        \"\"\"\n        # handfull shortcut for getting args\n        raw = self.raw\n        argcount = raw.co_argcount\n        if var:\n            argcount += raw.co_flags & CO_VARARGS\n            argcount += raw.co_flags & CO_VARKEYWORDS\n        return raw.co_varnames[:argcount]\n\n\nclass Frame:\n    \"\"\"Wrapper around a Python frame holding f_locals and f_globals\n    in which expressions can be evaluated.\"\"\"\n\n    def __init__(self, frame):\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i 's/from traceback import format_exception_only/from traceback import format_exception/' src/_pytest/_code/code.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"src/_pytest/_code/code.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\nnew_content = content.replace(\"from traceback import format_exception_only\", \"from traceback import format_exception\")\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "grep -r \"format_exception_only\" src/_pytest/_code/code.py",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"src/_pytest/_code/code.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Replace the specific line call\nnew_content = content.replace(\"lines = format_exception_only(self.type, self.value)\", \"lines = traceback.format_exception(self.type, self.value, self.raw.tb)\")\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 57203,
+ "completion_tokens": 3476,
+ "context_files_written": 1,
+ "submitted": true,
+ "patch_bytes": 866,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 101.8
+}

@@ -1,0 +1,71 @@
+{
+ "instance_id": "astropy__astropy-14598",
+ "condition": "FILE",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"astropy.io.fits.Card\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"astropy.io.fits\" .",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "ls -R astropy/io/fits/",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "cat astropy/io/fits/card.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i 's|r\"\\'(?P<strg>([ -~]+?|\\'\\'|) *?)\\'(?=$|/| )\"|r\"\\'(?P<strg>([ -~]+?|\\'\\'|.*?) *?)\\'(?=$|/| )\"|g' astropy/io/fits/card.py",
+   "exit": 2
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nimport re\nfile_path = \"astropy/io/fits/card.py\"\noriginal_regex = r\"\\'(?P<strg>([ -~]+?|\\'\\'|) *?)\\'(?=$|/| )\"\nnew_regex = r\"\\'(?P<strg>([ -~]+?|\\'\\'|.*?) *?)\\'(?=$|/| )\"\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Use a function replacement to handle the regex substitution safely\ndef replace_regex(match):\n    return match.group(0).replace(original_regex, new_regex)\n\n# Since the regex is embedded in a string assignment, we need to find the line\n# and replace the string literal content.\n# We look for the line defining _strg and replace the content inside the quotes.\n# This is brittle, but necessary given the structure.\n\n# A safer approach is to read the file, find the line, and rewrite it.\nlines = []\nin_target_block = False\nfor line in content.splitlines():\n    if \"r\\\"\\'(?P<strg>([ -~]+?|\\'\\'|) *?)\\'(?=$|/| )\\\"\" in line:\n        lines.append(line.replace(original_regex, new_regex))\n        in_target_block = True\n    else:\n        lines.append(line)\n\nnew_content = \"\\n\".join(lines)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 -m pytest astropy.io.fits.tests.test_core",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 astropy/io/fits/tests/test_core.py",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 44978,
+ "completion_tokens": 1435,
+ "context_files_written": 1,
+ "submitted": true,
+ "patch_bytes": 408,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 54.8
+}

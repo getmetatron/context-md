@@ -1,0 +1,76 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9229",
+ "condition": "FILE",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"docstring\" sphinx/ext/autodoc/typehints.py",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"docstring\" sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat sphinx/ext/autodoc/typehints.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport re\nfrom collections import OrderedDict\nfrom typing import Any, Dict, Iterable, Set, cast\n\nfrom docutils import nodes\nfrom docutils.nodes import Element\n\nfrom sphinx import addnodes\nfrom sphinx.application import Sphinx\nfrom sphinx.util import inspect, typing\n\n\ndef record_typehints(app: Sphinx, objtype: str, name: str, obj: Any,\n                     options: Dict, args: str, retann: str) -> None:\n    \"\"\"Record type hints to env object.\"\"\"\n    try:\n        if callable(obj):\n            annotations = app.env.temp_data.setdefault('annotations', {})\n            annotation = annotations.setdefault(name, OrderedDict())\n            sig = inspect.signature(obj, type_aliases=app.config.autodoc_type_aliases)\n            for param in sig.parameters.values():\n                if param.annotation is not param.empty:\n                    annotation[param.name] = typing.stringify(param.annotation)\n            if sig.return_annotation is not sig.empty:\n                annotation['return'] = typing.stringify(sig.return_annotation)\n    except (TypeError, ValueError):\n        pass\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport re\nfrom collections import OrderedDict\nfrom typing import Any, Dict, Iterable, Set, cast\n\nfrom docutils import nodes\nfrom docutils.nodes import Element\n\nfrom sphinx import addnodes\nfrom sphinx.application import Sphinx\nfrom sphinx.util import inspect, typing\n\n\ndef record_typehints(app: Sphinx, objtype: str, name: str, obj: Any,\n                     options: Dict, args: str, retann: str) -> None:\n    \"\"\"Record type hints to env object.\"\"\"\n    try:\n        if callable(obj):\n            annotations = app.env.temp_data.setdefault('annotations', {})\n            annotation = annotations.setdefault(name, OrderedDict())\n            sig = inspect.signature(obj, type_aliases=app.config.autodoc_type_aliases)\n            for param in sig.parameters.values():\n                if param.annotation is not param.empty:\n                    annotation[param.name] = typing.stringify(param.annotation)\n            if sig.return_annotation is not sig.empty:\n                annotation['return'] = typing.stringify(sig.return_annotation)\n    except (TypeError, ValueError):\n        pass\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\ndef record_typehints(app: Sphinx, objtype: str, name: str, obj: Any,\n                     options: Dict, args: str, retann: str) -> None:\n    \"\"\"Record type hints to env object.\"\"\"\n    try:\n        if callable(obj):\n            annotations = app.env.temp_data.setdefault('annotations', {})\n            annotation = annotations.setdefault(name, OrderedDict())\n            sig = inspect.signature(obj, type_aliases=app.config.autodoc_type_aliases)\n            \n            # Check for docstring on the object itself, which might be an alias definition\n            docstring = getattr(obj, '__doc__', None)\n            if docstring:\n                annotation['__doc__'] = docstring\n                \n            for param in sig.parameters.values():\n                if param.annotation is not param.empty:\n                    annotation[param.name] = typing.stringify(param.annotation)\n            if sig.return_annotation is not sig.empty:\n                annotation['return'] = typing.stringify(sig.return_annotation)\n    except (TypeError, ValueError):\n        pass\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i '/def record_typehints(app: Sphinx, objtype: str, name: str, obj: Any,/,/    except (TypeError, ValueError):/ s/            for param in sig.parameters.values():/            # Capture docstring if available on the object itself\n            docstring = getattr(obj, '__doc__', None)\n            if docstring:\n                annotation['__doc__'] = docstring\n            for param in sig.parameters.values():/'",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\ndef record_typehints(app: Sphinx, objtype: str, name: str, obj: Any,\n                     options: Dict, args: str, retann: str) -> None:\n    \"\"\"Record type hints to env object.\"\"\"\n    try:\n        if callable(obj):\n            annotations = app.env.temp_data.setdefault('annotations', {})\n            annotation = annotations.setdefault(name, OrderedDict())\n            sig = inspect.signature(obj, type_aliases=app.config.autodoc_type_aliases)\n            # --- START OF CHANGE ---\n            docstring = getattr(obj, '__doc__', None)\n            if docstring:\n                annotation['__doc__'] = docstring\n            # --- END OF CHANGE ---\n            for param in sig.parameters.values():\n                if param.annotation is not param.empty:\n                    annotation[param.name] = typing.stringify(param.annotation)\n            if sig.return_annotation is not sig.empty:\n                annotation['return'] = typing.stringify(sig.return_annotation)\n    except (TypeError, ValueError):\n        pass\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 52571,
+ "completion_tokens": 2328,
+ "context_files_written": 1,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 76.2
+}

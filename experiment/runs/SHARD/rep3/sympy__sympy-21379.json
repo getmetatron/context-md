@@ -1,0 +1,76 @@
+{
+ "instance_id": "sympy__sympy-21379",
+ "condition": "SHARD",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"PolynomialError\" src/sympy/core/eval.py",
+   "exit": 2
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"PolynomialError\" .",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat sympy/core/exprtools.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -r \"Piecewise\" .",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "cat sympy/core/tests/test_subs.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfrom sympy import (\n    Symbol, Wild, sin, cos, exp, sqrt, pi, Function, Derivative,\n    Integer, Eq, symbols, Add, I, Float, log, Rational,\n    Lambda, atan2, cse, cot, tan, S, Tuple, Basic, Dict,\n    Piecewise, oo, Mul, factor, nsimplify, zoo, Subs, RootOf,\n    AccumBounds, Matrix, zeros, ZeroMatrix\n)\nfrom sympy.core.basic import _aresame\nfrom sympy.testing.pytest import XFAIL\nfrom sympy.abc import a, x, y, z, t\n\ndef test_subs():\n    n3 = Rational(3)\n    e = x\n    e = e.subs(x, n3)\n    assert e == Rational(3)\n\n    e = 2*x\n    assert e == 2*x\n    e = e.subs(x, n3)\n    assert e == Rational(6)\n\n\ndef test_subs_Matrix():\n    z = zeros(2)\n    z1 = ZeroMatrix(2, 2)\n    assert (x*y).subs({x:z, y:0}) in [z, z1]\n    assert (x*y).subs({y:z, x:0}) == 0\n    assert (x*y).subs({y:z, x:0}, simultaneous=True) in [z, z1]\n    assert (x + y).subs({x: z, y: z}, simultaneous=True) in [z, z1]\n    assert (x + y).subs({x: z, y: z}) in [z, z1]\n\n    # Issue #15528\n    assert Mul(Matrix([[3]]), x).subs(x, 2.0) == Matrix([[6.0]])\n    # Does not raise a TypeError, see comment on the MatAdd postprocessor\n    assert Add(Matrix([[3]]), x).subs(x, 2.0) == Add(Matrix([[3]]), 2.0)\n\ndef test_subs_AccumBounds():\n    e = x\n    e = e.subs(x, AccumBounds(1, 3))\n    assert e == AccumBounds(1, 3)\n\n    e = 2*x\n    e = e.subs(x, AccumBounds(1, 3))\n    assert e == AccumBounds(2, 6)\n\n    e = x + x**2\n    e = e.subs(x, AccumBounds(-1, 1))\n    assert e == AccumBounds(-1, 2)\n\n\ndef test_trigonometric():\n    n3 = Rational(3)\n    e = (sin(x)**2).diff(x)\n    assert e == 2*sin(x)*cos(x)\n    e = e.subs(x, n3)\n    assert e == 2*cos(n3)*sin(n3)\n\n    e = (sin(x)**2).diff(x)\n    assert e == 2*sin(x)*cos(x)\n    e = e.subs(sin(x), cos(x))\n    assert e == 2*cos(x)**2\n\n    assert exp(pi).subs(exp, sin) == 0\n    assert cos(exp(pi)).subs(exp, sin) == 1\n\n    i = Symbol('i', integer=True)\n    zoo = S.ComplexInfinity\n    assert tan(x).subs(x, pi/2) is zoo\n    assert cot(x).subs(x, pi) is zoo\n    assert cot(i*x).subs(x, pi) is zoo\n    assert tan(i*x).subs(x, pi/2) == tan(i*pi/2)\n    assert tan(i*x).subs(x, pi/2).subs(i, 1) is zoo\n    o = Symbol('o', odd=True)\n    assert tan(o*x).subs(x, pi/2) == tan(o*pi/2)\n\ndef test_piecewise_subs():\n    # Mimics the user's scenario: Piecewise with real symbols and substitution\n    x_sym, y_sym, z_sym = symbols('x y z', real=True)\n    \n    # Original expression structure: exp(sinh(Piecewise((x, y > x), (y, True)) / z))\n    # We simplify the structure for testing subs:\n    # Let's use a simpler Piecewise that fails subs when real=True is active.\n    # The failure is likely due to subs triggering polynomial evaluation on the condition.\n    \n    # Test case: subs on Piecewise with real symbols\n    p = Piecewise((x_sym, x_sym > 0), (y_sym, True))\n    \n    # Substitute x_sym with a constant that forces evaluation path\n    # We use 1.0 to simulate the float casting mentioned in the prompt.\n    result = p.subs({x_sym: 1.0})\n    \n    # We expect the result to be a Piecewise where the first branch is evaluated\n    # and the second branch remains symbolic or evaluated correctly.\n    # Since the original fails with PolynomialError, we assert it doesn't crash\n    # and that the substitution happens correctly for the first branch.\n    assert isinstance(result, Piecewise)\n    \n    # Check if the first branch was substituted correctly\n    assert result.args[0].subs({x_sym: 1.0}) == 1.0\n    \n    # Check if the second branch was substituted correctly (if it depends on x_sym)\n    # In this simple case, the second branch is just y_sym, which should be unchanged.\n    assert result.args[1].subs({x_sym: 1.0}) == y_sym\n\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '/def test_subs_AccumBounds():/,/def test_trigonometric():/a\\\ndef test_piecewise_subs():\\\n    # Mimics the user's scenario: Piecewise with real symbols and substitution\\\n    x_sym, y_sym, z_sym = symbols(\\'x y z\\', real=True)\\\n    \\\n    # Test case: subs on Piecewise with real symbols\\\n    p = Piecewise((x_sym, x_sym > 0), (y_sym, True))\\\n    \\\n    # Substitute x_sym with a constant that forces evaluation path\\\n    result = p.subs({x_sym: 1.0})\\\n    \\\n    # We expect the result to be a Piecewise where the first branch is evaluated\\\n    assert isinstance(result, Piecewise)\\\n    \\\n    # Check if the first branch was substituted correctly\\\n    assert result.args[0].subs({x_sym: 1.0}) == 1.0\\\n    \\\n    # Check if the second branch was substituted correctly\\\n    assert result.args[1].subs({x_sym: 1.0}) == y_sym' sympy/core/tests/test_subs.py",
+   "exit": 2
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i '/def test_trigonometric():/,/def test_powers():/a\\\ndef test_piecewise_subs():\\\n    # Test case mimicking failure: subs on Piecewise with real symbols\\\n    x_sym, y_sym = symbols(\\'x y\\', real=True)\\\n    p = Piecewise((x_sym, x_sym > 0), (y_sym, True))\\\n    \\\n    # Substitute x_sym with a constant that forces evaluation path\\\n    result = p.subs({x_sym: 1.0})\\\n    \\\n    # Assertions to ensure substitution works without PolynomialError\\\n    assert isinstance(result, Piecewise)\\\n    assert result.args[0].subs({x_sym: 1.0}) == 1.0\\\n    assert result.args[1].subs({x_sym: 1.0}) == y_sym' sympy/core/tests/test_subs.py",
+   "exit": 2
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sympy/core/tests/test_subs.py\"\ntest_case = \"\"\"\ndef test_piecewise_subs():\n    # Test case mimicking failure: subs on Piecewise with real symbols\n    x_sym, y_sym = symbols('x y', real=True)\n    p = Piecewise((x_sym, x_sym > 0), (y_sym, True))\n    \n    # Substitute x_sym with a constant that forces evaluation path\n    result = p.subs({x_sym: 1.0})\n    \n    # Assertions to ensure substitution works without PolynomialError\n    assert isinstance(result, Piecewise)\n    assert result.args[0].subs({x_sym: 1.0}) == 1.0\n    assert result.args[1].subs({x_sym: 1.0}) == y_sym\n\"\"\"\nwith open(file_path, \"a\") as f:\n    f.write(test_case)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 55771,
+ "completion_tokens": 3173,
+ "context_files_written": 3,
+ "submitted": true,
+ "patch_bytes": 882,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 103.5
+}

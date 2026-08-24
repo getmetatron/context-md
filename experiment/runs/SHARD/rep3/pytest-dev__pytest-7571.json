@@ -1,0 +1,71 @@
+{
+ "instance_id": "pytest-dev__pytest-7571",
+ "condition": "SHARD",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"caplog\" src/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat src/_pytest/logging.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -A 10 \"caplog\" src/_pytest/logging.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '/def caplog(request: FixtureRequest) -> Generator[LogCaptureFixture, None, None]:/,/    result._finalize()/ s/yield result/yield result/",
+   "exit": 2
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport logging\nfrom typing import Optional\n\n# ... (rest of imports)\n\ndef caplog(request: FixtureRequest) -> Generator[LogCaptureFixture, None, None]:\n    \"\"\"Access and control log capturing.\n\n    Captured logs are available through the following properties/methods::\n\n    * caplog.messages        -> list of format-interpolated log messages\n    * caplog.text            -> string containing formatted log output\n    * caplog.records         -> list of logging.LogRecord instances\n    * caplog.record_tuples   -> list of (logger_name, level, message) tuples\n    * caplog.clear()         -> clear captured records and formatted log output string\n    \"\"\"\n    result = LogCaptureFixture(request.node)\n    original_level = logging.getLogger().getEffectiveLevel()\n    \n    try:\n        yield result\n    finally:\n        logging.getLogger().setLevel(original_level)\n        result._finalize()\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '/def caplog(request: FixtureRequest) -> Generator[LogCaptureFixture, None, None]:/,/    result._finalize()/ s/yield result/    original_level = logging.getLogger().getEffectiveLevel()\n    try:\n        yield result\n    finally:\n        logging.getLogger().setLevel(original_level)\n        result._finalize()/g' src/_pytest/logging.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"src/_pytest/logging.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Inject logic around yield result in caplog function\nnew_content = content.replace(\n    \"    yield result\\n    result._finalize()\",\n    \"\"\"    original_level = logging.getLogger().getEffectiveLevel()\n    try:\n        yield result\n    finally:\n        logging.getLogger().setLevel(original_level)\n        result._finalize()\"\"\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 32139,
+ "completion_tokens": 1427,
+ "context_files_written": 6,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 720,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 58.5
+}

@@ -1,0 +1,66 @@
+{
+ "instance_id": "django__django-11790",
+ "condition": "SHARD",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"AuthenticationForm\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "ls -R django/contrib/auth/",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat django/contrib/auth/forms.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport unicodedata\n\nfrom django import forms\nfrom django.contrib.auth import (\n    authenticate, get_user_model, password_validation,\n)\nfrom django.contrib.auth.hashers import (\n    UNUSABLE_PASSWORD_PREFIX, identify_hasher,\n)\nfrom django.contrib.auth.models import User\nfrom django.contrib.auth.tokens import default_token_generator\nfrom django.contrib.sites.shortcuts import get_current_site\nfrom django.core.mail import EmailMultiAlternatives\nfrom django.template import loader\nfrom django.utils.encoding import force_bytes\nfrom django.utils.http import urlsafe_base64_encode\nfrom django.utils.text import capfirst\nfrom django.utils.translation import gettext, gettext_lazy as _\n\nUserModel = get_user_model()\n\n\nclass ReadOnlyPasswordHashWidget(forms.Widget):\n    template_name = 'auth/widgets/read_only_password_hash.html'\n    read_only = True\n\n    def get_context(self, name, value, attrs):\n        context = super().get_context(name, value, attrs)\n        summary = []\n        if not value or value.startswith(UNUSABLE_PASSWORD_PREFIX):\n            summary.append({'label': gettext(\"No password set.\")})\n        else:\n            try:\n                hasher = identify_hasher(value)\n            except ValueError:\n                summary.append({'label': gettext(\"Invalid password format or unknown hashing algorithm.\")})\n            else:\n                for key, value_ in hasher.safe_summary(value).items():\n                    summary.append({'label': gettext(key), 'value': value_})\n        context['summary'] = summary\n        return context\n\n\nclass ReadOnlyPasswordHashField(forms.Field):\n    widget = ReadOnlyPasswordHashWidget\n\n    def __init__(self, *args, **kwargs):\n        kwargs.setdefault(\"required\", False)\n        super().__init__(*args, **kwargs)\n\n    def bound_data(self, data, initial):\n        # Always return initial because the widget doesn't\n        # render an input field.\n        return initial\n\n    def has_changed(self, initial, data):\n        return False\n\n\nclass UsernameField(forms.CharField):\n    def to_python(self, value):\n        return unicodedata.normalize('NFKC', super().to_python(value))\n\n    def widget_attrs(self, widget):\n        return {\n            **super().widget_attrs(widget),\n            'autocapitalize': 'none',\n            'autocomplete': 'username',\n            'maxlength': '255',\n        }\n\n\nclass UserCreationForm(forms.ModelForm):\n    \"\"\"\n    A form that creates a user, with no privileges, from the given username and\n    password.\n    \"\"\"\n    error_messages = {\n        'password_mismatch': _('The two password fields didn\u2019t match.'),\n    }\n    password1 = forms.CharField(\n        label=_(\"Password\"),\n        strip=False,\n        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),\n        help_text=password_validation.password_validators_help_text_html(),\n    )\n    password2 = forms.CharField(\n        label=_(\"Password confirmation\"),\n        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),\n        strip=False,\n        help_text=password_validation.password_validators_help_text_html(),\n    )\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i 's/            **super().widget_attrs(widget),/            **super().widget_attrs(widget),\n            \\'maxlength\\': \\'255\\',/' django/contrib/auth/forms.py",
+   "exit": 2
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '/class UsernameField(forms.CharField):/,/        return {/ s/            \\'autocomplete\\': \\'username\\',\\/\\            \\'autocomplete\\': \\'username\\',\\n            \\'maxlength\\': \\'255\\',\\/' django/contrib/auth/forms.py",
+   "exit": 2
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/contrib/auth/forms.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target the widget_attrs method in UsernameField\n# We are looking for the return statement block and appending the attribute.\nnew_content = content.replace(\n    \"            'autocomplete': 'username',\",\n    \"            'autocomplete': 'username',\\n            'maxlength': '255',\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 34607,
+ "completion_tokens": 1754,
+ "context_files_written": 6,
+ "submitted": true,
+ "patch_bytes": 408,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 56.6
+}

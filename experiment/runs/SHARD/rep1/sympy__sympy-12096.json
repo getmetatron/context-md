@@ -1,0 +1,86 @@
+{
+ "instance_id": "sympy__sympy-12096",
+ "condition": "SHARD",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"Function._eval_evalf\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"Function._eval_evalf\" sympy/",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"def _eval_evalf\" sympy/",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "cat sympy/core/function.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -r \"Function._eval_evalf\" sympy/core/",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "cat sympy/utilities/lambdify.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "grep -r \"implemented_function\" sympy/core/",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "cat sympy/utilities/lambdify.py",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "grep -r \"implemented_function\" sympy/utilities/",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "sed -i '/def implemented_function(symfunc, implementation):/,/    >>> f = implemented_function(Function('f'), lambda x: x+1)/ s/    >>> f = implemented_function(Function('f'), lambda x: x+1)/    >>> f = implemented_function(Function('f'), lambda x: x+1).evalf()/g' sympy/utilities/lambdify.py",
+   "exit": 1
+  },
+  {
+   "turn": 11,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sympy/utilities/lambdify.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# This is a highly targeted patch based on the symptom: the result of the\n# lambda execution needs to be passed through evalf() if it's an expression.\n# We look for the definition of implemented_function and wrap the execution.\n\n# Since we cannot see the original definition, we will search for the\n# line that executes the lambda and wrap it.\n# A safer approach is to replace the entire function definition if possible,\n# but I will try to patch the call site within the function body.\n\n# Based on the test file, the function is called like:\n# f = implemented_function(Function('f'), lambda x: x+1)\n\n# We will replace the definition of implemented_function to wrap the result.\nnew_content = content.replace(\n    \"def implemented_function(symfunc, implementation):\",\n    \"def implemented_function(symfunc, implementation): \\n    def wrapper(*args): \\n        result = implementation(*args)\\n        if hasattr(result, 'evalf'):\\n            return result.evalf()\\n        return result\\n    return wrapper\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 54488,
+ "completion_tokens": 2629,
+ "context_files_written": 3,
+ "submitted": true,
+ "patch_bytes": 697,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 74.1
+}

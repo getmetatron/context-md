@@ -1,0 +1,66 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9281",
+ "condition": "FILE",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"default\" sphinx/domains/python.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -A 5 \"node += nodes.inline('', param.default, classes=['default_value'],\" sphinx/domains/python.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -n '/node += nodes.inline('', param.default, classes=\\['default_value'\\],/p' sphinx/domains/python.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '/node += nodes.inline('', param.default, classes=\\['default_value'\\],/c\\    node += nodes.inline('', str(param.default).replace(\":\", \"\").strip(), classes=['default_value'],')' sphinx/domains/python.py",
+   "exit": 2
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i 's/node += nodes.inline('', param.default, classes=\\['default_value'\\],/node += nodes.inline('', str(param.default).split(\":\")[0].strip(), classes=['default_value'],/g' sphinx/domains/python.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i 's/param.default/str(param.default).split(\":\")[0].strip()/g' sphinx/domains/python.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sphinx/domains/python.py\"\nwith open(file_path, 'r') as f:\n    lines = f.readlines()\n\nnew_lines = []\nfor line in lines:\n    if \"param.default\" in line:\n        # Original line structure: node += nodes.inline('', param.default, classes=['default_value'],\n        # We replace 'param.default' with a placeholder that we will fix, or try to reconstruct the line.\n        # Since we cannot execute Python logic inside sed/simple string replacement,\n        # we must assume the fix is to format the default value *before* it gets passed to nodes.inline.\n        # The desired output format is likely just the name, e.g., \"ValueA\".\n        # We replace the usage of param.default with a placeholder that represents the desired string format.\n        new_line = line.replace(\"param.default\", \"str(param.default).split(':')[0].strip()\")\n        new_lines.append(new_line)\n    else:\n        new_lines.append(line)\n\nwith open(file_path, 'w') as f:\n    f.writelines(new_lines)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 23838,
+ "completion_tokens": 2334,
+ "context_files_written": 1,
+ "submitted": true,
+ "patch_bytes": 1109,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 56.2
+}

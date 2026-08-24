@@ -1,0 +1,122 @@
+{
+ "instance_id": "astropy__astropy-13453",
+ "condition": "SHARD",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "ls -F",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "ls -F astropy/io/ascii/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat astropy/io/ascii/html.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat astropy/io/ascii/core.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -r \"format=\\\"html\\\"\" astropy/io/ascii/",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -r \"format=\" astropy/io/ascii/core.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "cat astropy/io/ascii/core.py | grep -A 20 \"write\"",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "grep -r \"write(self, sp, format=\" astropy/io/ascii/core.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "cat astropy/io/ascii/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "cat astropy/io/ascii/ui.py",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "grep -r \"def write(\" astropy/io/ascii/ui.py",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "cat astropy/io/ascii/ui.py | grep -A 50 \"def write(table, output=None, format=None, Writer=None, fast_writer=True, *, \"",
+   "exit": 1
+  },
+  {
+   "turn": 12,
+   "cmd": "grep -C 10 \"def write(\" astropy/io/ascii/ui.py",
+   "exit": 0
+  },
+  {
+   "turn": 13,
+   "cmd": "python3 - <<'EOF'\nimport re\nimport os\nimport sys\nimport copy\nimport time\nimport warnings\nimport contextlib\nimport collections\nfrom io import StringIO\n\nimport numpy as np\n\nfrom . import core\nfrom . import basic\nfrom . import cds\nfrom . import mrt\nfrom . import daophot\nfrom . import ecsv\nfrom . import sextractor\nfrom . import ipac\nfrom . import latex\nfrom . import html\nfrom . import rst\nfrom . import fastbasic\nfrom . import cparser\nfrom . import fixedwidth\nfrom .docs import READ_KWARG_TYPES, WRITE_KWARG_TYPES\n\nfrom astropy.table import Table, MaskedColumn\nfrom astropy.utils.data import get_readable_fileobj\nfrom astropy.utils.exceptions import AstropyWarning\nfrom astropy.utils.misc import NOT_OVERWRITING_MSG\n\n_read_trace = []\n\n# Default setting for guess parameter in read()\n_GUESS = True\n\n\ndef _probably_html(table, maxchars=100000):\n    \"\"\"\n    Determine if ``table`` probably contains HTML content.  See PR #3693 and issue\n    #3691 for context.\n    \"\"\"\n    if not isinstance(table, str):\n        try:\n            # If table is an iterable (list of strings) then take the first\n            # maxchars of these.  Make sure this is something with random\n            # access to exclude a file-like object\n            table[0]\n            table[:1]\n            size = 0\n            for i, line in enumerate(table):\n                size += len(line)\n                if size > maxchars:\n                    table = table[:i + 1]\n                    break\n            table = os.linesep.join(table)\n        except Exception:\n            pass\n\n    if isinstance(table, str):\n        # Look for signs of an HTML table in the first maxchars characters\n        table = table[:maxchars]\n\n        # URL ending in .htm or .html\n        if re.match(r'( http[s]? | ftp | file ) :// .+ \\.htm[l]?$', table,\n                    re.IGNORECASE | re.VERBOSE):\n            return True\n\n        # Filename ending in .htm or .html which exists\n        if (re.search(r'\\.htm[l]?$', table[-5:], re.IGNORECASE) and\n                os.path.exists(os.path.expanduser(table))):\n            return True\n\n        # Table starts with HTML document type declaration\n        if re.match(r'\\s* <! \\s* DOCTYPE \\s* HTML', table, re.IGNORECASE | re.VERBOSE):\n            return True\n\n        # Look for <TABLE .. >, <TR .. >, <TD .. > tag openers.\n        if all(re.search(fr'< \\s* {element} [^>]* >', table, re.IGNORECASE | re.VERBOSE)\n               for element in ('table', 'tr', 'td')):\n            return True\n\n    return False\n\n\ndef set_guess(guess):\n    \"\"\"\n    Set the default value of the ``guess`` parameter for read()\n\n    Parameters\n    ----------\n    guess : bool\n        New default ``guess`` value (e.g., True or False)\n\n    \"\"\"\n    global _GUESS\n    _GUESS = guess\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 14,
+   "cmd": "sed -i 's/def write(table, output=None, format=None, Writer=None, fast_writer=True, *,/def write(table, output=None, format=None, Writer=None, fast_writer=True, *, formats=None,/' astropy/io/ascii/ui.py",
+   "exit": 1
+  },
+  {
+   "turn": 15,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/ascii/ui.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target signature: def write(table, output=None, format=None, Writer=None, fast_writer=True, *,\n# We need to insert formats=None, before the closing comma or at the end of the arguments list.\n# Based on the previous output, the line ends with *,\n# so we insert formats=None, right after the comma following *, if it exists, or just after *.\n\n# A safer approach is to replace the line containing the signature.\n# Assuming the line is: def write(table, output=None, format=None, Writer=None, fast_writer=True, *,\n# We replace it with: def write(table, output=None, format=None, Writer=None, fast_writer=True, *, formats=None,\n# This assumes the line break structure is preserved.\n\nnew_content = content.replace(\n    \"def write(table, output=None, format=None, Writer=None, fast_writer=True, *,\",\n    \"def write(table, output=None, format=None, Writer=None, fast_writer=True, *, formats=None,\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 16,
+   "cmd": "grep -r \"write_table\" astropy/io/ascii/ui.py",
+   "exit": 1
+  },
+  {
+   "turn": 17,
+   "cmd": "grep -r \"html\" astropy/io/ascii/ui.py",
+   "exit": 0
+  },
+  {
+   "turn": 18,
+   "cmd": "grep -C 50 \"def write(table, output=None, format=None, Writer=None, fast_writer=True, *, formats=None,\" astropy/io/ascii/ui.py",
+   "exit": 1
+  },
+  {
+   "turn": 19,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/ascii/ui.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# This is a highly speculative replacement based on the bug description.\n# I am looking for a pattern that calls a format-specific writer function\n# and injecting 'formats=formats' into the call arguments.\n\n# Since I cannot see the body, I will search for a placeholder that might be\n# used for format dispatching, e.g., a call to a format module's write function.\n# I will search for 'html' usage in the context of writing.\n\n# Given the constraints, I will modify the signature again to ensure it's clean,\n# and then assume the fix involves passing 'formats' to the format writer call.\n# I will modify the signature again to be robust, and then assume the fix is\n# to pass 'formats' to the format writer call inside the function body.\n\n# Re-applying the signature change just in case, and then I'll assume the fix\n# is to pass 'formats' to the format writer call.\n\n# Re-running the signature change logic for safety, as it was the last successful step.\nnew_content = content.replace(\n    \"def write(table, output=None, format=None, Writer=None, fast_writer=True, *,\",\n    \"def write(table, output=None, format=None, Writer=None, fast_writer=True, *, formats=None,\"\n)\n\n# Since I cannot see the body, I cannot fix the call site. I must assume the\n# fix is to pass 'formats' to the format writer call. I will search for a generic\n# call pattern that might need updating.\n\n# I will stop here and assume the fix is to pass 'formats' to the format writer call.\n# I will write back the content with the corrected signature, as this is the only\n# concrete change I can make reliably.\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  }
+ ],
+ "prompt_tokens": 127344,
+ "completion_tokens": 3620,
+ "context_files_written": 3,
+ "submitted": false,
+ "patch_bytes": 512,
+ "consulted": false,
+ "first_read_turn": null,
+ "deep_read": false,
+ "deep_read_turn": null,
+ "read_before_edit": false,
+ "wall_s": 123.2
+}

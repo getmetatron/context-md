@@ -1,0 +1,66 @@
+{
+ "instance_id": "matplotlib__matplotlib-24637",
+ "condition": "SHARD",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"AnnotationBbox\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat lib/matplotlib/offsetbox.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -A 10 \"class AnnotationBbox\" lib/matplotlib/offsetbox.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -r \"add_artist\" lib/matplotlib/offsetbox.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/class AnnotationBbox/,$ { /def __init__/ s/def __init__\\(.*\\):/\\def __init__\\(.*\\): \\n        if hasattr(self, \"gid\") and self.gid is not None: \\n            self.set_gid(self.gid) \\n        \\n/' lib/matplotlib/offsetbox.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '/class AnnotationBbox/,$ { /def __init__\\(.*\\):/ s/def __init__\\1:/def __init__\\1:\\n        if hasattr(self, \"gid\") and self.gid is not None: self.set_gid(self.gid)\\n/' lib/matplotlib/offsetbox.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"lib/matplotlib/offsetbox.py\"\ncontent = \"\"\nin_init = False\nlines = []\n\nwith open(file_path, 'r') as f:\n    lines = f.readlines()\n\nfor i, line in enumerate(lines):\n    if \"def __init__\" in line:\n        in_init = True\n        lines.insert(i + 1, \"        # --- START OF FIX ---\")\n        lines.insert(i + 2, \"        if hasattr(self, 'gid') and self.gid is not None:\")\n        lines.insert(i + 3, \"            self.set_gid(self.gid)\")\n        lines.insert(i + 4, \"        # --- END OF FIX ---\")\n        i += 4 # Skip the inserted lines for the loop counter adjustment\n    elif in_init and line.strip() == \"\":\n        # Stop injecting logic if we hit a blank line after the method body starts\n        pass\n    \n# Write back the modified content\nwith open(file_path, 'w') as f:\n    f.writelines(lines)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 33492,
+ "completion_tokens": 2639,
+ "context_files_written": 3,
+ "submitted": true,
+ "patch_bytes": 6362,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 80.7
+}

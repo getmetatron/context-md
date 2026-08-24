@@ -1,0 +1,96 @@
+{
+ "instance_id": "sphinx-doc__sphinx-10673",
+ "condition": "FILE",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"toctree\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"genindex\" sphinx/directives/",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "cat sphinx/directives/toctree.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "ls -F",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "ls sphinx/directives/",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "cat sphinx/directives/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "grep -r -E \"genindex|modindex|search\" sphinx/",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nimport re\nfrom typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Tuple, TypeVar, cast\n\nfrom docutils import nodes\nfrom docutils.nodes import Node\nfrom docutils.parsers.rst import directives, roles\n\nfrom sphinx import addnodes\nfrom sphinx.addnodes import desc_signature\nfrom sphinx.util import docutils\nfrom sphinx.util.docfields import DocFieldTransformer, Field, TypedField\nfrom sphinx.util.docutils import SphinxDirective\nfrom sphinx.util.typing import OptionSpec\n\nif TYPE_CHECKING:\n    from sphinx.application import Sphinx\n\n# RE to strip backslash escapes\nnl_escape_re = re.compile(r'\\\\n')\nstrip_backslash_re = re.compile(r'\\\\(.)')\n\nT = TypeVar('T')\n\n# List of known index targets that should not trigger a \"nonexisting document\" warning\nINDEX_TARGETS = {'genindex', 'modindex', 'search'}\n\nclass ObjectDescription(SphinxDirective, Generic[T]):\n    \"\"\"\n    Directive to describe a class, function or similar object.  Not used\n    directly, but subclassed (in domain-specific directives) to add custom\n    behavior.\n    \"\"\"\n\n    has_content = True\n    required_arguments = 1\n    optional_arguments = 0\n    final_argument_whitespace = True\n    option_spec: OptionSpec = {\n        'noindex': directives.flag,\n    }\n\n    # types of doc fields that this directive handles, see sphinx.util.docfields\n    doc_field_types: List[Field] = []\n    domain: Optional[str] = None\n    objtype: Optional[str] = None\n    indexnode: Optional[addnodes.index] = None\n\n    # Warning: this might be removed in future version. Don't touch this from extensions.\n    _doc_field_type_map: Dict[str, Tuple[Field, bool]] = {}\n\n    def get_field_type_map(self) -> Dict[str, Tuple[Field, bool]]:\n        if self._doc_field_type_map == {}:\n            self._doc_field_type_map = {}\n            for field in self.doc_field_types:\n                for name in field.names:\n                    self._doc_field_type_map[name] = (field, False)\n\n                if field.is_typed:\n                    typed_field = cast(TypedField, field)\n                    for name in typed_field.typenames:\n                        self._doc_field_type_map[name] = (field, True)\n\n        return self._doc_field_type_map\n\n    def get_signatures(self) -> List[str]:\n        \"\"\"\n        Retrieve the signatures to document from the directive arguments.  By\n        default, signatures are given as arguments, one per line.\n        \"\"\"\n        lines = nl_escape_re.sub('', self.arguments[0]).split('\\n')\n        if self.config.strip_signature_backslash:\n            # remove backslashes to support (dummy) escapes; helps Vim highlighting\n            return [strip_backslash_re.sub(r'\\\\', line.strip()) for line in lines]\n        else:\n            return [line.strip() for line in lines]\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  },
+  {
+   "turn": 10,
+   "cmd": "python3 - <<'EOF'\nimport re\nfrom typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Tuple, TypeVar, cast\n\nfrom docutils import nodes\nfrom docutils.nodes import Node\nfrom docutils.parsers.rst import directives, roles\n\nfrom sphinx import addnodes\nfrom sphinx.addnodes import desc_signature\nfrom sphinx.util import docutils\nfrom sphinx.util.docfields import DocFieldTransformer, Field, TypedField\nfrom sphinx.util.docutils import SphinxDirective\nfrom sphinx.util.typing import OptionSpec\n\nif TYPE_CHECKING:\n    from sphinx.application import Sphinx\n\n# RE to strip backslash escapes\nnl_escape_re = re.compile(r'\\\\n')\nstrip_backslash_re = re.compile(r'\\\\(.)')\n\nT = TypeVar('T')\n\n# List of known index targets that should not trigger a \"nonexisting document\" warning\nINDEX_TARGETS = {'genindex', 'modindex', 'search'}\n\n\nclass ObjectDescription(SphinxDirective, Generic[T]):\n    \"\"\"\n    Directive to describe a class, function or similar object.  Not used\n    directly, but subclassed (in domain-specific directives) to add custom\n    behavior.\n    \"\"\"\n\n    has_content = True\n    required_arguments = 1\n    optional_arguments = 0\n    final_argument_whitespace = True\n    option_spec: OptionSpec = {\n        'noindex': directives.flag,\n    }\n\n    # types of doc fields that this directive handles, see sphinx.util.docfields\n    doc_field_types: List[Field] = []\n    domain: Optional[str] = None\n    objtype: Optional[str] = None\n    indexnode: Optional[addnodes.index] = None\n\n    # Warning: this might be removed in future version. Don't touch this from extensions.\n    _doc_field_type_map: Dict[str, Tuple[Field, bool]] = {}\n\n    def get_field_type_map(self) -> Dict[str, Tuple[Field, bool]]:\n        if self._doc_field_type_map == {}:\n            self._doc_field_type_map = {}\n            for field in self.doc_field_types:\n                for name in field.names:\n                    self._doc_field_type_map[name] = (field, False)\n\n                if field.is_typed:\n                    typed_field = cast(TypedField, field)\n                    for name in typed_field.typenames:\n                        self._doc_field_type_map[name] = (field, True)\n\n        return self._doc_field_type_map\n\n    def get_signatures(self) -> List[str]:\n        \"\"\"\n        Retrieve the signatures to document from the directive arguments.  By\n        default, signatures are given as arguments, one per line.\n        \"\"\"\n        lines = nl_escape_re.sub('', self.arguments[0]).split('\\n')\n        if self.config.strip_signature_backslash:\n            # remove backslashes to support (dummy) escapes; helps Vim highlighting\n            return [strip_backslash_re.sub(r'\\\\', line.strip()) for line in lines]\n        else:\n            return [line.strip() for line in lines]\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "ls -F sphinx/directives/",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "cat sphinx/directives/code.py",
+   "exit": 0
+  },
+  {
+   "turn": 13,
+   "cmd": "python3 - <<'EOF'\nimport re\nfrom typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Tuple, TypeVar, cast\n\nfrom docutils import nodes\nfrom docutils.nodes import Node\nfrom docutils.parsers.rst import directives, roles\n\nfrom sphinx import addnodes\nfrom sphinx.addnodes import desc_signature\nfrom sphinx.util import docutils\nfrom sphinx.util.docfields import DocFieldTransformer, Field, TypedField\nfrom sphinx.util.docutils import SphinxDirective\nfrom sphinx.util.typing import OptionSpec\n\nif TYPE_CHECKING:\n    from sphinx.application import Sphinx\n\n# RE to strip backslash escapes\nnl_escape_re = re.compile(r'\\\\n')\nstrip_backslash_re = re.compile(r'\\\\(.)')\n\nT = TypeVar('T')\n\n# Known index targets that should suppress warnings in toctree\nINDEX_TARGETS = {'genindex', 'modindex', 'search'}\n\n\nclass ObjectDescription(SphinxDirective, Generic[T]):\n    \"\"\"\n    Directive to describe a class, function or similar object.  Not used\n    directly, but subclassed (in domain-specific directives) to add custom\n    behavior.\n    \"\"\"\n\n    has_content = True\n    required_arguments = 1\n    optional_arguments = 0\n    final_argument_whitespace = True\n    option_spec: OptionSpec = {\n        'noindex': directives.flag,\n    }\n\n    # types of doc fields that this directive handles, see sphinx.util.docfields\n    doc_field_types: List[Field] = []\n    domain: Optional[str] = None\n    objtype: Optional[str] = None\n    indexnode: Optional[addnodes.index] = None\n\n    # Warning: this might be removed in future version. Don't touch this from extensions.\n    _doc_field_type_map: Dict[str, Tuple[Field, bool]] = {}\n\n    def get_field_type_map(self) -> Dict[str, Tuple[Field, bool]]:\n        if self._doc_field_type_map == {}:\n            self._doc_field_type_map = {}\n            for field in self.doc_field_types:\n                for name in field.names:\n                    self._doc_field_type_map[name] = (field, False)\n\n                if field.is_typed:\n                    typed_field = cast(TypedField, field)\n                    for name in typed_field.typenames:\n                        self._doc_field_type_map[name] = (field, True)\n\n        return self._doc_field_type_map\n\n    def get_signatures(self) -> List[str]:\n        \"\"\"\n        Retrieve the signatures to document from the directive arguments.  By\n        default, signatures are given as arguments, one per line.\n        \"\"\"\n        lines = nl_escape_re.sub('', self.arguments[0]).split('\\n')\n        if self.config.strip_signature_backslash:\n            # remove backslashes to support (dummy) escapes; helps Vim highlighting\n            return [strip_backslash_re.sub(r'\\\\', line.strip()) for line in lines]\n        else:\n            return [line.strip() for line in lines]\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 14,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 74658,
+ "completion_tokens": 4183,
+ "context_files_written": 1,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 106.4
+}

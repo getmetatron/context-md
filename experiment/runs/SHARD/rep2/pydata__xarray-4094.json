@@ -1,0 +1,61 @@
+{
+ "instance_id": "pydata__xarray-4094",
+ "condition": "SHARD",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"to_unstacked_dataset\" xarray/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat xarray/core/dataarray.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -n \"to_unstacked_dataset\" xarray/core/dataarray.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -n '1900,1910p' xarray/core/dataarray.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/Name of existing dimension to unstack/a\\\n    if self.dims and len(self.dims) == 1 and self.dims[0] == dim:\\n        # Handle single dimension case to prevent MergeError\\n        return Dataset({dim: self}, coords={dim: self.coords[dim]})' xarray/core/dataarray.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"xarray/core/dataarray.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Find the start of the function definition to insert the fix after the docstring.\n# We look for the end of the docstring block.\nstart_marker = \"        Parameters\\n        ----------\\n        dim : str\"\nif start_marker in content:\n    # Find the index right after the docstring block ends.\n    insert_index = content.find(start_marker) + len(start_marker)\n    \n    # The fix: If the dimension is single-dimensional, return a dataset directly\n    # to bypass the problematic stacking/merging logic.\n    fix = \"\\n    if self.dims and len(self.dims) == 1 and self.dims[0] == dim:\\n        # Single dimension case: return dataset directly to avoid MergeError\\n        return Dataset({dim: self}, coords={dim: self.coords[dim]})\\n\"\n    \n    new_content = content[:insert_index] + fix + content[insert_index:]\n    \n    with open(file_path, 'w') as f:\n        f.write(new_content)\nelse:\n    print(\"Could not find the function signature marker.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 22976,
+ "completion_tokens": 2099,
+ "context_files_written": 5,
+ "submitted": true,
+ "patch_bytes": 662,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 62.3
+}

@@ -1,0 +1,71 @@
+{
+ "instance_id": "astropy__astropy-7166",
+ "condition": "FILE",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"InheritDocstrings\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat astropy/utils/misc.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -A 20 \"class InheritDocstrings(type):\" astropy/utils/misc.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '/def __new__\\(.*?\\):/,/return super().__new__(mcs, name, bases, new_attrs)/ s/if inspect.isfunction(attr_value):/if inspect.isfunction(attr_value) or inspect.isdatadescriptor(attr_value):/g' astropy/utils/misc.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/utils/misc.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The goal is to change:\n# if inspect.isfunction(attr_value):\n# to include properties, which are descriptors.\n# I will replace the check to include inspect.isdatadescriptor(attr_value)\n# which covers properties and other descriptors.\n\nnew_content = content.replace(\n    \"if inspect.isfunction(attr_value):\",\n    \"if inspect.isfunction(attr_value) or inspect.isdatadescriptor(attr_value):\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '/if inspect.isfunction(attr_value):/c\\        if inspect.isfunction(attr_value) or inspect.isdatadescriptor(attr_value):' astropy/utils/misc.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/utils/misc.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Find the __new__ method definition block and apply the fix.\n# We are looking for the line: if inspect.isfunction(attr_value):\n# and replacing it with: if inspect.isfunction(attr_value) or inspect.isdatadescriptor(attr_value):\n\n# Since string replacement is brittle, I will use a more targeted replacement\n# that assumes the line structure is: 'if inspect.isfunction(attr_value):'\n# and replace it with the desired logic.\n\nnew_content = content.replace(\n    \"if inspect.isfunction(attr_value):\",\n    \"if inspect.isfunction(attr_value) or inspect.isdatadescriptor(attr_value):\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 34159,
+ "completion_tokens": 1898,
+ "context_files_written": 1,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 59.1
+}

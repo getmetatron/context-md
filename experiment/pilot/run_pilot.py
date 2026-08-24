@@ -15,13 +15,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data" / "swebench_verified.parquet"
 WORK = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "pilot" / "work"
-CONDITION = os.environ.get("CONDITION", "control")  # control | treatment
+CONDITION = os.environ.get("CONDITION", "control")  # control | treatment | files | files-bare
 EXECUTOR = os.environ.get("EXECUTOR", "ollama")     # ollama | anthropic
 CONTEXT_DIR = ROOT / "pilot" / "context"            # <reponame>.md, injected in treatment only
-LOGS = ROOT / "pilot" / "logs" / (CONDITION if EXECUTOR == "ollama" else f"{CONDITION}_{EXECUTOR}")
+SEEDS = ROOT / "seeds"                               # frozen E-arm seeds (files modes)
 FRONTIER_MODEL = "claude-opus-4-8"
 OLLAMA = "http://localhost:11434/api/chat"
-MODEL = "gemma4:e4b"
+MODEL = os.environ.get("MODEL", "gemma4:e4b")
+_suffix = "" if MODEL == "gemma4:e4b" else "_" + re.sub(r"[^a-z0-9]+", "-", MODEL)
+LOGS = ROOT / "pilot" / "logs" / ((CONDITION if EXECUTOR == "ollama" else f"{CONDITION}_{EXECUTOR}") + _suffix)
 MAX_TURNS = 20
 CMD_TIMEOUT = 90
 OUT_CAP = 3000  # chars of command output fed back
@@ -62,11 +64,103 @@ TASK:
 CMD_WORDS = ("ls", "cat", "grep", "sed", "find", "python3", "python", "git",
              "head", "tail", "rg", "awk", "echo", "submit", "cd", "wc", "diff")
 
+# Paper-2 existence check (PAPER2-DESIGN §8.1). Shipped AGENTS.md block,
+# `metatron context setup` pr gate, kb=context — verbatim from
+# metatron/context_setup.py::_ROOT_BLOCK["pr"] at 0.11.0.
+AGENTS_BLOCK = """\
+<!-- METATRON:START (managed by metatron context setup — safe to edit inside) -->
+## Codebase conventions via Metatron (files) — consult FIRST
+
+This repo's conventions ("decisions") live as Open Knowledge Format markdown under
+`context/decisions/`. In a monorepo each app has its own `context/`; use the one
+**nearest** the files you are touching.
+
+**Before you Read, Grep, Glob, or Edit code in an area — and before proposing an
+implementation — first read the relevant files in the nearest `context/decisions/`
+and follow them.** State that you consulted them; do not rediscover conventions
+manually until you have.
+
+When you find a durable convention not already captured, **author it as a decision
+on your working branch**: a new OKF file in the nearest `context/decisions/` (see the
+`context-okf-llm-ingest` skill in `.roo/skills/`). The review gate is `pr`: the
+human review of your pull request is the curation act, so decision changes reach
+the default branch only through a reviewed PR — never push them there directly.
+`context/candidate/` remains available as optional staging for proposals not yet
+ready for review; content there is never authoritative.
+<!-- METATRON:END -->
+"""
+
+# v2 contract — shipped in metatron 0.11.1 (PR #116): consultation means opening
+# the files, not listing the directory. Condition files-v2 uses this text.
+AGENTS_BLOCK_V2 = AGENTS_BLOCK.replace(
+    """**Before you Read, Grep, Glob, or Edit code in an area — and before proposing an
+implementation — first read the relevant files in the nearest `context/decisions/`
+and follow them.** State that you consulted them; do not rediscover conventions
+manually until you have.""",
+    """**Before you Read, Grep, Glob, or Edit code in an area — and before proposing an
+implementation — first read the contents of the relevant files in the nearest
+`context/decisions/` and follow them.** Open the files themselves — listing the
+directory is not consulting. State that you consulted them; do not rediscover conventions
+manually until you have.""")
+assert AGENTS_BLOCK_V2 != AGENTS_BLOCK
+
+# Contract iteration (product side-project): CONDITION=files-vN with a matching
+# pilot/contracts/files-vN.md overrides the block text (prompt + on-disk AGENTS.md).
+_contract_file = ROOT / "pilot" / "contracts" / f"{CONDITION}.md"
+CONTRACT_TEXT = (_contract_file.read_text() if _contract_file.exists()
+                 else AGENTS_BLOCK_V2 if CONDITION == "files-v2" else AGENTS_BLOCK)
+
+
+def setup_files(repo_dir, name):
+    """Write the shipped Metatron layout into the checkout: context.md entry
+    point (intent + decision index), sharded context/decisions/*.md (one OKF
+    file per seed `### topic` section), AGENTS.md with the shipped block.
+    Content = frozen Paper 1 E-arm seed, delivery = files (nothing injected)."""
+    seed = (SEEDS / name / "context.md").read_text()
+    parts = re.split(r"\n(?=### )", seed)
+    dec_dir = repo_dir / "context" / "decisions"
+    dec_dir.mkdir(parents=True, exist_ok=True)
+    index = []
+    for p in parts[1:]:
+        title = p.splitlines()[0].lstrip("# ").strip()
+        slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:60]
+        (dec_dir / f"{slug}.md").write_text(
+            f"---\ntype: Metatron Decision\nscope: {name}\nconfidence: high\n---\n\n{p.strip()}\n")
+        index.append(f"- `context/decisions/{slug}.md` — {title}")
+    hint = ("open and read the relevant files before editing code — filenames alone are not enough"
+            if CONDITION == "files-v2" else "read the relevant ones before editing code")
+    entry = (parts[0].strip() + f"\n\nCanonical decisions ({hint}):\n\n"
+             + "\n".join(index) + "\n")
+    (repo_dir / "context.md").write_text(entry)
+    (repo_dir / "AGENTS.md").write_text(CONTRACT_TEXT)
+
+
+CTX_READ_RE = re.compile(r"^(cat|ls|grep|head|tail|find|sed)\b[^\n]*(context\.md|context/|AGENTS\.md)", re.M)
+DEEP_READ_RE = re.compile(r"^(cat|head|tail|sed)\b[^\n]*(context\.md|context/decisions/\S+\.md)", re.M)
+
+
+def consultation(log):
+    """First-class Paper 2 metric (pilot version; frozen detector comes at
+    prereg2 freeze). Returns dict: read at any turn, first read turn, and
+    whether the first read preceded the first file-modifying command."""
+    edit_re = re.compile(r"sed -i|>\s*\S|EOF")
+    first_read = first_edit = None
+    for rec in log["turns"]:
+        cmd = rec.get("cmd") or ""
+        if first_read is None and CTX_READ_RE.search(cmd):
+            first_read = rec["turn"]
+        if first_edit is None and edit_re.search(cmd):
+            first_edit = rec["turn"]
+    deep = next((r["turn"] for r in log["turns"] if DEEP_READ_RE.search(r.get("cmd") or "")), None)
+    return {"consulted": first_read is not None, "first_read_turn": first_read,
+            "deep_read": deep is not None, "deep_read_turn": deep,
+            "read_before_edit": first_read is not None and (first_edit is None or first_read < first_edit)}
+
 
 def _anthropic_client():
     import anthropic
     key = None
-    for line in (Path("/Users/pavel/dev/getmetatron/metatron/.env")).read_text().splitlines():
+    for line in Path(os.environ.get("RCL_ENV_FILE", ".env")).read_text().splitlines():
         if line.startswith("ANTHROPIC_API_KEY="):
             key = line.split("=", 1)[1].strip().strip('"')
     return anthropic.Anthropic(api_key=key)
@@ -134,6 +228,10 @@ def run(instance, repo_dir):
                      "Consult it before planning; it constrains where fixes belong:\n\n"
                      + ctx_file.read_text() + "\n")
         log["context_file"] = str(ctx_file)
+    elif CONDITION.startswith("files") and CONDITION != "files-bare":
+        ctx_block = "\nAGENTS.md (repository instructions):\n\n" + CONTRACT_TEXT + "\n"
+    # files-bare: artifacts exist in the tree, prompt says nothing (strict
+    # "unprompted" reading of the roadmap existence check).
     problem = ctx_block + "TASK:\n" + problem if ctx_block else problem
     messages = [{"role": "system", "content": SYSTEM.format(max_turns=MAX_TURNS, problem=problem)},
                 {"role": "user", "content": "Begin. Explore the code, make the fix, then submit."}]
@@ -207,10 +305,16 @@ def main():
         if rd.exists(): subprocess.run(["rm", "-rf", str(rd)])
         subprocess.run(["git", "clone", "--shared", str(bare), str(rd)], check=True, capture_output=True)
         subprocess.run(["git", "checkout", "-q", inst["base_commit"]], cwd=rd, check=True, capture_output=True)
+        if CONDITION.startswith("files"):
+            setup_files(rd, name)
         print(f"=== {iid} ===", flush=True)
         log = run(inst, rd)
-        print(json.dumps({k: log[k] for k in
-              ("submitted", "n_turns", "invalid_replies", "patch_bytes", "file_overlap", "wall_s")}), flush=True)
+        if CONDITION.startswith("files"):
+            log.update(consultation(log))
+            (LOGS / f"{iid}.json").write_text(json.dumps(log, indent=1))
+        keys = ["submitted", "n_turns", "invalid_replies", "patch_bytes", "file_overlap", "wall_s"]
+        keys += ["consulted", "deep_read", "first_read_turn", "read_before_edit"] if CONDITION.startswith("files") else []
+        print(json.dumps({k: log.get(k) for k in keys}), flush=True)
 
 
 if __name__ == "__main__":

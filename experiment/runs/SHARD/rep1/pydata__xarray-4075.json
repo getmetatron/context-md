@@ -1,0 +1,76 @@
+{
+ "instance_id": "pydata__xarray-4075",
+ "condition": "SHARD",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"weighted\" xarray/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i 's/weighted_sum = self._weighted_sum(da, dim=dim, skipna=skipna)/weighted_sum = self._weighted_sum(da, dim=dim, skipna=skipna, weights=weights * 1 if weights.dtype == bool else None)/' xarray/core/weighted.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i 's/weighted_sum = self._weighted_sum(da, dim=dim, skipna=skipna)/weighted_sum = self._weighted_sum(da, dim=dim, skipna=skipna, weights=weights * 1 if weights.dtype == bool else None)/' xarray/core/weighted.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"xarray/core/weighted.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Look for the calculation of sum_of_weights in _weighted_mean\n# The original code likely calculates sum_of_weights using a dot product involving weights.\n# Based on the bug description, we need to ensure weights are cast to numeric type if boolean.\n\n# Since I cannot reliably locate the exact line without seeing the surrounding code structure \n# that uses the dot product for sum_of_weights, I will search for the function definition \n# and assume the fix needs to happen where weights are used for summation.\n\n# I will use a targeted replacement based on the knowledge that the issue is in sum_of_weights calculation.\n# I will search for the usage of weights in _weighted_mean and apply the fix there.\n\n# Re-reading the bug description: \"Internally the sum_of_weights is calculated as xr.dot(dta.notnull(), wgt)\"\n# This suggests the fix is in the calculation of sum_of_weights, which is called by _weighted_mean.\n\n# I will search for the definition of sum_of_weights calculation within the file.\n# Since I cannot reliably find the exact line, I will assume the fix is to cast weights to float \n# when calculating the sum of weights if they are boolean.\n\nnew_content = content.replace(\n    \"sum_of_weights = xr.dot(da.notnull(), weights)\", \n    \"sum_of_weights = xr.dot(da.notnull(), weights.astype(float) if weights.dtype == bool else weights)\"\n)\n\n# This is a guess based on the bug description, assuming 'weights' is the variable name used for wgt.\n# If the above fails, I will try to find the actual call site for sum_of_weights.\n\n# Let's try to find the actual function that calculates sum_of_weights if it exists, \n# or modify _weighted_mean directly if it calls it.\n\n# Given the constraints, I will stick to modifying the most likely spot based on the bug report's implication.\n# I will modify the calculation of sum_of_weights inside _weighted_mean.\n\n# A safer approach is to modify the call to _weighted_sum if it handles the weight casting.\n# However, the bug points to sum_of_weights calculation.\n\n# Let's assume the fix is to cast weights to float when calculating the sum of weights.\n# I will use a more general replacement targeting the dot product involving weights.\n\n# Since I cannot see the surrounding code, I will try to replace the usage of weights in the dot product.\n# I will assume the variable name for weights in the context of sum_of_weights calculation is 'weights'.\n\nfinal_content = content.replace(\n    \"sum_of_weights = xr.dot(da.notnull(), weights)\", \n    \"sum_of_weights = xr.dot(da.notnull(), weights.astype(float) if weights.dtype == bool else weights)\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(final_content)\nprint(\"File modified.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i 's/sum_of_weights = xr.dot(da.notnull(), weights)/sum_of_weights = xr.dot(da.notnull(), weights.astype(float) if weights.dtype == bool else weights)/g' xarray/core/weighted.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"xarray/core/weighted.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The fix is to cast boolean weights to float before calculating the dot product for sum_of_weights.\n# We assume the variable name for weights in the context of sum_of_weights calculation is 'weights'.\n# We replace the line calculating sum_of_weights.\n\n# Check if the line to replace exists before attempting replacement to avoid errors.\nif \"sum_of_weights = xr.dot(da.notnull(), weights)\" in content:\n    new_content = content.replace(\n        \"sum_of_weights = xr.dot(da.notnull(), weights)\", \n        \"sum_of_weights = xr.dot(da.notnull(), weights.astype(float) if weights.dtype == bool else weights)\"\n    )\n    with open(file_path, 'w') as f:\n        f.write(new_content)\nelse:\n    print(\"Target line for sum_of_weights calculation not found.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "grep -C 10 \"sum_of_weights\" xarray/core/weighted.py",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"xarray/core/weighted.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Modify _sum_of_weights to cast self.weights to float if it is boolean.\n# Original line: sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)\n# New line should use self.weights.astype(float) if self.weights.dtype == bool else self.weights\n\nnew_content = content.replace(\n    \"sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)\",\n    \"sum_of_weights = self._reduce(mask, self.weights.astype(float) if self.weights.dtype == bool else self.weights, dim=dim, skipna=False)\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nprint(\"File modified.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 40980,
+ "completion_tokens": 2598,
+ "context_files_written": 5,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 612,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 75.8
+}

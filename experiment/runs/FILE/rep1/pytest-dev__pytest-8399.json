@@ -1,0 +1,56 @@
+{
+ "instance_id": "pytest-dev__pytest-8399",
+ "condition": "FILE",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"setUpClass\" src/_pytest/unittest.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat src/_pytest/unittest.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -n \"setUpClass\" src/_pytest/unittest.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/self._inject_setup_class_fixture()/self._inject_setup_class_fixture() if hasattr(self.obj, \"__doc__\") and self.obj.__doc__ is not None else None/g' src/_pytest/unittest.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"src/_pytest/unittest.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Look for the call site in UnitTestCase.collect\n# We are looking for: self._inject_setup_class_fixture()\n# We will replace it with a check that only calls it if the class object has a docstring.\n\n# This replacement is heuristic based on the previous failure and the goal.\n# We assume the call is on a line by itself or easily identifiable.\nnew_content = content.replace(\n    \"self._inject_setup_class_fixture()\",\n    \"self._inject_setup_class_fixture() if hasattr(self.obj, '__doc__') and self.obj.__doc__ is not None else None\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 17619,
+ "completion_tokens": 1482,
+ "context_files_written": 1,
+ "submitted": true,
+ "patch_bytes": 596,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 36.7
+}

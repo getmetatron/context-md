@@ -1,0 +1,96 @@
+{
+ "instance_id": "pytest-dev__pytest-10081",
+ "condition": "SHARD",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat context/decisions/marks-and-skipping.md",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"tearDown\" src/_pytest/skipping.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"runtest\" src/_pytest/skipping.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "cat src/_pytest/skipping.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -n \"pytest_runtest_teardown\" src/_pytest/skipping.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "grep -i \"teardown\" src/_pytest/skipping.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "tail -n 50 src/_pytest/skipping.py",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "grep -A 10 \"pytest_runtest_setup\" src/_pytest/skipping.py",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nimport pytest\nfrom _pytest.nodes import Item\nfrom _pytest.outcomes import skip\n\ndef pytest_runtest_setup(item: Item) -> None:\n    skipped = evaluate_skip_marks(item)\n    if skipped:\n        # Set a flag indicating skip happened before raising\n        item._pytest_skipped_by_setup = True\n        raise skip.Exception(skipped.reason, _use_item_location=True)\n\n    item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)\n    if xfailed and not item.config.option.runxfail and not xfailed.run:\n        xfail(\"[NOTRUN] \" + xfailed.reason)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 10,
+   "cmd": "python3 - <<'EOF'\ndef pytest_runtest_setup(item: Item) -> None:\n    skipped = evaluate_skip_marks(item)\n    if skipped:\n        item._pytest_skipped_by_setup = True\n        raise skip.Exception(skipped.reason, _use_item_location=True)\n\n    item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)\n    if xfailed and not item.config.option.runxfail and not xfailed.run:\n        xfail(\"[NOTRUN] \" + xfailed.reason)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "submit"
+  },
+  {
+   "turn": 12,
+   "cmd": "sed -i '/def pytest_runtest_setup(item: Item) -> None:/,/if xfailed and not item.config.option.runxfail and not xfailed.run:/ s/if skipped:/if skipped:/g' src/_pytest/skipping.py",
+   "exit": 1
+  },
+  {
+   "turn": 13,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"src/_pytest/skipping.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target function start\nstart_marker = \"def pytest_runtest_setup(item: Item) -> None:\"\n# Target function end (or the line after the last statement)\nend_marker = \"    item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)\"\n\n# Find the block to modify\nif start_marker in content and end_marker in content:\n    # Simple replacement logic: find the skip check and inject the flag setting\n    # We are looking for: if skipped: raise skip.Exception(...)\n    \n    # This is a highly targeted replacement based on the structure observed previously.\n    # We replace the line that raises the exception to include setting the flag.\n    \n    new_content = content.replace(\n        \"        raise skip.Exception(skipped.reason, _use_item_location=True)\",\n        \"        item._pytest_skipped_by_setup = True\\n        raise skip.Exception(skipped.reason, _use_item_location=True)\"\n    )\n    \n    with open(file_path, 'w') as f:\n        f.write(new_content)\nelse:\n    print(\"Markers not found, skipping write.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 14,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 58157,
+ "completion_tokens": 2564,
+ "context_files_written": 6,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 511,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 79.6
+}

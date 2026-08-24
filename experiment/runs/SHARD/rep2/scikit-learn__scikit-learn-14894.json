@@ -1,0 +1,76 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-14894",
+ "condition": "SHARD",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"_sparse_fit\" src/sklearn/svm/",
+   "exit": 2
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"_sparse_fit\" .",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat sklearn/svm/base.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport numpy as np\nimport scipy.sparse as sp\nimport warnings\nfrom abc import ABCMeta, abstractmethod\n\nfrom . import libsvm, liblinear\nfrom . import libsvm_sparse\nfrom ..base import BaseEstimator, ClassifierMixin\nfrom ..preprocessing import LabelEncoder\nfrom ..utils.multiclass import _ovr_decision_function\nfrom ..utils import check_array, check_random_state\nfrom ..utils import column_or_1d, check_X_y\nfrom ..utils import compute_class_weight\nfrom ..utils.extmath import safe_sparse_dot\nfrom ..utils.validation import check_is_fitted, _check_large_sparse\nfrom ..utils.validation import _check_sample_weight\nfrom ..utils.multiclass import check_classification_targets\nfrom ..exceptions import ConvergenceWarning\nfrom ..exceptions import NotFittedError\n\n\nLIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']\n\n\ndef _one_vs_one_coef(dual_coef, n_support, support_vectors):\n    \"\"\"Generate primal coefficients from dual coefficients\n    for the one-vs-one multi class LibSVM in the case\n    of a linear kernel.\"\"\"\n\n    # get 1vs1 weights for all n*(n-1) classifiers.\n    # this is somewhat messy.\n    # shape of dual_coef_ is nSV * (n_classes -1)\n    # see docs for details\n    n_class = dual_coef.shape[0] + 1\n\n    # XXX we could do preallocation of coef but\n    # would have to take care in the sparse case\n    coef = []\n    sv_locs = np.cumsum(np.hstack([[0], n_support]))\n    for class1 in range(n_class):\n        # SVs for class1:\n        sv1 = support_vectors[sv_locs[class1]:sv_locs[class1 + 1], :]\n        for class2 in range(class1 + 1, n_class):\n            # SVs for class1:\n            sv2 = support_vectors[sv_locs[class2]:sv_locs[class2 + 1], :]\n\n            # dual coef for class1 SVs:\n            alpha1 = dual_coef[class2 - 1, sv_locs[class1]:sv_locs[class1 + 1]]\n            # dual coef for class2 SVs:\n            alpha2 = dual_coef[class1, sv_locs[class2]:sv_locs[class2 + 1]]\n            # build weight for class1 vs class2\n\n            coef.append(safe_sparse_dot(alpha1, sv1)\n                        + safe_sparse_dot(alpha2, sv2))\n    return coef\n\n\nclass BaseLibSVM(BaseEstimator, metaclass=ABCMeta):\n    \"\"\"Base class for estimators that use libsvm as backing library\n\n    This implements support vector machine classification and regression.\n\n    Parameter documentation is in the derived `SVC` class.\n    \"\"\"\n\n    # The order of these must match the integer values in LibSVM.\n    # XXX These are actually the same in the dense case. Need to factor\n    # this out.\n    _sparse_kernels = [\"linear\", \"poly\", \"rbf\", \"sigmoid\", \"precomputed\"]\n\n    @abstractmethod\n    def __init__(self, kernel, degree, gamma, coef0,\n                 tol, C, nu, epsilon, shrinking, probability, cache_size,\n                 class_weight, verbose, max_iter, random_state):\n\n        if self._impl not in LIBSVM_IMPL:  # pragma: no cover\n            raise ValueError(\"impl should be one of %s, %s was given\" % (\n                LIBSVM_IMPL, self._impl))\n\n        if gamma == 0:\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -A 20 \"_sparse_fit\" sklearn/svm/base.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nimport numpy as np\nimport scipy.sparse as sp\nimport warnings\nfrom abc import ABCMeta, abstractmethod\n\nfrom . import libsvm, liblinear\nfrom . import libsvm_sparse\nfrom ..base import BaseEstimator, ClassifierMixin\nfrom ..preprocessing import LabelEncoder\nfrom ..utils.multiclass import _ovr_decision_function\nfrom ..utils import check_array, check_random_state\nfrom ..utils import column_or_1d, check_X_y\nfrom ..utils import compute_class_weight\nfrom ..utils.extmath import safe_sparse_dot\nfrom ..utils.validation import check_is_fitted, _check_large_sparse\nfrom ..utils.validation import _check_sample_weight\nfrom ..utils.multiclass import check_classification_targets\nfrom ..exceptions import ConvergenceWarning\nfrom ..exceptions import NotFittedError\n\n\nLIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']\n\n\ndef _one_vs_one_coef(dual_coef, n_support, support_vectors):\n    \"\"\"Generate primal coefficients from dual coefficients\n    for the one-vs-one multi class LibSVM in the case\n    of a linear kernel.\"\"\"\n\n    # get 1vs1 weights for all n*(n-1) classifiers.\n    # this is somewhat messy.\n    # shape of dual_coef_ is nSV * (n_classes -1)\n    # see docs for details\n    n_class = dual_coef.shape[0] + 1\n\n    # XXX we could do preallocation of coef but\n    # would have to take care in the sparse case\n    coef = []\n    sv_locs = np.cumsum(np.hstack([[0], n_support]))\n    for class1 in range(n_class):\n        # SVs for class1:\n        sv1 = support_vectors[sv_locs[class1]:sv_locs[class1 + 1], :]\n        for class2 in range(class1 + 1, n_class):\n            # SVs for class1:\n            sv2 = support_vectors[sv_locs[class2]:sv_locs[class2 + 1], :]\n\n            # dual coef for class1 SVs:\n            alpha1 = dual_coef[class2 - 1, sv_locs[class1]:sv_locs[class1 + 1]]\n            # dual coef for class2 SVs:\n            alpha2 = dual_coef[class1, sv_locs[class2]:sv_locs[class2 + 1]]\n            # build weight for class1 vs class2\n\n            coef.append(safe_sparse_dot(alpha1, sv1)\n                        + safe_sparse_dot(alpha2, sv2))\n    return coef\n\n\nclass BaseLibSVM(BaseEstimator, metaclass=ABCMeta):\n    \"\"\"Base class for estimators that use libsvm as backing library\n\n    This implements support vector machine classification and regression.\n\n    Parameter documentation is in the derived `SVC` class.\n    \"\"\"\n\n    # The order of these must match the integer values in LibSVM.\n    # XXX These are actually the same in the dense case. Need to factor\n    # this out.\n    _sparse_kernels = [\"linear\", \"poly\", \"rbf\", \"sigmoid\", \"precomputed\"]\n\n    @abstractmethod\n    def __init__(self, kernel, degree, gamma, coef0,\n                 tol, C, nu, epsilon, shrinking, probability, cache_size,\n                 class_weight, verbose, max_iter, random_state):\n\n        if self._impl not in LIBSVM_IMPL:  # pragma: no cover\n            raise ValueError(\"impl should be one of %s, %s was given\" % (\n                LIBSVM_IMPL, self._impl))\n\n        if gamma == 0:\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '/def _sparse_fit(self, X, y, sample_weight, solver_type, kernel,/,/        self._warn_from_fit_status()/ {\n    /self.support_vectors_.shape[0] == 0/ {\n        i \\\n        if self.support_vectors_.shape[0] == 0:\n            self.support_ = np.array([], dtype=np.int32)\n            self.support_vectors_ = sp.csr_matrix((0, X.shape[1]))\n            self.dual_coef_ = sp.csr_matrix((0, X.shape[1]))\n            self.intercept_ = np.array([])\n            self._n_support = 0\n            self.probA_ = np.array([])\n            self.probB_ = np.array([])\n            self.fit_status_ = 0\n            return self\n        # Original code continues here\n    }\n}' sklearn/svm/base.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sklearn/svm/base.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Define the check to insert\ncheck_code = \"\"\"\n        if self.support_vectors_.shape[0] == 0:\n            self.support_ = np.array([], dtype=np.int32)\n            self.support_vectors_ = sp.csr_matrix((0, X.shape[1]))\n            self.dual_coef_ = sp.csr_matrix((0, X.shape[1]))\n            self.intercept_ = np.array([])\n            self._n_support = 0\n            self.probA_ = np.array([])\n            self.probB_ = np.array([])\n            self.fit_status_ = 0\n            return self\n\"\"\"\n\n# Find the function definition and insert the check immediately after it.\n# We look for the start of _sparse_fit and insert the check before the first line of logic.\n# This is a heuristic replacement based on the previous grep output.\n\n# Since I cannot reliably use regex replacement across multiple lines with simple tools,\n# I will write a script that reads the file, finds the function, and prints the modified content.\n# Then I will use a final write-back step.\n\n# For simplicity and robustness, I will assume the insertion point is right after the function signature.\n\nprint(f\"--- START MODIFICATION FOR {file_path} ---\")\nprint(\"This script will read the file and print the modified content. Please review and confirm.\")\nprint(\"The modification inserts a check for zero support vectors at the start of _sparse_fit.\")\nprint(\"--- END MODIFICATION ---\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sklearn/svm/base.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The check to insert at the beginning of _sparse_fit\ncheck_code = \"\"\"\n        if self.support_vectors_.shape[0] == 0:\n            self.support_ = np.array([], dtype=np.int32)\n            self.support_vectors_ = sp.csr_matrix((0, X.shape[1]))\n            self.dual_coef_ = sp.csr_matrix((0, X.shape[1]))\n            self.intercept_ = np.array([])\n            self._n_support = 0\n            self.probA_ = np.array([])\n            self.probB_ = np.array([])\n            self.fit_status_ = 0\n            return self\n\"\"\"\n\n# Split the content into parts before and after the function definition\n# We look for the function signature: def _sparse_fit(self, X, y, sample_weight, solver_type, kernel,\n# This is brittle, but necessary given the constraints. We will use a marker search.\n\n# Find the start of _sparse_fit\nstart_marker = \"def _sparse_fit(self, X, y, sample_weight, solver_type, kernel,\"\nif start_marker not in content:\n    print(\"Error: Could not find the start marker for _sparse_fit.\")\n    exit(1)\n\n# Split content at the marker\nparts = content.split(start_marker, 1)\npre_content = parts[0]\npost_content = start_marker + parts[1]\n\n# Inject the check code right after the function signature line (which is the first line of post_content)\nmodified_content = pre_content + start_marker + check_code + \"\\n\" + post_content\n\nwith open(file_path, 'w') as f:\n    f.write(modified_content)\nprint(\"Successfully modified sklearn/svm/base.py\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 43333,
+ "completion_tokens": 3796,
+ "context_files_written": 3,
+ "submitted": true,
+ "patch_bytes": 972,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 111.2
+}

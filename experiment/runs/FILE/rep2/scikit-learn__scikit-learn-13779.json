@@ -1,0 +1,66 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-13779",
+ "condition": "FILE",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"VotingClassifier\" src/sklearn/ensemble/",
+   "exit": 2
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"VotingClassifier\" .",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"class VotingClassifier\" .",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "cat sklearn/ensemble/voting.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/if sample_weight is not None:/a \\\n            if any(step is None for _, step in self.estimators):\\n                raise ValueError(\"Cannot fit with sample_weight when one or more estimators are None.\")' sklearn/ensemble/voting.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '/if sample_weight is not None:/r /if any(step is None for _, step in self.estimators):\\n                raise ValueError(\"Cannot fit with sample_weight when one or more estimators are None.\")/' sklearn/ensemble/voting.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sklearn/ensemble/voting.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The check needs to be inserted after the existing sample_weight support check.\n# Original block ends around:\n#         if sample_weight is not None:\n#             for name, step in self.estimators:\n#                 if not has_fit_parameter(step, 'sample_weight'):\n#                     raise ValueError('Underlying estimator \\'%s\\' does not'\n#                                      ' support sample weights.' % name)\n\n# New check to insert:\nnew_check = \"\\n            if any(step is None for _, step in self.estimators):\\n                raise ValueError(\\\"Cannot fit with sample_weight when one or more estimators are None.\\\")\\n\"\n\n# Find the insertion point: right after the loop that checks for sample_weight support.\n# We look for the closing parenthesis of the sample_weight check block.\nif \"support sample weights.' % name)\" in content:\n    # We insert the check right after the loop finishes.\n    modified_content = content.replace(\n        \"support sample weights.' % name)\",\n        f\"support sample weights.' % name)\\n{new_check}\"\n    )\n    print(\"Successfully modified content.\")\n    with open(file_path, 'w') as f:\n        f.write(modified_content)\nelse:\n    print(\"Could not find the expected insertion point in the file.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 26332,
+ "completion_tokens": 1491,
+ "context_files_written": 1,
+ "submitted": true,
+ "patch_bytes": 656,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 49.2
+}

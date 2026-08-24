@@ -1,0 +1,66 @@
+{
+ "instance_id": "sympy__sympy-24661",
+ "condition": "SHARD",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"parse_expr\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat sympy/core/sympify.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"parse_expr\" sympy/core/sympify.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "cat sympy/parsing/ast_parser.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport sympy\nfrom sympy.core.basic import Basic\nfrom sympy.core.sympify import SympifyError\n\nfrom ast import parse, NodeTransformer, Call, Name, Load, \\\n    fix_missing_locations, Str, Tuple\n\nclass Transform(NodeTransformer):\n\n    def __init__(self, local_dict, global_dict):\n        NodeTransformer.__init__(self)\n        self.local_dict = local_dict\n        self.global_dict = global_dict\n\n    def visit_Constant(self, node):\n        if isinstance(node.value, int):\n            return fix_missing_locations(Call(func=Name('Integer', Load()),\n                    args=[node], keywords=[]))\n        elif isinstance(node.value, float):\n            return fix_missing_locations(Call(func=Name('Float', Load()),\n                    args=[node], keywords=[]))\n        return node\n\n    def visit_Name(self, node):\n        if node.id in self.local_dict:\n            return node\n        elif node.id in self.global_dict:\n            name_obj = self.global_dict[node.id]\n\n            if isinstance(name_obj, (Basic, type)) or callable(name_obj):\n                return node\n        elif node.id in ['True', 'False']:\n            return node\n        return fix_missing_locations(Call(func=Name('Symbol', Load()),\n                args=[Str(node.id)], keywords=[]))\n\n    def visit_Lambda(self, node):\n        args = [self.visit(arg) for arg in node.args.args]\n        body = self.visit(node.body)\n        n = Call(func=Name('Lambda', Load()),\n            args=[Tuple(args, Load()), body], keywords=[])\n        return fix_missing_locations(n)\n\ndef parse_expr(s, local_dict, evaluate=True):\n    \"\"\"\n    Converts the string \"s\" to a SymPy expression, in local_dict.\n\n    It converts all numbers to Integers before feeding it to Python and\n    automatically creates Symbols.\n    \"\"\"\n    global_dict = {}\n    exec('from sympy import *', global_dict)\n    try:\n        a = parse(s.strip(), mode=\"eval\")\n    except SyntaxError:\n        raise SympifyError(\"Cannot parse %s.\" % repr(s))\n    a = Transform(local_dict, global_dict).visit(a)\n    \n    if not evaluate:\n        # Return the AST structure if evaluation is disabled\n        return a\n    \n    e = compile(a, \"<string>\", \"eval\")\n    return eval(e, global_dict, local_dict)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i 's/def parse_expr(s, local_dict):/def parse_expr(s, local_dict, evaluate=True):/' sympy/parsing/ast_parser.py\nsed -i 's/    e = compile(a, \"<string>\", \"eval\")/    if not evaluate: return a\\n    e = compile(a, \"<string>\", \"eval\")/g' sympy/parsing/ast_parser.py\nsed -i 's/    return eval(e, global_dict, local_dict)/    return eval(e, global_dict, local_dict) if evaluate else a/' sympy/parsing/ast_parser.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sympy/parsing/ast_parser.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# 1. Update function signature\ncontent = content.replace(\"def parse_expr(s, local_dict):\", \"def parse_expr(s, local_dict, evaluate=True):\")\n\n# 2. Update logic: check evaluate flag before compiling/evaluating\n# Original:\n# e = compile(a, \"<string>\", \"eval\")\n# return eval(e, global_dict, local_dict)\n#\n# New logic:\n# if not evaluate: return a\n# e = compile(a, \"<string>\", \"eval\")\n# return eval(e, global_dict, local_dict)\n\n# This replacement is tricky due to surrounding code, I will target the block around evaluation.\n# I will replace the entire return block logic.\n\n# Find the block:\n# e = compile(a, \"<string>\", \"eval\")\n# return eval(e, global_dict, local_dict)\n\n# And replace it with:\n# if not evaluate: return a\n# e = compile(a, \"<string>\", \"eval\")\n# return eval(e, global_dict, local_dict)\n\n# Since direct string replacement is brittle, I will use a targeted replacement based on context.\n# I will replace the lines leading up to the return statement.\n\n# Re-reading the file content and applying changes carefully:\nlines = content.splitlines()\nnew_lines = []\nin_parse_expr = False\nfor i, line in enumerate(lines):\n    if \"def parse_expr(s, local_dict):\" in line:\n        new_lines.append(\"def parse_expr(s, local_dict, evaluate=True):\")\n        new_lines.append(\"    global_dict = {}\")\n        new_lines.append(\"    exec('from sympy import *', global_dict)\")\n        new_lines.append(\"    try:\")\n        new_lines.append(\"        a = parse(s.strip(), mode=\\\"eval\\\")\")\n        new_lines.append(\"    except SyntaxError:\")\n        new_lines.append(\"        raise SympifyError(\\\"Cannot parse %s.\\\" % repr(s))\")\n        new_lines.append(\"    a = Transform(local_dict, global_dict).visit(a)\")\n        new_lines.append(\"    if not evaluate:\")\n        new_lines.append(\"        return a\")\n        new_lines.append(\"    e = compile(a, \\\"<string>\\\", \\\"eval\\\")\")\n        new_lines.append(\"    return eval(e, global_dict, local_dict)\")\n        in_parse_expr = True\n        continue\n    \n    if in_parse_expr:\n        # If we are inside the function body, we skip appending the original line \n        # because we replaced the whole block above.\n        pass\n    else:\n        new_lines.append(line)\n\nnew_content = \"\\n\".join(new_lines)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nprint(\"Successfully updated sympy/parsing/ast_parser.py\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 32384,
+ "completion_tokens": 2532,
+ "context_files_written": 3,
+ "submitted": true,
+ "patch_bytes": 801,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 74.2
+}

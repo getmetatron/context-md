@@ -1,0 +1,51 @@
+{
+ "instance_id": "pytest-dev__pytest-6197",
+ "condition": "SHARD",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat context/decisions/test-collection-and-discovery.md",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"__init__.py\" src/_pytest/",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat src/_pytest/python.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"src/_pytest/python.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target the block that seems to handle __init__.py collection.\n# This is a highly targeted replacement based on the grep output and task description.\n# We aim to prevent the collection/import attempt for __init__.py files.\nreplacement_content = \"\"\"\n    if path.basename == \"__init__.py\":\n        # Skip collection for __init__.py to prevent import errors in pytest 5.2.3\n        return None\n\"\"\"\n\n# Use a regex replacement to find the block and insert the skip logic.\n# This is brittle but necessary given the constraints.\n# I'll search for the line that starts the __init__.py check.\nif 'if path.basename == \"__init__.py\":' in content:\n    new_content = content.replace(\n        'if path.basename == \"__init__.py\":',\n        'if path.basename == \"__init__.py\":\\n' + replacement_content\n    )\n    print(\"Successfully prepared replacement content.\")\n    \n    # Write back the modified content\n    with open(file_path, 'w') as f:\n        f.write(new_content)\nelse:\n    print(\"Could not find the target block for replacement.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 17975,
+ "completion_tokens": 1663,
+ "context_files_written": 6,
+ "submitted": true,
+ "patch_bytes": 525,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 67.6
+}

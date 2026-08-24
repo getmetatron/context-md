@@ -1,0 +1,71 @@
+{
+ "instance_id": "django__django-14725",
+ "condition": "SHARD",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -rn \"formset\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"is_readonly\" django/forms/formsets.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"readonly\" django/forms/models.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "cat tests/generic_inline_admin/tests.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -r \"is_edit_only\" django/forms/formsets.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "grep -E \"save|clean|__init__\" django/forms/formsets.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '/def clean(self):/,/return form.cleaned_data.get(DELETION_FIELD_NAME, False)/ s/return form.cleaned_data.get(DELETION_FIELD_NAME, False)/if hasattr(self, \"context\") and self.context.get(\"edit_only\") is True and self.management_form.cleaned_data.get(\"TOTAL_FORM_COUNT\", 0) > self.management_form.cleaned_data.get(\"INITIAL_FORM_COUNT\", 0): raise self.form_errors(\"Cannot create new objects. This formset is in read-only (edit-only) mode.\") else: return form.cleaned_data.get(DELETION_FIELD_NAME, False)/' django/forms/formsets.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/forms/formsets.py\"\ncontent = \"\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Define the injection logic\ninjection_code = \"\"\"\n        # --- START: Added edit-only check for new object creation prevention ---\n        if hasattr(self, 'context') and self.context.get('edit_only') is True:\n            total = self.management_form.cleaned_data.get('TOTAL_FORM_COUNT', 0)\n            initial = self.management_form.cleaned_data.get('INITIAL_FORM_COUNT', 0)\n            if total > initial:\n                raise self.form_errors(\"Cannot create new objects. This formset is in read-only (edit-only) mode.\")\n        # --- END: Added edit-only check ---\n\"\"\"\n\n# Find the clean method definition and inject the code after super().clean()\n# This is a heuristic replacement, assuming clean() structure is stable.\nif \"def clean(self):\" in content:\n    # We look for the line after super().clean() call within clean()\n    # This is highly brittle, but necessary given the constraints.\n    \n    # Find the block containing clean()\n    start_marker = \"def clean(self):\"\n    end_marker = \"return form.cleaned_data.get(DELETION_FIELD_NAME, False)\"\n    \n    if start_marker in content and end_marker in content:\n        # Extract the content block for clean()\n        start_index = content.find(start_marker)\n        end_index = content.find(end_marker) + len(end_marker)\n        \n        # Reconstruct the file content with injection\n        new_content = content[:start_index + len(start_marker)] + \\\n                       content[start_index + len(start_marker):end_index] + \\\n                       injection_code + \\\n                       content[end_index:]\n        \n        with open(file_path, 'w') as f:\n            f.write(new_content)\n        print(\"Successfully injected edit-only check into clean() method.\")\n    else:\n        print(\"Could not locate the clean() method boundaries for patching.\")\nelse:\n    print(\"Could not find the clean() method in the file.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 30957,
+ "completion_tokens": 2501,
+ "context_files_written": 6,
+ "submitted": true,
+ "patch_bytes": 1024,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 74.1
+}

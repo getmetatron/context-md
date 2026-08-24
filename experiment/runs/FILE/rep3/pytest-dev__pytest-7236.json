@@ -1,0 +1,61 @@
+{
+ "instance_id": "pytest-dev__pytest-7236",
+ "condition": "FILE",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"tearDown\" src/_pytest/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i '/# when --pdb is given, we want to postpone calling tearDown() otherwise/,/setattr(self._testcase, \"tearDown\", lambda *args: None)/ s/self._explicit_tearDown = self._testcase.tearDown\\nsetattr(self._testcase, \"tearDown\", lambda *args: None)/if \"--pdb\" not in sys.argv[1:]:\\n    self._explicit_tearDown = self._testcase.tearDown\\n    setattr(self._testcase, \"tearDown\", lambda *args: None)/g",
+   "exit": 2
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport re\nimport sys\n\nfile_path = \"src/_pytest/unittest.py\"\n\ntry:\n    with open(file_path, \"r\") as f:\n        content = f.read()\nexcept FileNotFoundError:\n    print(f\"Error: {file_path} not found.\")\n    sys.exit(1)\n\n# The section to modify is:\n# self._explicit_tearDown = self._testcase.tearDown\n# setattr(self._testcase, \"tearDown\", lambda *args: None)\n# This should only happen if --pdb is NOT present.\n\n# We look for the block that sets the explicit tearDown and modify the assignment.\n# We use a multi-line replacement pattern.\n\n# Pattern to find:\n# self._explicit_tearDown = self._testcase.tearDown\n# setattr(self._testcase, \"tearDown\", lambda *args: None)\n# And replace it with a conditional block.\n\n# Since we are modifying logic based on sys.argv, we must ensure the replacement\n# is syntactically correct Python code.\n\n# The original code block context:\n# ...\n# self._explicit_tearDown = self._testcase.tearDown\n# setattr(self._testcase, \"tearDown\", lambda *args: None)\n\n# Replacement logic:\nreplacement_snippet = \"\"\"\n        if \"--pdb\" not in sys.argv[1:] and self._explicit_tearDown is not None:\n            self._explicit_tearDown = self._testcase.tearDown\n            setattr(self._testcase, \"tearDown\", lambda *args: None)\n\"\"\"\n\n# We need to find the lines that set the tearDown and replace them with the conditional logic.\n# Based on the grep output, the lines are near the end of the block.\n\n# A safer approach is to read the file, find the lines, and reconstruct the file content.\n# I will use a targeted search and replace on the content string.\n\n# Search for the sequence that sets the tearDown when pdb is not considered.\n# This is highly dependent on surrounding code, but I'll target the assignment lines.\n\n# Let's assume the lines are exactly as shown in the grep output context:\n# self._explicit_tearDown = self._testcase.tearDown\n# setattr(self._testcase, \"tearDown\", lambda *args: None)\n\n# We replace these two lines with the conditional logic.\npattern = r\"self._explicit_tearDown = self._testcase\\.tearDown\\nsetattr\\(self._testcase, \\\"tearDown\\\", lambda \\*args: None\\)\"\nreplacement = r\"\"\"\n        if \"--pdb\" not in sys.argv[1:] and self._explicit_tearDown is not None:\n            self._explicit_tearDown = self._testcase.tearDown\n            setattr(self._testcase, \"tearDown\", lambda *args: None)\n\"\"\"\n\nnew_content = re.sub(pattern, replacement, content)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\n\nprint(\"Successfully updated src/_pytest/unittest.py\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/self._explicit_tearDown = self._testcase.tearDown/,/setattr(self._testcase, \"tearDown\", lambda *args: None)/ s/self._explicit_tearDown = self._testcase.tearDown\\nsetattr(self._testcase, \"tearDown\", lambda *args: None)/if \"--pdb\" not in sys.argv[1:]:\\n    self._explicit_tearDown = self._testcase.tearDown\\n    setattr(self._testcase, \"tearDown\", lambda *args: None)/g",
+   "exit": 2
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nimport re\nimport sys\n\nfile_path = \"src/_pytest/unittest.py\"\n\ntry:\n    with open(file_path, \"r\") as f:\n        content = f.read()\nexcept FileNotFoundError:\n    print(f\"Error: {file_path} not found.\")\n    sys.exit(1)\n\n# The goal is to wrap the assignment of tearDown in a check for --pdb.\n# We look for the sequence:\n# self._explicit_tearDown = self._testcase.tearDown\n# setattr(self._testcase, \"tearDown\", lambda *args: None)\n\n# We use a pattern that captures the preceding context (if any) and the lines to be replaced.\n# This pattern assumes the lines are consecutive and preceded by some code.\npattern = r\"(self._explicit_tearDown = self._testcase\\.tearDown\\nsetattr\\(self._testcase, \\\"tearDown\\\", lambda \\*args: None\\))\"\n\n# The replacement must be a valid Python conditional block.\nreplacement = r\"\"\"\\n        if \"--pdb\" not in sys.argv[1:] and self._explicit_tearDown is not None:\n            self._explicit_tearDown = self._testcase.tearDown\n            setattr(self._testcase, \"tearDown\", lambda *args: None)\n\"\"\"\n\n# We use re.DOTALL to ensure '.' matches newlines if necessary, though the pattern is specific.\nnew_content = re.sub(pattern, replacement, content, flags=re.DOTALL)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 29493,
+ "completion_tokens": 2874,
+ "context_files_written": 1,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 85.6
+}

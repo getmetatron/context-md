@@ -1,0 +1,71 @@
+{
+ "instance_id": "django__django-13121",
+ "condition": "SHARD",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"DurationField\" django/db/models/fields/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat django/db/models/fields/duration.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"DurationField\" django/db/models/query.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -r \"timedelta\" django/db/models/",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "cat django/db/models/expressions.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfrom django.db.models.expressions import Combinable\nimport datetime\n\n# Patching the _combine method in Combinable class\ndef _combine(self, other, connector, reversed):\n    if not hasattr(other, 'resolve_expression'):\n        # everything must be resolvable to an expression\n        if isinstance(other, datetime.timedelta):\n            # Original: other = DurationValue(other, output_field=fields.DurationField())\n            # Change to use Value() which might be more generic for literal additions\n            # or handle the conversion explicitly if DurationValue is the problem.\n            # Let's try Value() first as it's the general fallback.\n            from django.db.models import Value\n            other = Value(other)\n        else:\n            other = Value(other)\n\n    if reversed:\n        return CombinedExpression(other, connector, self)\n    return CombinedExpression(self, connector, other)\n\n# Monkey patch the method (this is highly invasive but necessary given the scope)\nCombinable._combine = _combine\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '/if isinstance(other, datetime.timedelta):/ {\n    :a\n    N; s/.*other = DurationValue(other, output_field=fields.DurationField()).*/other = Value(other)/\n    :b\n}' django/db/models/expressions.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/models/expressions.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target replacement logic:\n# Original: other = DurationValue(other, output_field=fields.DurationField())\n# Replacement: other = Value(other)\n\n# We look for the block containing the check for timedelta and replace the assignment.\n# This is a highly targeted replacement based on the previous context.\nnew_content = content.replace(\n    \"if isinstance(other, datetime.timedelta):\",\n    \"if isinstance(other, datetime.timedelta):\" # Keep the check\n).replace(\n    \"other = DurationValue(other, output_field=fields.DurationField())\",\n    \"other = Value(other)\"\n)\n\n# A more robust replacement targeting the whole block if possible, but sticking to line replacement for safety.\n# Since the previous attempt failed, I will assume the simple string replacement is sufficient for the core fix.\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 28080,
+ "completion_tokens": 2632,
+ "context_files_written": 6,
+ "submitted": true,
+ "patch_bytes": 578,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 78.7
+}

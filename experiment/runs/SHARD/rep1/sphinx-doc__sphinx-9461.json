@@ -1,0 +1,66 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9461",
+ "condition": "SHARD",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "ls -R sphinx/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat sphinx/ext/autodoc/directive.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "cat sphinx/util/inspect.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -r \"getdoc\" sphinx/util/inspect.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '/def getdoc(obj: Any, attrgetter: Callable = safe_getattr,/,/    return None/ s/    doc = inspect.getdoc(obj)/    doc = inspect.getdoc(obj) or inspect.getdoc(getattr(obj, \"__wrapped__\", obj))/g' sphinx/util/inspect.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sphinx/util/inspect.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Simple replacement strategy: look for the original getdoc implementation\n# and inject logic to check __wrapped__ and descriptors.\n\n# This is a highly targeted replacement based on observing the function structure.\n# We are looking for the block that starts with 'def getdoc(obj: Any, attrgetter: Callable = safe_getattr,'\n# and injecting logic to check __wrapped__ before calling inspect.getdoc(obj).\n\n# Since direct regex replacement is brittle, I will use a placeholder approach \n# and assume the structure allows for a targeted replacement of the core logic.\n\n# Re-reading the file content to find the function definition block for safer editing.\n# Given the complexity, I will use a multi-step approach focusing on the core logic flow.\n\n# I will replace the initial docstring retrieval with a more robust check.\nnew_content = content.replace(\n    \"    doc = inspect.getdoc(obj)\",\n    \"\"\"    doc = inspect.getdoc(obj)\n    if doc is None and hasattr(obj, '__wrapped__'):\n        doc = inspect.getdoc(obj.__wrapped__)\n    \"\"\"\n)\n\n# Also check for the fallback logic if it exists, though the above might cover it.\n# I will stick to the most direct fix for the initial call site.\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 38553,
+ "completion_tokens": 1931,
+ "context_files_written": 5,
+ "submitted": true,
+ "patch_bytes": 421,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 51.3
+}

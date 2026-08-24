@@ -1,0 +1,51 @@
+{
+ "instance_id": "pytest-dev__pytest-5262",
+ "condition": "SHARD",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat _pytest/capture.py",
+   "exit": 1
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"EncodedFile\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat src/_pytest/capture.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -A 10 \"class EncodedFile(object):\" src/_pytest/capture.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"src/_pytest/capture.py\"\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# The original function body seems to be:\n# def write(self, obj):\n#     if isinstance(obj, six.text_type):\n#         obj = obj.encode(self.encoding, \"replace\")\n#     elif _PY3:\n#         raise TypeError(\n#             \"write() argument must be str, not {}\".format(type(obj).__name__)\n#         )\n#\n# I will replace this entire block with logic that handles bytes.\n\nnew_content = content.replace(\n    \"    def write(self, obj):\\n        if isinstance(obj, six.text_type):\\n            obj = obj.encode(self.encoding, \\\"replace\\\")\\n        elif _PY3:\\n            raise TypeError(\\n                \\\"write() argument must be str, not {}\\\".format(type(obj).__name__)\\n            )\\n    \",\n    \"\"\"    def write(self, obj):\n        if isinstance(obj, six.text_type):\n            obj = obj.encode(self.encoding, \"replace\")\n        elif isinstance(obj, bytes):\n            self.buffer.write(obj)\n            return\n        else:\n            # Attempt to encode if it's a string-like object that failed the first check\n            try:\n                obj = str(obj)\n                obj = obj.encode(self.encoding, \"replace\")\n            except Exception:\n                # If encoding fails, we might be dealing with something else,\n                # but for safety, we let the underlying buffer handle it if possible.\n                pass\n        self.buffer.write(obj)\n\"\"\"\n)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 17580,
+ "completion_tokens": 1805,
+ "context_files_written": 6,
+ "submitted": true,
+ "patch_bytes": 1138,
+ "consulted": false,
+ "first_read_turn": null,
+ "deep_read": false,
+ "deep_read_turn": null,
+ "read_before_edit": false,
+ "wall_s": 55.7
+}

@@ -1,0 +1,51 @@
+{
+ "instance_id": "astropy__astropy-8707",
+ "condition": "SHARD",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat context/decisions/io-registry-and-format-contract.md",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"fromstring\" astropy/io/fits/header.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i 's/def fromstring(cls, data, sep='\\'''):/def fromstring(cls, data, sep='\\'''):\\n        if isinstance(data, bytes): data = data.decode(\"ascii\")\\n        return _fromstring_impl(cls, data, sep)/g' astropy/io/fits/header.py",
+   "exit": 2
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/fits/header.py\"\n\ndef fix_fromstring(content):\n    # Fix for Header.fromstring\n    content = content.replace(\n        \"def fromstring(cls, data, sep=''):\",\n        \"def fromstring(cls, data, sep=''):\\n        if isinstance(data, bytes): data = data.decode('ascii')\\n        return _fromstring_impl(cls, data, sep)\"\n    )\n    # Fix for Card.fromstring\n    content = content.replace(\n        \"def fromstring(cls, data, sep=''):\",\n        \"def fromstring(cls, data, sep=''):\\n        if isinstance(data, bytes): data = data.decode('ascii')\\n        return _fromstring_impl(cls, data, sep)\"\n    )\n    return content\n\ntry:\n    with open(file_path, 'r') as f:\n        content = f.read()\n    new_content = fix_fromstring(content)\n    with open(file_path, 'w') as f:\n        f.write(new_content)\n    print(\"Successfully updated fromstring methods in header.py.\")\nexcept FileNotFoundError:\n    print(f\"Error: {file_path} not found.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 11912,
+ "completion_tokens": 1176,
+ "context_files_written": 3,
+ "submitted": true,
+ "patch_bytes": 597,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 34.7
+}

@@ -1,0 +1,61 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8721",
+ "condition": "SHARD",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "sharded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"viewcode\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat sphinx/ext/viewcode.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "This only skips if it's an EPUB builder AND `viewcode_enable_epub` is False. If it's another builder (like `epub` if it's not detected by `startswith`), or if the logic needs to be applied more broadly, I need to adjust this.\n\nSince the task states it runs even if `viewcode_enable_epub=False` on `make html epub`, and the code already checks for `epub` builders, I suspect the issue is that the builder name might be exactly `\"epub\"` or that the check needs to be more comprehensive. I will modify the condition to check for the builder name being exactly `\"epub\"` or if the builder name starts with `\"epub\"` and enforce the check.\n\nI will change the condition to check if the builder name is `\"epub\"` and if `viewcode_enable_epub` is False, which seems to be the most direct fix based on the reproduction steps.",
+   "exit": 2
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/if app.builder.name.startswith(\"epub\") and not env.config.viewcode_enable_epub:/if app.builder.name == \"epub\" and not env.config.viewcode_enable_epub:/g' sphinx/ext/viewcode.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i 's/if app.builder.name.startswith(\"epub\") and not env.config.viewcode_enable_epub:/if app.builder.name == \"epub\" and not env.config.viewcode_enable_epub:/g' sphinx/ext/viewcode.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sphinx/ext/viewcode.py\"\nold_line = '    if app.builder.name.startswith(\"epub\") and not env.config.viewcode_enable_epub:'\nnew_line = '    if app.builder.name == \"epub\" and not env.config.viewcode_enable_epub:'\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\nnew_content = content.replace(old_line, new_line)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 23651,
+ "completion_tokens": 1558,
+ "context_files_written": 5,
+ "submitted": true,
+ "patch_bytes": 597,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 53.3
+}

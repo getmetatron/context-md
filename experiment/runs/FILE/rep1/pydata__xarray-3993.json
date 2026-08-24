@@ -1,0 +1,61 @@
+{
+ "instance_id": "pydata__xarray-3993",
+ "condition": "FILE",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"integrate(dim=\" .",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"integrate(\" .",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport re\nfrom xarray.core.dataarray import DataArray\n\ndef fix_dataarray_integrate(module_path):\n    with open(module_path, 'r') as f:\n        content = f.read()\n\n    # 1. Fix signature: dim -> coord\n    content = re.sub(r\"def integrate\\(self, dim, datetime_unit=None\\):\", \"def integrate(self, coord, datetime_unit=None):\", content)\n\n    # 2. Fix internal call site: dim -> coord\n    content = re.sub(r\"self._to_temp_dataset\\(\\).integrate\\(dim, datetime_unit\\)\", r\"self._to_temp_dataset\\().integrate(coord, datetime_unit)\", content)\n\n    # 3. Fix docstring example call: da.integrate(\"x\")\n    # This targets the line shown in the search results: >>> da.integrate(\"x\")\n    content = re.sub(r\">>> da\\.integrate\\(\\\"x\\\"\\)\", r\">>> da.integrate(\\\"x\\\")\", content)\n\n    with open(module_path, 'w') as f:\n        f.write(content)\n\nfix_dataarray_integrate(\"./xarray/core/dataarray.py\")\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/def integrate(self, dim, datetime_unit=None):/def integrate(self, coord, datetime_unit=None):/g' xarray/core/dataarray.py\nsed -i 's/self._to_temp_dataset\\(\\).integrate(dim, datetime_unit)/self._to_temp_dataset\\().integrate(coord, datetime_unit)/g' xarray/core/dataarray.py\nsed -i 's/>>> da\\.integrate(\"\\([^\"]*\\)\")/>>> da.integrate(\"\\1\")/g' xarray/core/dataarray.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i 's/def integrate(self, dim, datetime_unit=None):/def integrate(self, coord, datetime_unit=None):/g' xarray/core/dataarray.py\nsed -i 's/self._to_temp_dataset\\(\\).integrate(dim, datetime_unit)/self._to_temp_dataset\\().integrate(coord, datetime_unit)/g' xarray/core/dataarray.py\nsed -i 's/>>> da\\.integrate(\"\\([^\"]*\\)\")/>>> da.integrate(\"\\1\")/g' xarray/core/dataarray.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"xarray/core/dataarray.py\"\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# 1. Fix signature: dim -> coord\ncontent = re.sub(r\"def integrate\\(self, dim, datetime_unit=None\\):\", \"def integrate(self, coord, datetime_unit=None):\", content)\n\n# 2. Fix internal call site: dim -> coord\ncontent = re.sub(r\"self._to_temp_dataset\\(\\).integrate\\(dim, datetime_unit\\)\", r\"self._to_temp_dataset\\().integrate(coord, datetime_unit)\", content)\n\n# 3. Fix docstring example call: da.integrate(\"x\")\n# This regex captures any string literal argument passed to da.integrate()\ncontent = re.sub(r\">>> da\\.integrate\\(\\\"([^\\\"]*)\\\"\\)\", r\">>> da.integrate(\\\"\\1\\\")\", content)\n\nwith open(file_path, 'w') as f:\n    f.write(content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 22337,
+ "completion_tokens": 2111,
+ "context_files_written": 1,
+ "submitted": true,
+ "patch_bytes": 753,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 59.6
+}

@@ -1,0 +1,71 @@
+{
+ "instance_id": "astropy__astropy-14508",
+ "condition": "FILE",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"io.fits.Card._format_float\" astropy/io/fits/",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "cat astropy/io/fits/card.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '/def _format_float(value):/,/    return f\"{value:.16G}\"/ {\n    :a\n    N;s/.*def _format_float(value):.*$/def _format_float(value):/\n    :b\n    N;s/.*    return f\"{value:.16G}\"/    str_value = str(value)\\n    if len(str_value) <= 20:\\n        return str_value\\n    return f\"{value:.16G}\"/\n' astropy/io/fits/card.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/fits/card.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The original function definition block to find and replace\n# We look for the start and end of the function body.\n# This is brittle, but necessary given the constraints.\n\n# Original logic (approximate):\n# def _format_float(value):\n#     return f\"{value:.16G}\"\n\n# New logic:\nnew_content = content.replace(\n    \"    return f\\\"{value:.16G}\\\"\",\n    \"\"\"    str_value = str(value)\n    if len(str_value) <= 20:\n        return str_value\n    return f\"{value:.16G}\"\"\"\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/fits/card.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The original return statement to replace\nold_return = \"    return f\\\"{value:.16G}\\\"\"\n\n# The replacement logic implementing the desired behavior\nnew_return = \"\"\"    str_value = str(value)\n    if len(str_value) <= 20:\n        return str_value\n    return f\"{value:.16G}\"\"\"\n\n# Perform the replacement\nnew_content = content.replace(old_return, new_return)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i 's/    return f\"{value:.16G}\"/    str_value = str(value)\\n    if len(str_value) <= 20:\\n        return str_value\\n    return f\"{value:.16G}\"/g' astropy/io/fits/card.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/fits/card.py\"\nwith open(file_path, 'r') as f:\n    lines = f.readlines()\n\nnew_lines = []\nin_format_float = False\nreplacement_done = False\n\nfor i, line in enumerate(lines):\n    if \"def _format_float(value):\" in line and not replacement_done:\n        new_lines.append(line)\n        in_format_float = True\n        continue\n\n    if in_format_float:\n        if \"return f\\\"\" in line and not replacement_done:\n            # Replace the return line with the new logic block\n            new_lines.append(\"    str_value = str(value)\\n\")\n            new_lines.append(\"    if len(str_value) <= 20:\\n\")\n            new_lines.append(\"        return str_value\\n\")\n            new_lines.append(\"    return f\\\"{value:.16G}\\\"\\n\")\n            replacement_done = True\n            continue\n        \n        # Keep subsequent lines as they are (e.g., closing indentation)\n        new_lines.append(line)\n    else:\n        new_lines.append(line)\n\nwith open(file_path, 'w') as f:\n    f.writelines(new_lines)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 37863,
+ "completion_tokens": 1968,
+ "context_files_written": 1,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 56.3
+}

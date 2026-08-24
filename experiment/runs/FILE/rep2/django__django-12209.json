@@ -1,0 +1,61 @@
+{
+ "instance_id": "django__django-12209",
+ "condition": "FILE",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "file",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat context.md",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"save(\" . --include=\"*.py\" | head -n 20",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat tests/model_forms/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nfrom django.db import models\n\n# ... (rest of the file content)\n\nclass Article(models.Model):\n    # ... (fields)\n\n    def save(self, *args, **kwargs):\n        # Original logic: if not self.id: self.created = datetime.date.today()\n        # If self.id is explicitly set (i.e., we are updating an existing object\n        # or simulating the problematic save(pk=...) call), we should check if\n        # 'created' should be set based on whether it's a new object or if\n        # the save context implies creation.\n        # For simplicity and targeting the described issue (explicit pk),\n        # we only set created if it's truly a new object (no primary key set).\n        if not self.pk:\n            self.created = datetime.date.today()\n        return super().save(*args, **kwargs)\n\n# ... (rest of the file content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/if not self.id:/if not self.pk:/g' tests/model_forms/models.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i 's/if not self.id:/if not self.pk:/g' tests/model_forms/models.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"tests/model_forms/models.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Change 'if not self.id:' to 'if not self.pk:' in Article.save()\nnew_content = content.replace(\"if not self.id:\", \"if not self.pk:\")\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 26068,
+ "completion_tokens": 1283,
+ "context_files_written": 1,
+ "submitted": true,
+ "patch_bytes": 499,
+ "consulted": true,
+ "first_read_turn": 0,
+ "deep_read": true,
+ "deep_read_turn": 0,
+ "read_before_edit": true,
+ "wall_s": 44.1
+}
