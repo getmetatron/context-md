@@ -88,7 +88,7 @@ exposed.
 
 | | |
 |---|---|
-| current HEAD | `89a27308386e5c5c3ece358219b6468a3e8ef411` |
+| audited tree | `89a27308386e5c5c3ece358219b6468a3e8ef411` — the commit this audit was run against. This report was added in the commit immediately after, which is the one the tag should be created on; the report changes no code, data or metadata. |
 | proposed final tag | `v1.0-agenticdev2026-artifact` |
 | archived size | ~13 MB compressed (`git archive` tarball); ~90 MB checked out, 4,886 tracked files |
 | existing tag `camera-ready-agenticdev2026` | **superseded** — predates the metadata, deviations log and ARTIFACT.md corrections; must not be used as the Zenodo snapshot |
