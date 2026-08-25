@@ -1,0 +1,90 @@
+{
+ "instance_id": "pydata__xarray-6599",
+ "condition": "B",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"polyval\" xarray/core/core.py",
+   "exit": 2
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"polyval\" . | head -n 10",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "ls -R xarray/",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"polyval\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "cat xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -A 10 \"polyval\" xarray/core/computation.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nimport numpy as np\nfrom xarray import DataArray, Dataset\nfrom typing import Hashable\n\n# Assuming necessary imports like datetime_to_numeric are available in scope\n# We are modifying the function body in xarray/core/computation.py\n\ndef polyval(\n    coord: Dataset | DataArray,\n    coeffs: Dataset | DataArray,\n    degree_dim: Hashable = \"degree\",\n) -> Dataset | DataArray:\n    \"\"\"Evaluate a polynomial at specific values\n\n    Parameters\n    ----------\n    coord : DataArray or Dataset\n        Values at which to evaluate the polynomial.\n    \"\"\"\n\n    if degree_dim not in coeffs._indexes:\n        raise ValueError(\n            f\"Dimension `{degree_dim}` should be a coordinate variable with labels.\"\n        )\n    if not np.issubdtype(coeffs[degree_dim].dtype, int):\n        raise ValueError(\n            f\"Dimension `{degree_dim}` should be of integer dtype. Received {coeffs[degree_dim].dtype} instead.\"\n        )\n\n    # --- FIX START ---\n    # Check if coord is a time type and convert it to numeric representation\n    if hasattr(coord, 'dtype') and np.issubdtype(coord.dtype, np.datetime64):\n        # Use datetime_to_numeric to convert datetime/timedelta to numeric (e.g., nanoseconds)\n        numeric_coord = utils.datetime_to_numeric(coord)\n        # We need to ensure the resulting numeric_coord has the correct structure\n        # For simplicity and to match numpy.polynomial.polyval expectation, we pass the array.\n        # If coord was a DataArray, numeric_coord should be a DataArray or array-like.\n        if isinstance(coord, DataArray):\n            coord = numeric_coord\n        elif isinstance(coord, Dataset):\n            # If it's a Dataset, we might need to select the coordinate variable\n            coord = numeric_coord\n    # --- FIX END ---\n\n    return np.polynomial.polynomial.polyval(coord, coeffs)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '/def polyval(/{\n    :a\n    N;s/polyval(coord: Dataset | DataArray, coeffs: Dataset | DataArray, degree_dim: Hashable = \"degree\",) -> Dataset | DataArray:/polyval(coord: Dataset | DataArray, coeffs: Dataset | DataArray, degree_dim: Hashable = \"degree\",) -> Dataset | DataArray:/\n    /if degree_dim not in coeffs._indexes:/ {\n        :b\n        N;s/    return np.polynomial.polynomial.polyval(coord, coeffs)/    if hasattr(coord, \"dtype\") and np.issubdtype(coord.dtype, np.datetime64):\n        coord = utils.datetime_to_numeric(coord)\n        return np.polynomial.polynomial.polyval(coord, coeffs)/\n    }\n    :c\n}' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i '/def polyval(/{\n    :a\n    N;s/    return np.polynomial.polynomial.polyval(coord, coeffs)/    if hasattr(coord, \"dtype\") and np.issubdtype(coord.dtype, np.datetime64):\n        coord = utils.datetime_to_numeric(coord)\n    return np.polynomial.polynomial.polyval(coord, coeffs)/\n    :b\n}' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"xarray/core/computation.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The goal is to wrap the return statement in polyval with type checking for datetime64\n# We look for the line that returns the result of polyval.\n# This replacement assumes the structure found in the previous steps is correct.\nnew_content = content.replace(\n    \"    return np.polynomial.polynomial.polyval(coord, coeffs)\",\n    \"\"\"    if hasattr(coord, \"dtype\") and np.issubdtype(coord.dtype, np.datetime64):\n        coord = utils.datetime_to_numeric(coord)\n    return np.polynomial.polynomial.polyval(coord, coeffs)\"\"\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  },
+  {
+   "turn": 11,
+   "cmd": "grep -n \"return np.polynomial.polynomial.polyval(coord, coeffs)\" xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 12,
+   "cmd": "sed -i '/    return np.polynomial.polynomial.polyval(coord, coeffs)/ s/return np.polynomial.polynomial.polyval(coord, coeffs)/    if hasattr(coord, \"dtype\") and np.issubdtype(coord.dtype, np.datetime64):\n        coord = utils.datetime_to_numeric(coord)\n    return np.polynomial.polynomial.polyval(coord, coeffs)/' xarray/core/computation.py",
+   "exit": 1
+  },
+  {
+   "turn": 13,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"xarray/core/computation.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target the return statement within the polyval function.\n# We replace the original return line with the type-checking logic.\n# This assumes the original line was exactly: return np.polynomial.polynomial.polyval(coord, coeffs)\nnew_content = content.replace(\n    \"    return np.polynomial.polynomial.polyval(coord, coeffs)\",\n    \"\"\"    if hasattr(coord, \"dtype\") and np.issubdtype(coord.dtype, np.datetime64):\n        coord = utils.datetime_to_numeric(coord)\n    return np.polynomial.polynomial.polyval(coord, coeffs)\"\"\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 14,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 86537,
+ "completion_tokens": 3057,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "wall_s": 96.7
+}

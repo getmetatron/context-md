@@ -16,6 +16,10 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parent.parent
 SEED = 42
 N_PERM = 10_000
+EXPECTED_RECORDED_ABORTS = {
+    ("eval-A2-rep1", "pydata__xarray-4687"),
+    ("eval-A2-rep2", "pydata__xarray-7393"),
+}
 
 
 def files_of(patch): return set(re.findall(r"^diff --git a/(\S+)", patch, re.M))
@@ -32,8 +36,43 @@ def load_preds(path):
 def load_verdicts():
     v = {}
     for l in (ROOT / "runs" / "eval_summary.jsonl").read_text().splitlines():
-        r = json.loads(l); v[(r["run_id"], r["instance_id"])] = r["resolved"]
+        r = json.loads(l); v[(r["run_id"], r["instance_id"])] = r
+    # Two planned A2 attempts terminated with rc=1 before producing either an
+    # episode/prediction or an evaluator row. The frozen analysis retained the
+    # full planned denominator and scored these attempts unresolved. Require the
+    # original batch log to support exactly those otherwise-missing outcomes.
+    batch = (ROOT / "runs" / "batch_frontier2.log").read_text()
+    failed_a2 = {
+        (f"eval-A2-rep{rep}", iid)
+        for iid, rep in re.findall(
+            r"--condition A --instances (\S+) --rep (\d+) --run-dir \S*/runs/A2/rep\d+"
+            r" -> rc=[1-9]\d*", batch)
+    }
+    recorded_aborts = {key for key in failed_a2 if key not in v}
+    if recorded_aborts != EXPECTED_RECORDED_ABORTS:
+        raise AssertionError(
+            f"recorded frontier aborts changed: {sorted(recorded_aborts)}")
+    for key in recorded_aborts:
+        v[key] = {"run_id": key[0], "instance_id": key[1], "resolved": False,
+                  "note": "runner_abort_rc_nonzero"}
     return v
+
+
+def require(mapping, key, kind):
+    """Return a released record, failing loudly instead of imputing failure."""
+    if key not in mapping:
+        raise AssertionError(f"missing {kind}: {key}")
+    return mapping[key]
+
+
+def require_prediction(mapping, key, verdicts, verdict_key, kind):
+    """Require a patch record or an explicit evaluator record for no patch."""
+    if key in mapping:
+        return mapping[key]
+    verdict = require(verdicts, verdict_key, "evaluation verdict")
+    if verdict.get("note") in {"empty_patch_skipped", "runner_abort_rc_nonzero"}:
+        return ""
+    raise AssertionError(f"missing {kind} without an explicit empty-patch verdict: {key}")
 
 
 def paired_test(df, arm1, arm0, metric, rng):
@@ -69,10 +108,13 @@ def build_frame(gold_df, verdicts):
                         rid = ridt.format(t=tag, r=rep)
                     else:
                         store = flat[arm]; rid = ridt.format(r=rep)
-                    patch = store.get(b, "")
+                    verdict_key = (rid, b)
+                    patch = require_prediction(store, b, verdicts, verdict_key,
+                                               f"prediction for {arm} tier {tier} rep {rep}")
                     rows.append(dict(tier=tier, arm=arm, pair=tag, rep=rep,
                                      gold_hit=bool(files_of(patch) & gold),
-                                     resolved=verdicts.get((rid, b), False)))
+                                     resolved=require(verdicts, verdict_key,
+                                                      "evaluation verdict")["resolved"]))
     # frontier stratified arms
     pairs = json.loads((ROOT / "harness" / "pairs_frontier.json").read_text())["pairs"]
     for rep in range(1, 4):
@@ -82,10 +124,13 @@ def build_frame(gold_df, verdicts):
             b = p["b"]; gold = files_of(gold_df.loc[b, "patch"])
             cp = load_preds(ROOT / "runs" / "C2" / f"pair_{tag}" / f"rep{rep}" / "predictions.jsonl")
             for arm, store, rid in (("C2", cp, f"eval-C2-p{tag}-rep{rep}"), ("A2", ap, f"eval-A2-rep{rep}")):
-                patch = store.get(b, "")
+                verdict_key = (rid, b)
+                patch = require_prediction(store, b, verdicts, verdict_key,
+                                           f"prediction for {arm} frontier rep {rep}")
                 rows.append(dict(tier=0, arm=arm, pair=tag, rep=rep,
                                  gold_hit=bool(files_of(patch) & gold),
-                                 resolved=verdicts.get((rid, b), False)))
+                                 resolved=require(verdicts, verdict_key,
+                                                  "evaluation verdict")["resolved"]))
     return pd.DataFrame(rows)
 
 

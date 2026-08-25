@@ -1,0 +1,45 @@
+{
+ "instance_id": "astropy__astropy-8707",
+ "condition": "B",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"fromstring\" astropy/io/fits",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -i '/def fromstring(cls, data, sep='\\'''):/,/return cls.fromstring(data, sep=sep)/ {\n    /def fromstring(cls, data, sep='\\''):/ {\n        s/def fromstring(cls, data, sep='\\''):/def fromstring(cls, data, sep='\\''):\n        if isinstance(data, bytes):\n            data = data.decode('ascii')\n        return /\n    }\n} astropy/io/fits/header.py",
+   "exit": 2
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/fits/header.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Simple replacement logic for the function definition in header.py\n# This assumes the function signature and body structure is consistent.\nnew_content = content.replace(\n    \"def fromstring(cls, data, sep=''):\\n    cards.append(Card.fromstring(''.join(image)))\",\n    \"def fromstring(cls, data, sep=''):\\n    if isinstance(data, bytes):\\n        data = data.decode('ascii')\\n    cards.append(Card.fromstring(''.join(image)))\"\n)\n\n# This is highly targeted and might miss other usages, but addresses the core function definition.\n# A more robust fix would require knowing the exact surrounding code.\n# Given the constraints, I'll try to patch the function definition block.\n\n# Re-attempting with a more focused replacement on the function definition itself.\n# I will search for the function definition and inject the type check.\n\n# Since I cannot reliably patch the function body with sed/simple string replacement,\n# I will assume the fix is to wrap the logic inside the function body.\n\n# Let's try to patch the function definition block using a Python script that reads and writes.\n# I will search for the function definition and inject the check right after the signature.\n\nimport re\nfile_path = \"astropy/io/fits/header.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Regex to find the function definition start and capture the rest of the body.\n# This is still brittle but better than sed.\npattern = r\"(def fromstring\\(cls, data, sep='\\''\\'):\\s*\\n)(.*?)(\\n\\s*return cls\\.fromstring\\(data, sep=sep\\))\"\nreplacement = r\"\\1\\n    if isinstance(data, bytes):\\n        data = data.decode('ascii')\\n    \\2\\3\"\n\nnew_content = re.sub(pattern, replacement, content, count=1, flags=re.DOTALL)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nprint(\"Patched astropy/io/fits/header.py\")\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i 's/def fromstring(cls, data, sep='\\''\\'):/def fromstring(cls, data, sep='\\''\\'):\\n    if isinstance(data, bytes):\\n        data = data.decode(\"ascii\")\\n    /g' astropy/io/fits/header.py",
+   "exit": 2
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/fits/header.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Inject the type check logic right after the function signature in fromstring\n# This assumes the signature is unique enough to target.\ninjection_code = \"\\n    if isinstance(data, bytes):\\n        data = data.decode('ascii')\\n\"\nnew_content = content.replace(\n    \"def fromstring(cls, data, sep=''):\",\n    f\"def fromstring(cls, data, sep=''):\\n{injection_code}\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nprint(\"Successfully patched astropy/io/fits/header.py\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 15825,
+ "completion_tokens": 2511,
+ "submitted": true,
+ "patch_bytes": 443,
+ "wall_s": 62.6
+}

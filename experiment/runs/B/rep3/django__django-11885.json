@@ -1,0 +1,60 @@
+{
+ "instance_id": "django__django-11885",
+ "condition": "B",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"fast delete queries\" .",
+   "exit": 1
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"on_delete=models.CASCADE\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"Collector\" .",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat django/db/models/deletion.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -A 10 \"add_field_update\" django/db/models/deletion.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfrom django.db.models.deletion import Collector\n\ndef add_field_update(self, field, value, objs):\n    \"\"\"\n    Schedule a field update. 'objs' must be a homogeneous iterable\n    collection of model instances (e.g. a QuerySet).\n    \"\"\"\n    if not objs:\n        return\n    model = objs[0].__class__\n    self.field_updates.setdefault(\n        model, {}).setdefault(\n        (field, value), set()).update(objs)\n    \n    # New logic to track PKs for fast deletion combination\n    if hasattr(field, 'remote_field') and field.remote_field.one_to_many:\n        pk_values = {obj.pk for obj in objs if obj.pk is not None}\n        if pk_values:\n            self.fast_deletes.append({\n                'model': field.remote_field.model,\n                'pk_values': pk_values,\n                'field': field.name\n            })\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '/def add_field_update(self, field, value, objs):/,$ { /if not objs:/r /def add_field_update(self, field, value, objs):\\n    \"\"\"\\n    Schedule a field update. 'objs' must be a homogeneous iterable\\n    collection of model instances (e.g. a QuerySet).\\n    \"\"\"\\n    if not objs:\\n        return\\n    model = objs[0].__class__\\n    self.field_updates.setdefault(\\n        model, {}).setdefault(\\n        (field, value), set()).update(objs)\\n    \\n    # Track PKs for fast deletion combination if it's a ForeignKey\\n    if hasattr(field, \"remote_field\") and field.remote_field.one_to_many:\\n        pk_values = {obj.pk for obj in objs if obj.pk is not None}\\n        if pk_values:\\n            self.fast_deletes.append({\\n                \\'model\\': field.remote_field.model,\\n                \\'pk_values\\': pk_values,\\n                \\'field\\': field.name\\n            })\\n}' django/db/models/deletion.py",
+   "exit": 2
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/models/deletion.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The logic to append after the existing update call\nappend_logic = \"\"\"\n    # Track PKs for fast deletion combination if it's a ForeignKey\n    if hasattr(field, \"remote_field\") and field.remote_field.one_to_many:\n        pk_values = {obj.pk for obj in objs if obj.pk is not None}\n        if pk_values:\n            self.fast_deletes.append({\n                'model': field.remote_field.model,\n                'pk_values': pk_values,\n                'field': field.name\n            })\n\"\"\"\n\n# Find the line ending the update call and insert the logic after it.\n# We look for the closing parenthesis of the update call.\nif \"update(objs)\" in content:\n    new_content = content.replace(\n        \"        (field, value), set()).update(objs)\",\n        \"        (field, value), set()).update(objs)\\n\" + append_logic\n    )\n    with open(file_path, 'w') as f:\n        f.write(new_content)\nelse:\n    print(\"Could not find the target line in add_field_update.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 29449,
+ "completion_tokens": 1660,
+ "submitted": true,
+ "patch_bytes": 847,
+ "wall_s": 51.8
+}

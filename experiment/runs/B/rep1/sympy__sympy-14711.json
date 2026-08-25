@@ -1,0 +1,45 @@
+{
+ "instance_id": "sympy__sympy-14711",
+ "condition": "B",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"TypeError: A Vector must be supplied\" sympy/physics/vector/vector.py",
+   "exit": 1
+  },
+  {
+   "turn": 1,
+   "cmd": "cat sympy/physics/vector/vector.py | grep -A 10 \"def _check_vector(other):\"",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i '/def _check_vector(other):/,/return other/ s/if not isinstance(other, Vector):/if not isinstance(other, Vector) and not (other == 0):/g' sympy/physics/vector/vector.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i 's/if not isinstance(other, Vector):/if not isinstance(other, Vector) and other != 0:/g' sympy/physics/vector/vector.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sympy/physics/vector/vector.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Original line to find: if not isinstance(other, Vector):\n# New logic: if not isinstance(other, Vector) and other != 0:\n# This assumes that if other is not a Vector, it must be zero to pass.\n# A safer check might be to allow scalars if they are zero.\n\n# Let's try to replace the entire block for safety, focusing on the condition.\nnew_content = content.replace(\n    \"if not isinstance(other, Vector):\",\n    \"if not isinstance(other, Vector) and other != 0:\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 6932,
+ "completion_tokens": 1188,
+ "submitted": true,
+ "patch_bytes": 436,
+ "wall_s": 33.5
+}

@@ -24,7 +24,7 @@ Paired analyses (per pair×rep, sign-flip permutation, 10k draws, seed 42):
 
 ## Caveats
 - Gold-file hit is a localization proxy; resolve (the ultimate metric) shows nothing at this tier by design.
-- Holm correction: E-vs-B and D-vs-B sit in different pre-registered families (RQ1, RQ2); no cross-family correction applies. If a reviewer insists on pooling them into one family, E's corrected p = 0.082 — report both readings.
+- Holm correction: E-vs-B and D-vs-B sit in different pre-registered families (RQ1, RQ2); no cross-family correction applies. If a reviewer pools them into one family, the exact corrected p is 0.0812 (0.081 at three decimals) — report both readings.
 - Empty patches count as gold-miss (per the §6 formula); arm-level non-empty rates are reported alongside to keep that interpretable.
 
 ## Next cells

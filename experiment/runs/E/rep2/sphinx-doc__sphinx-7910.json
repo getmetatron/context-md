@@ -1,0 +1,67 @@
+{
+ "instance_id": "sphinx-doc__sphinx-7910",
+ "condition": "E",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"obj.__globals__\" sphinx/ext/autodoc/",
+   "exit": 1
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -C 10 \"obj.__globals__\" sphinx/ext/autodoc/__init__.py",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"obj.__globals__\" sphinx/ext/autodoc/importer.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "cat sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -r \"Documenter\" sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "cat sphinx/ext/autodoc/importer.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\ndef import_object(modname: str, objpath: List[str], objtype: str = '',\n                  attrgetter: Callable[[Any, str], Any] = safe_getattr,\n                  warningiserror: bool = False) -> Any:\n    if objpath:\n        logger.debug('[autodoc] from %s import %s', modname, '.'.join(objpath))\n    else:\n        logger.debug('[autodoc] import %s', modname)\n\n    try:\n        module = None\n        exc_on_importing = None\n        objpath = list(objpath)\n        while module is None:\n            try:\n                module = import_module(modname, warningiserror=warningiserror)\n                logger.debug('[autodoc] import %s => %r', modname, module)\n            except ImportError as exc:\n                logger.debug('[autodoc] import %s => failed', modname)\n                exc_on_importing = exc\n                if '.' in modname:\n                    # retry with parent module\n                    modname, name = modname.rsplit('.', 1)\n                    objpath.insert(0, name)\n                else:\n                    raise\n\n        obj = module\n        parent = None\n        object_name = None\n        for attrname in objpath:\n            parent = obj\n            logger.debug('[autodoc] getattr(_, %r)', attrname)\n            obj = attrgetter(obj, attrname)\n            logger.debug('[autodoc] => %r', obj)\n            object_name = attrname\n            # Attempt to unwrap decorators if the object is a function or method\n            if hasattr(obj, '__wrapped__'):\n                obj = obj.__wrapped__\n        return [module, parent, object_name, obj]\n    except (AttributeError, ImportError) as exc:\n        if isinstance(exc, AttributeError) and exc_on_importing:\n            # restore ImportError\n            exc = exc_on_importing\n\n        if objpath:\n            errmsg = ('autodoc: failed to import %s %r from module %r' %\n                      (objtype, '.'.join(objpath), modname))\n        else:\n            errms\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '/for attrname in objpath:/,/logger.debug('[autodoc] => %r', obj)/ s/obj = attrgetter(obj, attrname)/obj = attrgetter(obj, attrname); if hasattr(obj, '__wrapped__'): obj = obj.__wrapped__/g' sphinx/ext/autodoc/importer.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sphinx/ext/autodoc/importer.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The target loop structure:\n# for attrname in objpath:\n#     parent = obj\n#     logger.debug('[autodoc] getattr(_, %r)', attrname)\n#     obj = attrgetter(obj, attrname)\n#     logger.debug('[autodoc] => %r', obj)\n#     object_name = attrname\n\n# Replacement logic: add unwrapping after assignment to obj\nnew_content = content.replace(\n    \"obj = attrgetter(obj, attrname)\\n            logger.debug('[autodoc] => %r', obj)\\n            object_name = attrname\",\n    \"obj = attrgetter(obj, attrname)\\n            logger.debug('[autodoc] => %r', obj)\\n            object_name = attrname\\n            # Attempt to unwrap decorators\\n            if hasattr(obj, '__wrapped__'):\\n                obj = obj.__wrapped__\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 42103,
+ "completion_tokens": 2493,
+ "context_truncated": false,
+ "context_words": 665,
+ "submitted": true,
+ "patch_bytes": 700,
+ "wall_s": 78.4
+}

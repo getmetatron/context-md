@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-14787",
+ "condition": "B",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"method_decorator\" .",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat django/utils/decorators.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nfrom functools import partial, update_wrapper, wraps\n\n\nclass classonlymethod(classmethod):\n    def __get__(self, instance, cls=None):\n        if instance is not None:\n            raise AttributeError(\"This method is available only on the class, not on instances.\")\n        return super().__get__(instance, cls)\n\n\ndef _update_method_wrapper(_wrapper, decorator):\n    # _multi_decorate()'s bound_method isn't available in this scope. Cheat by\n    # using it on a dummy function.\n    @decorator\n    def dummy(*args, **kwargs):\n        pass\n    update_wrapper(_wrapper, dummy)\n\n\ndef _multi_decorate(decorators, method):\n    \"\"\"\n    Decorate `method` with one or more function decorators. `decorators` can be\n    a single decorator or an iterable of decorators.\n    \"\"\"\n    if hasattr(decorators, '__iter__'):\n        # Apply a list/tuple of decorators if 'decorators' is one. Decorator\n        # functions are applied so that the call order is the same as the\n        # order in which they appear in the iterable.\n        decorators = decorators[::-1]\n    else:\n        decorators = [decorators]\n\n    def _wrapper(self, *args, **kwargs):\n        # bound_method has the signature that 'decorator' expects i.e. no\n        # 'self' argument, but it's a closure over self so it can call\n        # 'func'. Also, wrap method.__get__() in a function because new\n        # attributes can't be set on bound method objects, only on functions.\n        bound_method = partial(method.__get__(self, type(self)))\n        for dec in decorators:\n            bound_method = dec(bound_method)\n        return bound_method(*args, **kwargs)\n\n    # Copy any attributes that a decorator adds to the function it decorates.\n    for dec in decorators:\n        _update_method_wrapper(_wrapper, dec)\n    # Preserve any existing attributes of 'method', including the name.\n    update_wrapper(_wrapper, method)\n    return _wrapper\n\n\ndef method_decorator(decorator, name=''):\n    \"\"\"\n    Convert a function decorator into a method decorator\n    \"\"\"\n    # 'obj' can be a class or a function. If 'obj' is a function at the time it\n    # is passed to _dec,  it will eventually be a method of the class it is\n    # defined on. If 'obj' is a class, the 'name' is required to be the name\n    # of the method that will be decorated.\n    def _dec(obj):\n        if not isinstance(obj, type):\n            return _multi_decorate(decorator, obj)\n        if not (name and hasattr(obj, name)):\n            raise ValueError(\n                \"The keyword argument `name` must be the name of a method \"\n                \"of the decorated class: %s. Got '%s' instead.\" % (obj, name)\n            )\n        method = getattr(obj, name)\n        if not callable(method):\n            raise TypeError(\n                \"Cannot decorate '%s' as it isn't a callable attribute of \"\n                \"%s (%s).\" % (name, obj, method)\n            )\n        _wrapper = _multi_decorate(decorator, method)\n        update_wrapper(_wrapper, method)\n        return _wrapper\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "submit"
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nfile_path=\"django/utils/decorators.py\"\nsed_script='\n/        _wrapper = _multi_decorate(decorator, method)/a\\        update_wrapper(_wrapper, method)\\n        return _wrapper'\nsed -i \"$sed_script\" \"$file_path\"\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/        _wrapper = _multi_decorate(decorator, method)/a\\        update_wrapper(_wrapper, method)\\n        return _wrapper' django/utils/decorators.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path=\"django/utils/decorators.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Find the block:\n#        _wrapper = _multi_decorate(decorator, method)\n#        return _wrapper\n\n# Replace it with:\n#        _wrapper = _multi_decorate(decorator, method)\n#        update_wrapper(_wrapper, method)\n#        return _wrapper\n\nnew_content = content.replace(\n    \"        _wrapper = _multi_decorate(decorator, method)\\n        return _wrapper\",\n    \"        _wrapper = _multi_decorate(decorator, method)\\n        update_wrapper(_wrapper, method)\\n        return _wrapper\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 21331,
+ "completion_tokens": 1700,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "wall_s": 45.5
+}

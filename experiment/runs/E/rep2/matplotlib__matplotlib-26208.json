@@ -1,0 +1,87 @@
+{
+ "instance_id": "matplotlib__matplotlib-26208",
+ "condition": "E",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"dataLim\" lib/matplotlib/axes/",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat lib/matplotlib/axes/_base.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"dataLim.update_from_data_xy\" lib/matplotlib/axes/_base.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '/self.dataLim.update_from_data_xy(xys, self.ignore_existing_data_limits,/' lib/matplotlib/axes/_base.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -A 10 \"self.dataLim.update_from_data_xy\" lib/matplotlib/axes/_base.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/def _process_unit_info/,$ { /if self.has_units()/ { s/if self.has_units()/if self.has_units() and not self._is_unit_processing_for_data_lim_update()/ } }' lib/matplotlib/axes/_base.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"lib/matplotlib/axes/_base.py\"\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# Inject a check at the start of _process_unit_info to prevent dataLim reset\n# if units are already set, which is the suspected cause of the bug with twinx/stackplot.\n# We check for the function definition and insert the guard clause.\n\n# The guard clause should check if self.has_units() is true, and if so,\n# it should skip the dataLim update logic that follows.\n\n# Since I cannot reliably parse the whole function, I will search for the first\n# instance of dataLim update after the function definition and wrap it.\n\n# I will search for the line that updates dataLim and wrap it in a conditional check.\n# Based on previous context, the update happens after checking self.has_units().\n\n# This substitution is highly targeted to the suspected area.\nnew_content = content.replace(\n    \"if self.has_units():\",\n    \"if self.has_units() and not self._is_unit_processing_for_data_lim_update():\"\n)\n\n# If the above substitution is too broad, I will try to wrap the entire block.\n# Given the constraints, I'll stick to the most targeted change: modifying the condition.\n\nif new_content != content:\n    print(\"Applying substitution.\")\n    with open(file_path, \"w\") as f:\n        f.write(new_content)\nelse:\n    print(\"Substitution did not change content, trying a different approach.\")\n    # Fallback: If the simple string replacement fails, I'll assume the issue is\n    # that the dataLim update needs to be guarded by a check that the axis is not\n    # being processed for unit info if it already has units.\n    # I will assume the fix is to add a check right after the docstring.\n    \n    # Re-reading the context, the issue is that the unit processing *causes* the update.\n    # I will modify the function body to return early if units are present and no explicit\n    # data update is requested.\n    \n    # Since I cannot reliably inject code, I will assume the simple string replacement\n    # is the intended fix for the condition check.\n    pass\n\n# Final write back using the potentially modified content\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '/def _process_unit_info/,$ { :a; N; /if self.has_units()/ { s/if self.has_units()/if self.has_units() and not self._is_unit_processing_for_data_lim_update():/; ba; } }' lib/matplotlib/axes/_base.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "grep -r \"twinx\" lib/matplotlib/axes/",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"lib/matplotlib/axes/_base.py\"\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# The fix is to ensure that when twinx is called, the data limits of the original axis (self)\n# are preserved for the new axis, and that the process doesn't incorrectly update self.dataLim.\n\n# I will modify the twinx method to explicitly pass the current data limits\n# or prevent the data limit update mechanism from running on self.\n\n# Searching for the twinx method definition and modifying it.\n# The method signature is: def twinx(self):\n\n# I will modify the method to save the current data limits before calling the parent/base implementation,\n# and ensure the new axis inherits these limits correctly without triggering a full recalculation on self.\n\n# Since I cannot see the full implementation, I will use a targeted replacement around the method body.\n# I will assume the fix is to call a method that explicitly copies limits.\n\nnew_content = content.replace(\n    \"def twinx(self):\\n        For those who are 'picking' artists while using twinx, pick\",\n    \"def twinx(self):\\n        # Preserve data limits of self before creating twin axis\\n        original_data_lims = self.dataLim\\n        for those who are 'picking' artists while using twinx, pick\"\n)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  },
+  {
+   "turn": 11,
+   "cmd": "grep -A 10 \"def twinx(self):\" lib/matplotlib/axes/_base.py",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"lib/matplotlib/axes/_base.py\"\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# Inject saving of self.dataLim at the start of twinx\nnew_content = content.replace(\n    \"def twinx(self):\\n        \\\"\\\"\\\"\\n        Create a twin Axes sharing the xaxis.\\n\\n        Create a new Axes with an invisible x-axis and an independent\\n        y-axis positioned opposite to the original one (i.e. at right). The\\n        x-axis autoscale setting will be inherited from the original\\n        Axes.  To ensure that the tick marks of both y-axes align, see\\n        `~matplotlib.ticker.LinearLocator`.\\n\\n        Returns\",\n    \"def twinx(self):\\n        \\\"\\\"\\\"\\n        Create a twin Axes sharing the xaxis.\\n\\n        Save original data limits before creating twin axis.\\n        original_data_lims = self.dataLim\\n\\n        Create a new Axes with an invisible x-axis and an independent\\n        y-axis positioned opposite to the original one (i.e. at right). The\\n        x-axis autoscale setting will be inherited from the original\\n        Axes.  To ensure that the tick marks of both y-axes align, see\\n        `~matplotlib.ticker.LinearLocator`.\\n\\n        Returns\"\n)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 13,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 82802,
+ "completion_tokens": 4059,
+ "context_truncated": false,
+ "context_words": 683,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 621,
+ "wall_s": 114.5
+}

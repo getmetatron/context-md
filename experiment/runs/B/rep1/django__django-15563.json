@@ -1,0 +1,90 @@
+{
+ "instance_id": "django__django-15563",
+ "condition": "B",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"QuerySet.update\" myapp/models.py",
+   "exit": 2
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"QuerySet.update\" . | head -n 10",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"update\" django/db/models/query.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '/django\\/db\\/models\\/query.py/s/update_fields = [self.model._meta.get_field(name) for name in update_fields]/update_fields = [self.model._meta.get_field(name) for name in update_fields if not (f.primary_key for f in update_fields)]/g' django/db/models/query.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -A 10 \"update_fields = [self.model._meta.get_field(name) for name in update_fields]\" django/db/models/query.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i 's/update_fields = [self.model._meta.get_field(name) for name in update_fields]/update_fields = [self.model._meta.get_field(name) for name in update_fields if name in self.model._meta.fields]/g' django/db/models/query.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "grep -A 20 \"def update(self, **kwargs):\" django/db/models/query.py",
+   "exit": 2
+  },
+  {
+   "turn": 7,
+   "cmd": "cat django/db/models/query.py | grep -A 10 \"def update(self, **kwargs):\"",
+   "exit": 2
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i '/def update(self, **kwargs):/,$ { /update_fields = \\[self\\.model_meta\\.get_field\\(name\\) for name in update_fields\\]/ s/update_fields = \\[self\\.model_meta\\.get_field\\(name\\) for name in update_fields\\]/update_fields = [self.model._meta.get_field(name) for name in update_fields if name in self.model._meta.fields]/g' django/db/models/query.py",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"django/db/models/query.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The fix is to ensure that update_fields only contains fields defined on the model itself,\n# preventing updates from incorrectly targeting parent tables in multiple inheritance.\n# We target the line where update_fields are processed.\n\n# Original pattern (approximate): update_fields = [self.model._meta.get_field(name) for name in update_fields]\n# Replacement logic: Filter fields to only those defined on self.model._meta.fields\nnew_content = re.sub(\n    r'(django/db/models/query\\.py:.*?)update_fields = \\[self\\.model_meta\\.get_field\\(name\\) for name in update_fields\\]',\n    r'\\1update_fields = [self.model._meta.get_field(name) for name in update_fields if name in self.model._meta.fields]',\n    content,\n    flags=re.DOTALL\n)\n\nprint(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "sed -i '/def update(self, **kwargs):/,/    self.model._meta.get_field(name) for name in update_fields/ s/update_fields = [self.model._meta.get_field(name) for name in update_fields]/update_fields = [self.model._meta.get_field(name) for name in update_fields if name in self.model._meta.fields]/g' django/db/models/query.py",
+   "exit": 1
+  },
+  {
+   "turn": 11,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"django/db/models/query.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Regex to find the line defining update_fields within the update method context.\n# We use a non-greedy match to capture the surrounding code context.\n# The pattern targets the list comprehension assignment for update_fields.\npattern = r\"(update_fields = \\[self\\.model_meta\\.get_field\\(name\\) for name in update_fields\\])\"\nreplacement = r\"update_fields = [self.model._meta.get_field(name) for name in update_fields if name in self.model._meta.fields]\"\n\nnew_content = re.sub(pattern, replacement, content)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 12,
+   "cmd": "submit"
+  },
+  {
+   "turn": 13,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"django/db/models/query.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Re-applying the targeted replacement using regex substitution on the content.\npattern = r\"update_fields = \\[self\\.model_meta\\.get_field\\(name\\) for name in update_fields\\]\"\nreplacement = r\"update_fields = [self.model._meta.get_field(name) for name in update_fields if name in self.model._meta.fields]\"\n\nnew_content = re.sub(pattern, replacement, content)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 14,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 53861,
+ "completion_tokens": 3094,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "wall_s": 80.0
+}

@@ -1,0 +1,52 @@
+{
+ "instance_id": "django__django-13112",
+ "condition": "E",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"ForeignKey\" django/db/models/fields/",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat django/db/models/fields/related.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\ndef resolve_relation(scope_model, relation):\n    \"\"\"\n    Transform relation into a model or fully-qualified model string of the form\n    \"app_label.ModelName\", relative to scope_model.\n\n    The relation argument can be:\n      * RECURSIVE_RELATIONSHIP_CONSTANT, i.e. the string \"self\", in which case\n        the model argument will be returned.\n      * A bare model name without an app_label, in which case scope_model's\n        app_label will be prepended.\n      * An \"app_label.ModelName\" string.\n      * A model class, which will be returned unchanged.\n    \"\"\"\n    # Check for recursive relations\n    if relation == RECURSIVE_RELATIONSHIP_CONSTANT:\n        relation = scope_model\n\n    # Look for an \"app.Model\" relation\n    if isinstance(relation, str):\n        if \".\" not in relation:\n            # Normalize app_label to lowercase for consistent resolution\n            app_label = scope_model._meta.app_label.lower()\n            relation = \"%s.%s\" % (app_label, relation)\n\n    return relation\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "submit"
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/relation = \"%s.%s\" % (scope_model._meta.app_label, relation)/relation = \"%s.%s\" % (scope_model._meta.app_label.lower(), relation)/g' django/db/models/fields/related.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/models/fields/related.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target line: relation = \"%s.%s\" % (scope_model._meta.app_label, relation)\n# Replacement: relation = \"%s.%s\" % (scope_model._meta.app_label.lower(), relation)\nnew_content = content.replace(\n    'relation = \"%s.%s\" % (scope_model._meta.app_label, relation)',\n    'relation = \"%s.%s\" % (scope_model._meta.app_label.lower(), relation)'\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 30035,
+ "completion_tokens": 1220,
+ "context_truncated": false,
+ "context_words": 830,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 555,
+ "wall_s": 42.1
+}

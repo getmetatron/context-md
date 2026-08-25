@@ -1,0 +1,47 @@
+{
+ "instance_id": "pytest-dev__pytest-7236",
+ "condition": "E",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"pdb\" src/_pytest/",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat src/_pytest/unittest.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i '/if not skipped:/ s/if not skipped:/if not skipped and not self.config.getoption(\"usepdb\"):/' src/_pytest/unittest.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '/if not skipped:/ {\n    N\n    s/if not skipped:/if not skipped and not self.config.getoption(\"usepdb\"):/\n}' src/_pytest/unittest.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"src/_pytest/unittest.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target the block:\n#         skipped = getattr(cls, \"__unittest_skip__\", False)\n#         if not skipped:\n#             self._inject_setup_teardown_fixtures(cls)\n#             self._inject_setup_class_fixture()\n\n# Replace 'if not skipped:' with 'if not skipped and not self.config.getoption(\"usepdb\"):'\n# This assumes the surrounding indentation and structure remain valid.\nnew_content = content.replace(\n    \"        if not skipped:\\n            self._inject_setup_teardown_fixtures(cls)\\n            self._inject_setup_class_fixture()\",\n    \"        if not skipped and not self.config.getoption(\\\"usepdb\\\"):\\n            self._inject_setup_teardown_fixtures(cls)\\n            self._inject_setup_class_fixture()\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 28558,
+ "completion_tokens": 1854,
+ "context_truncated": false,
+ "context_words": 602,
+ "submitted": true,
+ "patch_bytes": 479,
+ "wall_s": 51.5
+}

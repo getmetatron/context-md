@@ -3,8 +3,10 @@
 Required by `PREREGISTRATION.md` §12. This file covers the Paper 1 protocol
 frozen at tag `prereg-v1` (commit `056156679a896f0697198bb240c92110aa2df048`,
 2026-07-09). The delivery study has its own frozen protocol
-(`PREREGISTRATION-PAPER2.md`, tag `prereg2-v1`) and its own log,
-`DEVIATIONS-2.md`.
+(`PREREGISTRATION-PAPER2.md`) and its own log, `DEVIATIONS-2.md`. That
+protocol's freeze tag `prereg2-v1` is **not public** and is a lightweight tag
+with no tagger timestamp; see the provenance caveat in `ARTIFACT.md`. Paper 2's
+pre-registration provenance is therefore weaker than Paper 1's.
 
 **How this was compiled.** The frozen protocol was compared clause by clause
 against the committed implementation (`harness/`, `analysis/`), the arms present
@@ -57,7 +59,8 @@ reps**, below the ≥25 target and at the low end of the §8 power table. §8 al
 permitted raising frontier reps from 3 to 5 "if observed variance warrants";
 reps were not raised. This is a direct cause of the wide interval on the frontier
 resolve effect, which the camera-ready reports as directional
-(raw p = 0.041, Holm-adjusted p = 0.082 within its registered family).
+(raw p = 0.0406, Holm-adjusted p = 0.0812 within its registered family;
+reported to three decimals as 0.041 and 0.081).
 
 ---
 
@@ -155,7 +158,13 @@ Generated after seeing the data. The paper labels each as such.
   `paper/camera-ready-agenticdev2026/analysis/verify_claims.py`.
 - **Multiple-comparison status made explicit.** The frontier resolve p-value is
   reported both uncorrected (0.041) and Holm-adjusted within its registered family
-  (0.082), and the effect is described as directional rather than confirmed.
+  (0.081), and the effect is described as directional rather than confirmed.
+- **Two frontier control attempts ended before an episode record was written.**
+  The no-context A2 attempts for `pydata__xarray-4687` rep 1 and
+  `pydata__xarray-7393` rep 2 exited nonzero. The frozen analysis retained the
+  planned 48-attempt denominator and scored both unresolved; the released
+  `runs/batch_frontier2.log` records the runner outcomes. This is now asserted by
+  `analysis/reproduce_paper.py` instead of being silently imputed from absence.
 
 ---
 

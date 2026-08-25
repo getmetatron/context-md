@@ -1,0 +1,77 @@
+{
+ "instance_id": "pytest-dev__pytest-8399",
+ "condition": "E",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -C 10 \"unittest_setUpClass_fixture\" src/_pytest/unittest.py",
+   "exit": 1
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"setUpClass\" src/_pytest/unittest.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat src/_pytest/unittest.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -A 20 \"setUpClass\" src/_pytest/unittest.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '/def _inject_setup_class_fixture(cls: Any) -> None:/,/if method_fixture:/ s/$/\\n    if not hasattr(cls, \"__doc__\") or cls.__doc__ is None: pass # Skip setup if class lacks docstring\\n    /' src/_pytest/unittest.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/def _inject_setup_class_fixture(cls: Any) -> None:/a\\\n        if not hasattr(cls, \"__doc__\") or cls.__doc__ is None:\n            # Skip setup if class lacks docstring, mimicking private fixture behavior.\n            return\n' src/_pytest/unittest.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"src/_pytest/unittest.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The goal is to insert:\n# if not hasattr(cls, \"__doc__\") or cls.__doc__ is None:\n#     return\n# right after the function signature line.\n\n# Use regex to find the function signature and replace it with the guarded version.\nimport re\n# Pattern to find the function signature line\npattern = r\"(def _inject_setup_class_fixture\\(cls: Any\\) -> None:)\"\n\n# Replacement string includes the guard clause and preserves the rest of the function body.\nreplacement = r\"\\1\\n        if not hasattr(cls, \\\"__doc__\\\") or cls.__doc__ is None:\\n            return\\n\"\n\nnew_content = re.sub(pattern, replacement, content, count=1)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  },
+  {
+   "turn": 8,
+   "cmd": "grep -A 5 \"def _inject_setup_class_fixture(cls: Any) -> None:\" src/_pytest/unittest.py",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "sed -i '/def _inject_setup_class_fixture(cls: Any) -> None:/r /if not hasattr(cls, \"__doc__\") or cls.__doc__ is None:\\n            return\\n/' src/_pytest/unittest.py",
+   "exit": 1
+  },
+  {
+   "turn": 10,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"src/_pytest/unittest.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Pattern to find the function definition line\npattern = r\"(def _inject_setup_class_fixture\\(cls: Any\\) -> None:)\"\n\n# The guard clause to insert\nguard_clause = \"\\n        if not hasattr(cls, \\\"__doc__\\\") or cls.__doc__ is None:\\n            return\\n\"\n\n# Use re.sub to replace the pattern with itself plus the guard clause.\nimport re\nnew_content = re.sub(pattern, r\"\\1\" + guard_clause, content, count=1)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 55342,
+ "completion_tokens": 3287,
+ "context_truncated": false,
+ "context_words": 602,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "wall_s": 88.4
+}

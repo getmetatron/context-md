@@ -17,8 +17,8 @@ A pre-registered evaluation on SWE-bench Verified (protocol frozen and timestamp
 <table>
 <tr>
 <td width="50%" align="center">
-  <img src="whitepaper/figure2-lifecycle-effect.png" alt="Slopegraph: a frontier agent resolves 72.9% of held-out constraint-sharing tasks with the consult-execute-learn-promote lifecycle vs 58.3% without it (+14.6pp, p=0.041), across 11 constraint groups." width="96%"/><br/>
-  <sub>A frontier agent running the lifecycle resolves <b>72.9%</b> of held-out tasks vs <b>58.3%</b> without it (+14.6&nbsp;pp, p&nbsp;=&nbsp;0.041).</sub>
+  <img src="whitepaper/figure2-lifecycle-effect.png" alt="Slopegraph: a frontier agent resolves 72.9% of held-out constraint-sharing tasks with the consult-execute-learn-promote lifecycle vs 58.3% without it (+14.6pp; raw p=0.041, Holm-adjusted p=0.081), across 11 constraint groups. The result is directional, not confirmed after correction." width="96%"/><br/>
+  <sub>A frontier agent running the lifecycle resolves <b>72.9%</b> of held-out tasks vs <b>58.3%</b> without it (+14.6&nbsp;pp; raw p&nbsp;=&nbsp;0.041, Holm-adjusted p&nbsp;=&nbsp;0.081; directional).</sub>
 </td>
 <td width="50%" align="center">
   <img src="whitepaper/figure3-capability-gradient.png" alt="Bar chart: an 8B local model's localization improves +26.1pp with frontier-authored context and +21.7pp with gold-distilled context (both p<0.0001), but +0.0pp with its own self-authored lessons." width="96%"/><br/>
@@ -31,9 +31,9 @@ A pre-registered evaluation on SWE-bench Verified (protocol frozen and timestamp
   <img src="whitepaper/figure4-token-economics.png" alt="Bar chart: tokens consumed per resolved task drop from 81.8K without context to 55.7K with the context lifecycle (−32%). Successful fixes cost the same in both arms; the saving comes from fewer doomed explorations." width="72%"/>
 </p>
 
-And it pays for itself: **32% fewer tokens per fixed bug** — successful fixes cost the same; the saving is the doomed exploration that never happens.
+In that regime the observed cost is also lower: **32% fewer tokens per resolved task** — successful fixes cost the same in both arms; the descriptive saving comes from fewer doomed explorations. Because this ratio depends on a directional resolve improvement (raw p = .041, Holm-adjusted p = .081 across the two registered contrasts), treat it as an economic observation in this constraint-sharing sample rather than a confirmed effect.
 
-Every number is reproducible from the released data: `cd experiment && make docker-reproduce` → `15/15 claims reproduced`. Full protocol, transcripts, and verdicts in [`experiment/`](experiment/); details in the [paper](whitepaper/repository-context-layer-paper.pdf).
+The reported numbers are recomputed from the artifact data by two checkers: `cd experiment && make reproduce-paper` → `15/15 claims reproduced`, and `python paper/camera-ready-agenticdev2026/analysis/verify_claims.py` → `all checked camera-ready claims verified` (delivery matrix, leakage audit, ceiling and token economics). The protocol, completed-episode transcripts, runner-failure records, audit records, and verdicts are in [`experiment/`](experiment/); the registered consultation hand audit is prepared but still awaits human labels. Details are in the [paper](whitepaper/repository-context-layer-paper.pdf).
 
 ## The file
 

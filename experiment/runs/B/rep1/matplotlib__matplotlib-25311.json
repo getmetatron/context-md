@@ -1,0 +1,65 @@
+{
+ "instance_id": "matplotlib__matplotlib-25311",
+ "condition": "B",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"pickle.dumps(fig)\" .",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"pickle\" lib/matplotlib/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"draggable\" lib/matplotlib/",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat lib/matplotlib/legend.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport matplotlib.legend\nimport matplotlib.figure\n\ndef set_draggable(self, state, use_blit=False, update='loc'):\n    if self._draggable is None:\n        self._draggable = DraggableLegend(self,\n    if self._draggable is not None:\n        self._draggable.disconnect()\n    self._draggable = None\n    return self._draggable\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport matplotlib.legend\nimport matplotlib.figure\n\ndef set_draggable(self, state, use_blit=False, update='loc'):\n    if self._draggable is None:\n        self._draggable = DraggableLegend(self,\n            use_blit=use_blit, update=update)\n    if self._draggable is not None:\n        self._draggable.disconnect()\n    self._draggable = None\n    return self._draggable\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '/def set_draggable(self, state, use_blit=False, update=\\'loc\\'):/,/return self._draggable/ s/.*$/    if self._draggable is not None:\n        self._draggable.disconnect()\n    self._draggable = None\n    return self._draggable/' lib/matplotlib/legend.py",
+   "exit": 2
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"lib/matplotlib/legend.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The original function body is complex. We replace the entire function definition\n# to ensure correct syntax and logic application.\nnew_content = content.replace(\n    \"def set_draggable(self, state, use_blit=False, update='loc'):\\n    if self._draggable is None:\\n        self._draggable = DraggableLegend(self,\\n            use_blit=use_blit, update=update)\\n    if self._draggable is not None:\\n        self._draggable.disconnect()\\n    self._draggable = None\\n    return self._draggable\",\n    \"def set_draggable(self, state, use_blit=False, update='loc'):\\n    if self._draggable is None:\\n        self._draggable = DraggableLegend(self,\\n            use_blit=use_blit, update=update)\\n    if self._draggable is not None:\\n        self._draggable.disconnect()\\n    self._draggable = None\\n    return self._draggable\"\n)\n\n# Since the replacement logic is identical, I must ensure I am only replacing the body\n# or the whole function block cleanly. Given the previous failure, I will use a targeted\n# replacement that assumes the structure is correct and only modifies the body logic.\n\n# Re-evaluating: The goal is to ensure that after cleanup, self._draggable is None.\n# I will use a simpler replacement targeting the end of the function body.\n\n# Let's use a more robust replacement that targets the lines after disconnection.\n# This assumes the structure up to disconnection is correct.\nsed_script = r\"\n/def set_draggable(self, state, use_blit=False, update='loc'):/,/return self._draggable/ {\n    /self._draggable = None/ {\n        /self._draggable = None/ {\n            /return self._draggable/ {\n                s/self._draggable = None/self._draggable = None # Keep this line, it's the fix\n            }\n        }\n    }\n}\n\"\n# This is too complex for sed. I will stick to the Python replacement, but I must ensure\n# the replacement string is exactly what is needed.\n\n# Final attempt using Python to replace the entire function body block.\n# I will read the file, find the start of the function, and overwrite the body.\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Find the start of the function definition\nstart_marker = \"def set_draggable(self, state, use_blit=False, update='loc'):\"\nif start_marker in content:\n    # Find the end of the function block (assuming it ends before the next method or class end)\n    # This is brittle, but necessary given the constraints.\n    \n    # We replace the entire function body block with the fixed logic.\n    fixed_body = \"\"\"    if self._draggable is None:\n        self._draggable = DraggableLegend(self,\n            use_blit=use_blit, update=update)\n    if self._draggable is not None:\n        self._draggable.disconnect()\n    self._draggable = None\n    return self._draggable\"\"\"\n    \n    # This replacement is highly risky but necessary to fix the logic.\n    # We replace the existing body content between the definition and the return statement.\n    \n    # Since I cannot reliably find the end of the function block with simple string replacement,\n    # I will write the entire function definition back, assuming the surrounding code is correct.\n    \n    new_function = \"\"\"def set_draggable(self, state, use_blit=False, update='loc'):\n    if self._draggable is None:\n        self._draggable = DraggableLegend(self,\n            use_blit=use_blit, update=update)\n    if self._draggable is not None:\n        self._draggable.disconnect()\n    self._draggable = None\n    return self._draggable\"\"\"\n    \n    # Use sed to replace the function definition block entirely.\n    # This requires knowing the exact lines to replace. I'll use a placeholder approach.\n    \n    # Given the constraints, I will use sed again, but simplify the pattern matching.\n    # I will assume the function starts at the line containing 'def set_draggable'\n    # and ends at the line containing 'return self._draggable'.\n    \n    print(\"Applying fix via sed...\")\n    # This sed command attempts to replace the function body content.\n    # It's the best guess given the previous failures.\n    import subprocess\n    subprocess.run([\"sed\", \"-i\", \"s/.*def set_draggable(self, state, use_blit=False, update='loc'):.*/def set_draggable(self, state, use_blit=False, update='loc'):\\n    if self._draggable is None:\\n        self._draggable = DraggableLegend(self,\\n            use_blit=use_blit, update=update)\\n    if self._draggable is not None:\\n        self._draggable.disconnect()\\n    self._draggable = None\\n    return self._draggable/\", file_path])\nelse:\n    print(\"Could not find function definition.\")\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"lib/matplotlib/legend.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The fixed logic for set_draggable:\nfixed_function_body = \"\"\"def set_draggable(self, state, use_blit=False, update='loc'):\n    if self._draggable is None:\n        self._draggable = DraggableLegend(self,\n            use_blit=use_blit, update=update)\n    if self._draggable is not None:\n        self._draggable.disconnect()\n    self._draggable = None\n    return self._draggable\"\"\"\n\n# We use a regex pattern to find the function definition and replace its entire content.\n# This pattern is highly specific to the function signature and structure.\nimport re\npattern = r\"(def set_draggable\\(self, state, use_blit=False, update='loc'\\):.*?return self._draggable)\"\n\n# The replacement string must match the structure of the original function definition.\nreplacement = fixed_function_body\n\nnew_content = re.sub(pattern, replacement, content, count=1, flags=re.DOTALL)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 37183,
+ "completion_tokens": 3330,
+ "submitted": true,
+ "patch_bytes": 1916,
+ "wall_s": 98.2
+}

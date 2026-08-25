@@ -1,0 +1,42 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-25931",
+ "condition": "E",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"sklearn/ensemble/_iforest.py\" .",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -C 5 \"contamination\" sklearn/ensemble/_iforest.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i '/        # else, define offset_ wrt contamination parameter/,/        self.offset_ = np.percentile(self.score_samples(X), 100.0 * self.contamination)/ s/        self.offset_ = np.percentile(self.score_samples(X), 100.0 * self.contamination)/        with warnings.catch_warnings():\\n            warnings.simplefilter(\"ignore\", UserWarning)\\n            self.offset_ = np.percentile(self.score_samples(X), 100.0 * self.contamination)/' sklearn/ensemble/_iforest.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"sklearn/ensemble/_iforest.py\"\ntarget_pattern = r\"(self.offset_ = np.percentile\\(self.score_samples\\(X\\), 100\\.0 \\* self.contamination\\))\"\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The replacement needs to wrap the assignment in a warning context manager.\n# We are replacing:\n# self.offset_ = np.percentile(self.score_samples(X), 100.0 * self.contamination)\n# with:\n# with warnings.catch_warnings():\n#     warnings.simplefilter(\"ignore\", UserWarning)\n#     self.offset_ = np.percentile(self.score_samples(X), 100.0 * self.contamination)\n\nreplacement = r\"\"\"        with warnings.catch_warnings():\n            warnings.simplefilter(\"ignore\", UserWarning)\n            self.offset_ = np.percentile(self.score_samples(X), 100.0 * self.contamination)\"\"\"\n\n# Use re.sub to replace the line, ensuring we only replace the specific assignment.\nnew_content = re.sub(\n    r\"self.offset_ = np.percentile\\(self.score_samples\\(X\\), 100\\.0 \\* self.contamination\\)\",\n    replacement,\n    content\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 16963,
+ "completion_tokens": 946,
+ "context_truncated": false,
+ "context_words": 600,
+ "submitted": true,
+ "patch_bytes": 650,
+ "wall_s": 33.5
+}

@@ -1,0 +1,52 @@
+{
+ "instance_id": "django__django-12708",
+ "condition": "E",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"ValueError: Found wrong number\" django/db/backends/base/schema.py",
+   "exit": 1
+  },
+  {
+   "turn": 1,
+   "cmd": "cat django/db/backends/base/schema.py | grep -C 10 _delete_composed_index",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\ndef _delete_composed_index(self, model, fields, constraint_kwargs, sql):\n    meta_constraint_names = {constraint.name for constraint in model._meta.constraints}\n    meta_index_names = {constraint.name for constraint in model._meta.indexes}\n    columns = [model._meta.get_field(field).column for field in fields]\n    constraint_names = self._constraint_names(\n        model, columns, exclude=meta_constraint_names | meta_index_names,\n        **constraint_kwargs\n    )\n    if len(constraint_names) != 1:\n        raise ValueError(\"Found wrong number (%s) of constraints for %s(%s)\" % (\n            len(constraint_names),\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i 's/if len(constraint_names) != 1:/if len(constraint_names) > 0:/g' django/db/backends/base/schema.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/if len(constraint_names) != 1:/if len(constraint_names) > 0:/g' django/db/backends/base/schema.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/backends/base/schema.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\nnew_content = content.replace(\"if len(constraint_names) != 1:\", \"if len(constraint_names) > 0:\")\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 22553,
+ "completion_tokens": 1176,
+ "context_truncated": false,
+ "context_words": 830,
+ "submitted": true,
+ "patch_bytes": 618,
+ "wall_s": 37.2
+}

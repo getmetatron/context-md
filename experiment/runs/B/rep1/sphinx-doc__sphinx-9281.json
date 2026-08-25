@@ -1,0 +1,45 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9281",
+ "condition": "B",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"autodoc\" sphinx/",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat sphinx/ext/autodoc/__init__.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"signature\" sphinx/util/inspect.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '/def stringify_signature(sig: inspect.Signature, show_annotation: bool = True,/' \\\n    -e ':a;N;$!ba' -e 's/.*(.*?)\\n(.*)/def stringify_signature(sig: inspect.Signature, show_annotation: bool = True):\\n    parts = []\\n    for name, param in sig.parameters.items():\\n        default_value = param.default\\n        default_str = \"\"\\n        if default_value is not inspect.Parameter.empty:\\n            try:\\n                # Check if the default value is an Enum member instance\\n                if hasattr(default_value, '__module__') and 'enum' in str(type(default_value)).lower():\\n                    enum_type = type(default_value)\\n                    if hasattr(enum_type, '__name__'):\\n                        default_str = f\"{enum_type.__name__}.{getattr(default_value, \"__name__\", str(default_value))}\"\\n                    else:\\n                        default_str = str(default_value)\\n                else:\\n                    default_str = repr(default_value)\\n            except Exception:\\n                default_str = repr(default_value)\\n        else:\\n            default_str = \"\"\\n\\n        param_str = f\"{name}: {param.annotation.__name__}\" if show_annotation and param.annotation != inspect.Parameter.empty else f\"{name}: {param.annotation}\"\\n        \\n        if default_str:\\n            param_str += f\\\" = {default_str}\\\"\\n        \\n        parts.append(param_str)\\n\\n    return \\\", \\\".join(parts)' sphinx/util/inspect.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sphinx/util/inspect.py\"\nnew_body = \"\"\"    parts = []\n    for name, param in sig.parameters.items():\n        default_value = param.default\n        default_str = \"\"\n        if default_value is not inspect.Parameter.empty:\n            try:\n                # Check if the default value is an Enum member instance\n                if hasattr(default_value, '__module__') and 'enum' in str(type(default_value)).lower():\n                    enum_type = type(default_value)\n                    if hasattr(enum_type, '__name__'):\n                        # Format as MyEnum.ValueA\n                        default_str = f\"{enum_type.__name__}.{getattr(default_value, \"__name__\", str(default_value))}\"\n                    else:\n                        default_str = str(default_value)\n                else:\n                    default_str = repr(default_value)\n            except Exception:\n                default_str = repr(default_value)\n        else:\n            default_str = \"\"\n\n        # Reconstruct parameter string, handling annotation display\n        annotation_display = \"\"\n        if show_annotation and param.annotation != inspect.Parameter.empty:\n            # Use __name__ if available, otherwise use repr/str\n            annotation_display = getattr(param.annotation, '__name__', str(param.annotation))\n        else:\n            annotation_display = \"\"\n\n        param_str = f\"{name}: {annotation_display}\"\n        \n        if default_str:\n            param_str += f\" = {default_str}\"\n        \n        parts.append(param_str)\n\n    return \", \".join(parts)\n\"\"\"\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Find the function definition and replace the body content\n# This is a highly targeted replacement based on the function signature.\nstart_marker = \"def stringify_signature(sig: inspect.Signature, show_annotation: bool = True,\"\nend_marker = \"    return \", \"    return \", \"    return \" # Need to find the actual return statement\n\n# Simple replacement strategy: find the function definition and overwrite everything until the next function definition or end of file.\n# Since this is complex, I will use a placeholder replacement that assumes the function body is self-contained.\n\n# A safer approach is to use regex replacement on the whole file content.\nimport re\npattern = re.compile(\n    r\"(def stringify_signature\\(sig: inspect\\.Signature, show_annotation: bool = True,\\s*.*?)\\n(.*?)(?=\\n\\s*def |\\Z)\", \n    re.DOTALL | re.MULTILINE\n)\n\ndef replacer(match):\n    # match.group(1) is the signature line\n    # match.group(2) is the old body\n    return f\"def stringify_signature(sig: inspect.Signature, show_annotation: bool = True):\\n{new_body}\"\n\nnew_content = pattern.sub(replacer, content)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nprint(\"Successfully updated stringify_signature in sphinx/util/inspect.py\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 18367,
+ "completion_tokens": 2453,
+ "submitted": true,
+ "patch_bytes": 4099,
+ "wall_s": 74.3
+}

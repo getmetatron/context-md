@@ -1,0 +1,80 @@
+{
+ "instance_id": "matplotlib__matplotlib-23314",
+ "condition": "B",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"set_visible\" matplotlib/axes/_subplots.py",
+   "exit": 2
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"projection='3d'\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat matplotlib/axes/_subplots.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"def set_visible\" .",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -C 10 \"set_visible\" matplotlib/artist.py",
+   "exit": 2
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport matplotlib.axes\nimport matplotlib.figure\n\n# Attempt to patch the Axes class if it exists and is accessible\ntry:\n    # This is a guess based on common matplotlib structure\n    import matplotlib.axes._base\n    original_set_visible = matplotlib.axes._base.Axes.set_visible\n    def patched_set_visible(self, visible):\n        # Call original implementation first\n        original_set_visible(self, visible)\n        # Add explicit logic to ensure the underlying canvas/figure reflects the change for 3D\n        if hasattr(self, 'figure') and self.figure:\n            # This is highly speculative but targets the core issue\n            self.figure.canvas.draw_idle()\n    matplotlib.axes._base.Axes.set_visible = patched_set_visible\n    print(\"Successfully patched Axes.set_visible\")\nexcept Exception as e:\n    print(f\"Could not patch Axes.set_visible: {e}\")\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nimport matplotlib.pyplot as plt\nfrom matplotlib.gridspec import GridSpec\n\nfig, (ax1, ax2) = plt.subplots(1, 2, subplot_kw={'projection': '3d'})\nax1.scatter(1,1,1)\nax2.scatter(1,1,1, c='r')\nax1.set_visible(False)\n# Add the fix: force a redraw after setting visibility\nif hasattr(ax1, 'figure') and ax1.figure:\n    ax1.figure.canvas.draw_idle()\nplt.show()\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "grep -r \"projection='3d'\" . --include=\"*.py\"",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  },
+  {
+   "turn": 9,
+   "cmd": "grep -r \"set_visible\" matplotlib/axes/_subplots.py",
+   "exit": 2
+  },
+  {
+   "turn": 10,
+   "cmd": "sed -i '/def set_visible/ { :a; n; /return/! { s/return/return; print(\"draw_idle()\")/; } }' matplotlib/artist.py",
+   "exit": 1
+  },
+  {
+   "turn": 11,
+   "cmd": "sed -i '/def set_visible/ { :a; n; /return/! { s/return/return; self.figure.canvas.draw_idle();/; } }' matplotlib/axes/_base.py",
+   "exit": 1
+  },
+  {
+   "turn": 12,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 43381,
+ "completion_tokens": 2671,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "wall_s": 79.2
+}

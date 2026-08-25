@@ -1,0 +1,52 @@
+{
+ "instance_id": "matplotlib__matplotlib-23476",
+ "condition": "E",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"backend_macosx.py\" lib/matplotlib/backends/",
+   "exit": 1
+  },
+  {
+   "turn": 1,
+   "cmd": "cat lib/matplotlib/backends/backend_macosx.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nimport matplotlib.figure\nimport matplotlib.backends.backend_macosx\nimport matplotlib.figure\n\n# Simulate the call path that leads to the issue:\n# The issue happens when FigureCanvasMac.__init__ is called during unpickling.\n# The super().__init__(figure=figure) call is the most likely culprit.\n# I will check if there's a way to intercept or adjust the DPI before super().__init__ is called.\n\n# Since I cannot run the reproduction code, I will focus on the constructor.\n# The super().__init__(figure=figure) call passes dimensions implicitly or explicitly.\n# I will check if I can modify the super call to pass explicit dimensions if they are available.\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i 's/super().__init__(figure=figure)/super().__init__(figure=figure, dpi=figure.dpi)/' lib/matplotlib/backends/backend_macosx.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/super().__init__(figure=figure)/super().__init__(figure=figure, dpi=figure.dpi)/g' lib/matplotlib/backends/backend_macosx.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"lib/matplotlib/backends/backend_macosx.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target line: super().__init__(figure=figure)\n# Replace it with: super().__init__(figure=figure, dpi=figure.dpi)\nnew_content = content.replace(\"super().__init__(figure=figure)\", \"super().__init__(figure=figure, dpi=figure.dpi)\")\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 28797,
+ "completion_tokens": 994,
+ "context_truncated": false,
+ "context_words": 683,
+ "submitted": true,
+ "patch_bytes": 604,
+ "wall_s": 36.0
+}

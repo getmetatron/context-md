@@ -1,0 +1,65 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-13496",
+ "condition": "B",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -C 10 \"IsolationForest\" sklearn/ensemble/_isolation_forest.py",
+   "exit": 2
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"IsolationForest\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat sklearn/ensemble/isolation_forest.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"IsolationForest\" sklearn/ensemble/",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "cat sklearn/ensemble/iforest.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"sklearn/ensemble/iforest.py\"\n\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# 1. Update __init__ signature\n# Original: def __init__(self, n_estimators=100, max_samples='auto', contamination=0.1, max_features=1.0, *, random_state=None, bootstrap=True, n_jobs=None):\n# New: def __init__(self, n_estimators=100, max_samples='auto', contamination=0.1, max_features=1.0, *, random_state=None, bootstrap=True, n_jobs=None, warm_start=False):\ncontent = re.sub(\n    r\"def __init__(self, n_estimators=100, max_samples='auto', contamination=0.1, max_features=1.0, *, random_state=None, bootstrap=True, n_jobs=None):\",\n    \"def __init__(self, n_estimators=100, max_samples='auto', contamination=0.1, max_features=1.0, *, random_state=None, bootstrap=True, n_jobs=None, warm_start=False):\",\n    content\n)\n\n# 2. Update docstring (This is tricky, I'll inject it after the existing docstring block)\ndocstring_addition = \"\"\"\n    warm_start : bool, optional (default=False)\n        When set to ``True``, reuse the solution of the previous call to fit and add more estimators to the ensemble, otherwise, just fit a whole new forest. See :term:`the Glossary <warm_start>`.\n\"\"\"\n# I will search for the end of the existing parameters description and inject the new text.\n# Looking at the end of the docstring:\n# ...\n#         .. versionchanged:: 0.20\n#            The default value of ``contamination`` will change from 0.1 in 0.20\n#            to ``'auto'`` in 0.22.\n#\n# I will inject the new text right after the last version change note.\ncontent = content.replace(\n    \"        .. versionchanged:: 0.20\\n           The default value of ``contamination`` will change from 0.1 in 0.20\\n           to ``'auto'`` in 0.22.\",\n    \"        .. versionchanged:: 0.20\\n           The default value of ``contamination`` will change from 0.1 in 0.20\\n           to ``'auto'`` in 0.22.\\n\\n\" + docstring_addition\n)\n\n\n# 3. Update super().__init__ call\n# Original: super().__init__(n_estimators=n_estimators, max_samples=max_samples, contamination=contamination, max_features=max_features, random_state=random_state, bootstrap=bootstrap, n_jobs=n_jobs)\n# New: super().__init__(n_estimators=n_estimators, max_samples=max_samples, contamination=contamination, max_features=max_features, random_state=random_state, bootstrap=bootstrap, n_jobs=n_jobs, warm_start=warm_start)\ncontent = re.sub(\n    r\"super().__init__(n_estimators=n_estimators, max_samples=max_samples, contamination=contamination, max_features=max_features, random_state=random_state, bootstrap=bootstrap, n_jobs=n_jobs)\",\n    \"super().__init__(n_estimators=n_estimators, max_samples=max_samples, contamination=contamination, max_features=max_features, random_state=random_state, bootstrap=bootstrap, n_jobs=n_jobs, warm_start=warm_start)\",\n    content\n)\n\nwith open(file_path, \"w\") as f:\n    f.write(content)\nprint(\"Successfully updated IsolationForest iniforest.py\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "grep -A 10 \"IsolationForest(\" sklearn/ensemble/tests/test_iforest.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nimport pytest\nfrom sklearn.ensemble import IsolationForest\nfrom sklearn.datasets import make_blobs\nfrom sklearn.model_selection import train_test_split\nimport numpy as np\n\n# Setup for the new test\n@pytest.mark.filterwarnings('ignore:default contamination')\n@pytest.mark.filterwarnings('ignore:threshold_ attribute')\n@pytest.mark.filterwarnings('ignore:behaviour=\"old\"')\ndef test_iforest_warm_start():\n    \"\"\"Test warm_start functionality for IsolationForest.\"\"\"\n    rng = check_random_state(0)\n    X, _ = make_blobs(n_samples=100, centers=1, cluster_std=1.0, random_state=rng)\n    X_train, X_test = X[:80], X[80:]\n\n    # 1. Fit the initial forest\n    clf = IsolationForest(n_estimators=10, random_state=rng).fit(X_train)\n    initial_score = clf.decision_function(X_test)\n\n    # 2. Warm start: Add more estimators\n    # We must pass warm_start=True and increment n_estimators\n    clf_warm = IsolationForest(n_estimators=10, random_state=rng, warm_start=True).fit(X_train)\n    warm_score = clf_warm.decision_function(X_test)\n\n    # Check if the model was updated (e.g., n_estimators increased)\n    assert clf_warm.n_estimators == 20\n\n    # Check if the prediction/score is different from the initial fit (indicating update)\n    # Since the exact score change is hard to predict, we check if the structure is maintained\n    # and that the call succeeds without error.\n    assert initial_score.shape == warm_score.shape\n\n    # 3. Test with warm_start=False (should re-fit entirely)\n    clf_new = IsolationForest(n_estimators=10, random_state=rng, warm_start=False).fit(X_train)\n    new_score = clf_new.decision_function(X_test)\n    \n    # The score should be different from the initial fit if the random state/fit process changes significantly\n    # For simplicity, we just ensure it runs and the structure is correct.\n    assert initial_score.shape == new_score.shape\n\nEOF\nprint(\"Added test_iforest_warm_start to test_iforest.py\")\nEOF",
+   "exit": 2
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"sklearn/ensemble/tests/test_iforest.py\"\n\n# Content to be inserted after the last test function (test_iforest_error)\nnew_test_content = \"\"\"\n@pytest.mark.filterwarnings('ignore:default contamination')\n@pytest.mark.filterwarnings('ignore:threshold_ attribute')\n@pytest.mark.filterwarnings('ignore:behaviour=\"old\"')\ndef test_iforest_warm_start():\n    \\\"\\\"\\\"Test warm_start functionality for IsolationForest.\\\"\\\"\\\"\n    from sklearn.datasets import make_blobs\n    from sklearn.model_selection import train_test_split\n    \n    rng = check_random_state(0)\n    X, _ = make_blobs(n_samples=100, centers=1, cluster_std=1.0, random_state=rng)\n    X_train, X_test = X[:80], X[80:]\n\n    # 1. Fit the initial forest\n    clf = IsolationForest(n_estimators=10, random_state=rng).fit(X_train)\n    initial_score = clf.decision_function(X_test)\n\n    # 2. Warm start: Add more estimators\n    # We must pass warm_start=True and increment n_estimators\n    clf_warm = IsolationForest(n_estimators=10, random_state=rng, warm_start=True).fit(X_train)\n    warm_score = clf_warm.decision_function(X_test)\n\n    # Check if the model was updated (n_estimators should increase)\n    assert clf_warm.n_estimators == 20\n\n    # Check if the score is calculated successfully\n    assert initial_score.shape == warm_score.shape\n\n    # 3. Test with warm_start=False (should re-fit entirely)\n    clf_new = IsolationForest(n_estimators=10, random_state=rng, warm_start=False).fit(X_train)\n    new_score = clf_new.decision_function(X_test)\n    \n    assert initial_score.shape == new_score.shape\n\"\"\"\n\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# Find the end of the file content to append the new test\n# Assuming the file ends after the last test function definition.\n# We will append the new test content.\nnew_content = content + \"\\n\\n\" + new_test_content\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nprint(\"Successfully appended test_iforest_warm_start to test_iforest.py\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 37995,
+ "completion_tokens": 3584,
+ "submitted": true,
+ "patch_bytes": 2569,
+ "wall_s": 98.9
+}

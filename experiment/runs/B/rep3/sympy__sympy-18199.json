@@ -1,0 +1,45 @@
+{
+ "instance_id": "sympy__sympy-18199",
+ "condition": "B",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"nthroot_mod\" .",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "python3 - <<'EOF'\nimport sympy\nfrom sympy.ntheory.residue_ntheory import _nthroot_mod1, _nthroot_mod2\n\ndef nthroot_mod(a, n, p, all_roots=False):\n    if a % p == 0:\n        if n >= 1:\n            if all_roots:\n                return [0]\n            else:\n                return 0\n    \n    res = _nthroot_mod1(a, n, p, all_roots)\n    return res\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\ndef nthroot_mod(a, n, p, all_roots=False):\n    if a % p == 0:\n        if n >= 1:\n            if all_roots:\n                return [0]\n            else:\n                return 0\n    return _nthroot_mod1(a, n, p, all_roots)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '/def nthroot_mod(a, n, p, all_roots=False):/,/        return _nthroot_mod1(a, n, p, all_roots)/ {\n    /def nthroot_mod(a, n, p, all_roots=False):/ {\n        s/def nthroot_mod(a, n, p, all_roots=False):/def nthroot_mod(a, n, p, all_roots=False):\n    if a % p == 0 and n >= 1:\n        if all_roots:\n            return [0]\n        else:\n            return 0\n    return /\n    }",
+   "exit": 2
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sympy/ntheory/residue_ntheory.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Inject the check after the function signature line\nnew_content = content.replace(\n    \"def nthroot_mod(a, n, p, all_roots=False):\",\n    \"def nthroot_mod(a, n, p, all_roots=False):\\n    if a % p == 0 and n >= 1:\\n        if all_roots:\\n            return [0]\\n        else:\\n            return 0\\n    \"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 10734,
+ "completion_tokens": 1026,
+ "submitted": true,
+ "patch_bytes": 481,
+ "wall_s": 28.1
+}

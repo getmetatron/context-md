@@ -1,0 +1,40 @@
+{
+ "instance_id": "django__django-16667",
+ "condition": "B",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"SelectDateWidget\" django/forms/widgets.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat django/forms/widgets.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i '/def value_from_datadict(self, data, files, name):/,/        return None/ s/date_value = datetime.date(int(y), int(m), int(d))/try: date_value = datetime.date(int(y), int(m), int(d)) except OverflowError: return None/",
+   "exit": 2
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/forms/widgets.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The problematic line is: date_value = datetime.date(int(y), int(m), int(d))\n# We need to replace it with a try-except block.\n\n# This replacement assumes the structure around the date creation is consistent.\n# We are looking for the line that constructs the date.\nnew_content = content.replace(\n    \"date_value = datetime.date(int(y), int(m), int(d))\",\n    \"try: date_value = datetime.date(int(y), int(m), int(d)) except OverflowError: return None\"\n)\n\n# A more robust replacement might be needed if the surrounding code changes,\n# but based on the error description, this targeted replacement should fix the crash.\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 8254,
+ "completion_tokens": 933,
+ "submitted": true,
+ "patch_bytes": 695,
+ "wall_s": 26.3
+}

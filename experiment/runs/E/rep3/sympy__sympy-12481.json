@@ -1,0 +1,67 @@
+{
+ "instance_id": "sympy__sympy-12481",
+ "condition": "E",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"Permutation(\" .",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"Permutation(\" sympy/combinatorics/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat sympy/combinatorics/permutations.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"Permutation(\" sympy/combinatorics/permutations.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -A 20 \"__init__\" sympy/combinatorics/permutations.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport sympy/combinatorics/permutations.py\nfrom sympy.combinatorics.permutations import Permutation\n\n# Backup original __init__\noriginal_init = Permutation.__init__\n\ndef new_init(self, *args):\n    if not args:\n        return\n    if len(args) == 1:\n        if isinstance(args[0], Permutation):\n            # Original logic for Permutation input\n            for c in args[0].cyclic_form:\n                self.update(self(*c))\n            return\n        elif isinstance(args[0], Cycle):\n            # Original logic for Cycle input\n            for k, v in args[0].items():\n                self[k] = v\n        # New logic for list/tuple of cycles (non-disjoint case)\n        elif isinstance(args[0], (list, tuple)):\n            # Assume args[0] is a list/tuple of cycles/permutations to compose\n            current_p = Permutation(range(self.size))\n            for cycle_input in args[0]:\n                if isinstance(cycle_input, Permutation):\n                    current_p = current_p * cycle_input\n                elif isinstance(cycle_input, Cycle):\n                    # If it's a Cycle, convert it to Permutation first\n                    cycle_perm = Permutation(cycle_input)\n                    current_p = current_p * cycle_perm\n                else:\n                    # Fallback or handle other types if necessary, but for now, assume valid cycle inputs\n                    pass\n            self.update(current_p)\n            return\n    \n    # Fallback to original logic if the new case doesn't match\n    original_init(self, *args)\n\nPermutation.__init__ = new_init\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '/elif isinstance(args[0], Cycle):/a\\            elif isinstance(args[0], (list, tuple)):\\n                current_p = Permutation(range(self.size))\\n                for cycle_input in args[0]:\\n                    if isinstance(cycle_input, Permutation):\\n                        current_p = current_p * cycle_input\\n                    elif isinstance(cycle_input, Cycle):\\n                        cycle_perm = Permutation(cycle_input)\\n                        current_p = current_p * cycle_perm\\n                    else:\\n                        pass\\n                self.update(current_p)\\n                return' sympy/combinatorics/permutations.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '/elif isinstance(args[0], Cycle):/a\\            elif isinstance(args[0], (list, tuple)):\\n                current_p = Permutation(range(self.size))\\n                for cycle_input in args[0]:\\n                    if isinstance(cycle_input, Permutation):\\n                        current_p = current_p * cycle_input\\n                    elif isinstance(cycle_input, Cycle):\\n                        cycle_perm = Permutation(cycle_input)\\n                        current_p = current_p * cycle_perm\\n                    else:\\n                        pass\\n                self.update(current_p)\\n                return' sympy/combinatorics/permutations.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sympy/combinatorics/permutations.py\"\nnew_logic = \"\"\"\n            elif isinstance(args[0], (list, tuple)):\n                current_p = Permutation(range(self.size))\n                for cycle_input in args[0]:\n                    if isinstance(cycle_input, Permutation):\n                        current_p = current_p * cycle_input\n                    elif isinstance(cycle_input, Cycle):\n                        cycle_perm = Permutation(cycle_input)\n                        current_p = current_p * cycle_perm\n                    else:\n                        pass\n                self.update(current_p)\n                return\n\"\"\"\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Find the insertion point: right after the Cycle handling block\n# We look for the closing part of the Cycle handling block to insert after it.\n# The structure is:\n# ...\n#             elif isinstance(args[0], Cycle):\n#                 for k, v in args[0].items():\n#                     self[k] = v\n#             # INSERT HERE\n# EOF\n\n# Use a placeholder marker to ensure we insert only once at the correct spot\nmarker = \"            elif isinstance(args[0], Cycle):\"\nif marker in content:\n    # We insert the new logic block right after the marker's block ends.\n    # Since the original code structure is complex, we'll replace the end of the existing if/elif chain.\n    # This is a heuristic replacement targeting the end of the single-argument handling.\n    \n    # Find the end of the existing single-argument handling block\n    # This assumes the next line after the cycle handling is the end of the if/elif structure.\n    \n    # A safer approach is to replace the entire block that handles single arguments if it exists.\n    # Given the context, I'll replace the entire block starting from 'if len(args) == 1:'\n    \n    # Re-reading the context, the logic is inside 'if len(args) == 1:'.\n    # I will replace the entire content of the 'if len(args) == 1:' block.\n    \n    # This is the content to replace:\n    old_block_start = \"        if len(args) == 1:\"\n    old_block_end_search = \"            return\" # This is too vague.\n    \n    # I will use a targeted replacement based on the structure:\n    # Find: if len(args) == 1: ... [existing logic] ... return\n    # Replace with: if len(args) == 1: ... [new logic] ... return\n    \n    # Since I cannot reliably capture the scope, I will use a simple string replacement that assumes the new logic fits naturally.\n    \n    # The original code ends the single argument handling with 'return' after the Cycle block.\n    # I will replace the entire content between 'if len(args) == 1:' and the next 'return' or 'else' block.\n    \n    # For simplicity and high chance of success, I will append the new logic right after the Cycle block's return, \n    # and then adjust the final return statement if necessary.\n    \n    # Let's assume the structure is:\n    # if len(args) == 1:\n    #     ... existing logic ...\n    #     return\n    \n    # I will inject the new logic and ensure the final return remains.\n    \n    # Find the line after the Cycle block's return:\n    # The line after the Cycle block's return is likely the end of the 'if len(args) == 1:' block.\n    \n    # Injecting the logic right after the Cycle block's return:\n    content = content.replace(\n        \"                for k, v in args[0].items():\\n                    self[k] = v\\n                return\",\n        \"                for k, v in args[0].items():\\n                    self[k] = v\\n                \\n            elif isinstance(args[0], (list, tuple)):\\n                current_p = Permutation(range(self.size))\\n                for cycle_input in args[0]:\\n                    if isinstance(cycle_input, Permutation):\\n                        current_p = current_p * cycle_input\\n                    elif isinstance(cycle_input, Cycle):\\n                        cycle_perm = Permutation(cycle_input)\\n                        current_p = current_p * cycle_perm\\n                    else:\\n                        pass\\n                self.update(current_p)\\n                return\\n                return\"\n    )\n\n    with open(file_path, 'w') as f:\n        f.write(content)\n    print(\"Successfully updated the __init__ method in permutations.py.\")\nelse:\n    print(\"Could not find the target block for modification.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 66025,
+ "completion_tokens": 3471,
+ "context_truncated": false,
+ "context_words": 715,
+ "submitted": true,
+ "patch_bytes": 1085,
+ "wall_s": 115.6
+}

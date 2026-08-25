@@ -1,0 +1,59 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-14983",
+ "condition": "B",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"RepeatedKFold\" sklearn/model_selection/",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat sklearn/model_selection/_split.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": null
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '/class RepeatedKFold/,$ { /def __repr__(self):/ s/return .*/return f\"RepeatedKFold(n_splits={self.n_splits}, n_repeats={self.n_repeats}, random_state={self.random_state})\"/ }' sklearn/model_selection/_split.py\nsed -i '/class RepeatedStratifiedKFold/,$ { /def __repr__(self):/ s/return .*/return f\"RepeatedStratifiedKFold(n_splits={self.n_splits}, n_repeats={self.n_repeats}, random_state={self.random_state})\"/ }' sklearn/model_selection/_split.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport re\n\ndef fix_repr(content, class_name):\n    if class_name == \"RepeatedKFold\":\n        # Pattern to find the __repr__ method definition and replace its return statement\n        pattern = r\"(def __repr__(self):\\s*return\\s*.*?)(\\n)\"\n        replacement = r\"def __repr__(self):\\n        return f\\\"\\\"\\\"RepeatedKFold(n_splits={self.n_splits}, n_repeats={self.n_repeats}, random_state={self.random_state})\\\"\\\"\\\"\"\n        return re.sub(pattern, replacement, content, count=1)\n    elif class_name == \"RepeatedStratifiedKFold\":\n        pattern = r\"(def __repr__(self):\\s*return\\s*.*?)(\\n)\"\n        replacement = r\"def __repr__(self):\\n        return f\\\"\\\"\\\"RepeatedStratifiedKFold(n_splits={self.n_splits}, n_repeats={self.n_repeats}, random_state={self.random_state})\\\"\\\"\\\"\"\n        return re.sub(pattern, replacement, content, count=1)\n    return content\n\nwith open(\"sklearn/model_selection/_split.py\", \"r\") as f:\n    content = f.read()\n\n# Apply fixes sequentially\ncontent = fix_repr(content, \"RepeatedKFold\")\ncontent = fix_repr(content, \"RepeatedStratifiedKFold\")\n\nwith open(\"sklearn/model_selection/_split.py\", \"w\") as f:\n    f.write(content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "submit"
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '/class RepeatedKFold/,$ { /def __repr__(self):/ s/.*$/def __repr__(self):\\n        return f\\\"\\\"\\\"RepeatedKFold(n_splits={self.n_splits}, n_repeats={self.n_repeats}, random_state={self.random_state})\\\"\\\"\\\"/ }' sklearn/model_selection/_split.py\nsed -i '/class RepeatedStratifiedKFold/,$ { /def __repr__(self):/ s/.*$/def __repr__(self):\\n        return f\\\"\\\"\\\"RepeatedStratifiedKFold(n_splits={self.n_splits}, n_repeats={self.n_repeats}, random_state={self.random_state})\\\"\\\"\\\"/ }' sklearn/model_selection/_split.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nimport re\n\ndef fix_repr(content, class_name):\n    # Regex to capture the entire __repr__ method block, assuming it starts with 'def __repr__(self):'\n    # This is fragile but necessary given the previous failures.\n    pattern = r\"(def __repr__(self):\\s*.*?return\\s*.*?\\n)\"\n    \n    if class_name == \"RepeatedKFold\":\n        replacement = r\"def __repr__(self):\\n        return f\\\"\\\"\\\"RepeatedKFold(n_splits={self.n_splits}, n_repeats={self.n_repeats}, random_state={self.random_state})\\\"\\\"\\\"\"\n    elif class_name == \"RepeatedStratifiedKFold\":\n        replacement = r\"def __repr__(self):\\n        return f\\\"\\\"\\\"RepeatedStratifiedKFold(n_splits={self.n_splits}, n_repeats={self.n_repeats}, random_state={self.random_state})\\\"\\\"\\\"\"\n    else:\n        return content\n\n    # Use re.sub with count=1 to replace only the first occurrence of the method\n    return re.sub(pattern, replacement, content, count=1)\n\nwith open(\"sklearn/model_selection/_split.py\", \"r\") as f:\n    content = f.read()\n\n# Apply fixes sequentially\ncontent = fix_repr(content, \"RepeatedKFold\")\ncontent = fix_repr(content, \"RepeatedStratifiedKFold\")\n\nwith open(\"sklearn/model_selection/_split.py\", \"w\") as f:\n    f.write(content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 20818,
+ "completion_tokens": 1599,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "wall_s": 50.0
+}

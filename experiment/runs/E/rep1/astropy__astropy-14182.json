@@ -1,0 +1,57 @@
+{
+ "instance_id": "astropy__astropy-14182",
+ "condition": "E",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "cat astropy/io/ascii/rst.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "python3 - <<'EOF'\nfrom astropy.io.ascii.rst import RST\n\ndef _update_rst_init(RST_class):\n    original_init = RST_class.__init__\n    def new_init(self, **kwargs):\n        self.header_rows = kwargs.pop('header_rows', None)\n        original_init(self, **kwargs)\n    RST_class.__init__ = new_init\n\n_update_rst_init(RST)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nfrom astropy.io.ascii.rst import RST\n\n# Update __init__ to accept header_rows\noriginal_init = RST.__init__\ndef new_init(self, **kwargs):\n    self.header_rows = kwargs.pop('header_rows', None)\n    original_init(self, **kwargs)\nRST.__init__ = new_init\n\n# Update write to use header_rows\noriginal_write = RST.write\ndef new_write(self, lines):\n    lines = original_write(self, lines)\n    if self.header_rows:\n        # Assuming header_rows contains the names/units for the header line\n        # The structure seems to be: [header_line_1, header_line_2, ..., data_lines...]\n        # We need to insert the header rows before the main content.\n        # The original code prepends and appends lines[1].\n        # If header_rows is present, it should replace the first line (which is usually the first separator line).\n        \n        # Based on the example:\n        # 1. Header row (e.g., \"wave response\")\n        # 2. Separator line (e.g., \"==== ======== wave response ====\")\n        # 3. Data rows\n        \n        # The original code does: lines = [lines[1]] + lines + [lines[1]]\n        # This seems to wrap the content with the separator line.\n        \n        # If header_rows is provided, it should be placed before the first separator line.\n        \n        # Let's assume header_rows should be placed right before the first separator line (lines[0] if lines is not empty).\n        if lines and lines[0].strip() == self.header_class.get_header_line(lines[1]):\n             # If the first line is already a separator, we insert header_rows before it.\n             return [header_rows] + lines\n        else:\n             # If we can't reliably determine placement, we'll just prepend it if it's not empty.\n             return [header_rows] + lines\n    return lines\n\nRST.write = new_write\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nfrom astropy.io.ascii.rst import RST\n\n# Update __init__ to accept header_rows\noriginal_init = RST.__init__\ndef new_init(self, **kwargs):\n    self.header_rows = kwargs.pop('header_rows', None)\n    original_init(self, **kwargs)\nRST.__init__ = new_init\n\n# Update write to use header_rows\noriginal_write = RST.write\ndef new_write(self, lines):\n    lines = original_write(self, lines)\n    if self.header_rows:\n        # Prepend header_rows if it was passed during initialization\n        return [self.header_rows] + lines\n    return lines\n\nRST.write = new_write\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/class RST(FixedWidth):/,/    \"\"\"/ {\n    /def __init__/:r /def __init__(self):/\n    :a \\\n    def __init__(self, **kwargs):\n        self.header_rows = kwargs.pop(\"header_rows\", None)\n        super().__init__(delimiter_pad=None, bookend=False)\n    :t\n}' astropy/io/ascii/rst.py\nsed -i '/def write(self, lines):/,/        return lines/ {\n    /def write(self, lines):/ {\n        :a \\\n        lines = super().write(lines)\n        if self.header_rows:\n            return [self.header_rows] + lines\n        lines = [lines[1]] + lines + [lines[1]]\n    :t\n}' astropy/io/ascii/rst.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/ascii/rst.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# 1. Update __init__\ncontent = content.replace(\n    \"    def __init__(self):\\n        super().__init__(delimiter_pad=None, bookend=False)\",\n    \"    def __init__(self, **kwargs):\\n        self.header_rows = kwargs.pop(\\\"header_rows\\\", None)\\n        super().__init__(delimiter_pad=None, bookend=False)\"\n)\n\n# 2. Update write\ncontent = content.replace(\n    \"    def write(self, lines):\\n        lines = super().write(lines)\\n        lines = [lines[1]] + lines + [lines[1]]\\n        return lines\",\n    \"    def write(self, lines):\\n        lines = super().write(lines)\\n        if self.header_rows:\\n            return [self.header_rows] + lines\\n        lines = [lines[1]] + lines + [lines[1]]\\n        return lines\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 38778,
+ "completion_tokens": 1933,
+ "context_truncated": false,
+ "context_words": 637,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 670,
+ "wall_s": 55.9
+}

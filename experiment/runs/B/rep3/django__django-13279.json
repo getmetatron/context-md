@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-13279",
+ "condition": "B",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"session data\" .",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"DEFAULT_HASHING_ALGORITHM\" django/contrib/sessions/",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"DEFAULT_HASHING_ALGORITHM.*sha1\" .",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"encode\" django/contrib/sessions/",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '/def encode(self, session_dict):/,/Return the given session dictionary serialized and encoded as a string./ s/encoded_data = base64.b64decode(session_data.encode('ascii'))/if settings.DEFAULT_HASHING_ALGORITHM == 'sha1':\\n                return self.legacy_encode(session_dict)\\n            else:\\n                encoded_data = base64.b64decode(session_data.encode('ascii'))/' django/contrib/sessions/backends/base.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/def encode(self, session_dict):/,/Return the given session dictionary serialized and encoded as a string./ {\n    /encoded_data = base64.b64decode(session_data.encode('ascii'))/ {\n        s/^/if settings.DEFAULT_HASHING_ALGORITHM == 'sha1':\\n                return self.legacy_encode(session_dict)\\n            else:\\n                &/;\n    }\n}' django/contrib/sessions/backends/base.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/contrib/sessions/backends/base.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target the encode method. We need to wrap the existing logic.\n# The prompt suggests using legacy encode() when DEFAULT_HASHING_ALGORITHM == 'sha1'.\n# I will replace the existing decoding logic with the conditional check.\n\n# This replacement assumes the existing logic block starts right after the function definition\n# and that 'self.legacy_encode(session_dict)' is the correct call.\nold_logic_marker = \"encoded_data = base64.b64decode(session_data.encode('ascii'))\"\nnew_logic = \"if settings.DEFAULT_HASHING_ALGORITHM == 'sha1':\\n                return self.legacy_encode(session_dict)\\n            else:\\n                encoded_data = base64.b64decode(session_data.encode('ascii'))\"\n\nif old_logic_marker in content:\n    new_content = content.replace(old_logic_marker, new_logic)\n    with open(file_path, 'w') as f:\n        f.write(new_content)\n    print(\"Successfully updated django/contrib/sessions/backends/base.py\")\nelse:\n    print(\"Could not find the target logic marker in django/contrib/sessions/backends/base.py\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 17572,
+ "completion_tokens": 2005,
+ "submitted": true,
+ "patch_bytes": 807,
+ "wall_s": 53.3
+}

@@ -1,0 +1,50 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-13779",
+ "condition": "B",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"VotingClassifier\" .",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "ls -l sklearn/ensemble/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"sample_weight\" sklearn/ensemble/voting.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '/def fit(self, X, y, sample_weight=None):/,/return super().fit(X, y, sample_weight)/ {\n    :a\n    /sample_weight is not None/ {\n        i \\\n        if sample_weight is not None:\n            for name, estimator in self.estimators_:\n                if estimator is None:\n                    raise AttributeError(\"Cannot fit with sample_weight when an estimator is None.\")\n    }\n    :b\n}' sklearn/ensemble/voting.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '/def fit(self, X, y, sample_weight=None):/,/return super().fit(X, y, sample_weight)/ {\n    /sample_weight is not None/ {\n        i \\\n        if sample_weight is not None:\n            for name, estimator in self.estimators_:\n                if estimator is None:\n                    raise AttributeError(\"Cannot fit with sample_weight when an estimator is None.\")\n    }\n}' sklearn/ensemble/voting.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sklearn/ensemble/voting.py\"\ncontent = \"\"\ntry:\n    with open(file_path, 'r') as f:\n        content = f.read()\nexcept FileNotFoundError:\n    print(\"File not found.\")\n    exit(1)\n\n# Define the injection logic\ninjection_code = \"\"\"\n        if sample_weight is not None:\n            for name, estimator in self.estimators_:\n                if estimator is None:\n                    raise AttributeError(\"Cannot fit with sample_weight when an estimator is None.\")\n\"\"\"\n\n# We look for the signature and inject the code right after it, before any subsequent logic.\n# This is a heuristic replacement targeting the first fit method signature that accepts sample_weight.\n# We use a placeholder marker to ensure we only modify one instance.\nmarker = \"/* VOTE_FIT_MARKER */\"\nmodified_content = content.replace(\n    \"def fit(self, X, y, sample_weight=None):\",\n    f\"def fit(self, X, y, sample_weight=None):\\n{marker}\"\n)\n\n# Now, we replace the marker with the injection code, assuming the marker is placed correctly.\nfinal_content = modified_content.replace(\n    marker,\n    f\"{injection_code}\\n\"\n)\n\n# Write back the modified content\nwith open(file_path, 'w') as f:\n    f.write(final_content)\n\nprint(\"Successfully modified sklearn/ensemble/voting.py\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 17371,
+ "completion_tokens": 2078,
+ "submitted": true,
+ "patch_bytes": 1528,
+ "wall_s": 61.2
+}

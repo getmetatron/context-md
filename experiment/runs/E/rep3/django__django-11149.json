@@ -1,0 +1,62 @@
+{
+ "instance_id": "django__django-11149",
+ "condition": "E",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"ManyToManyField\" django/contrib/admin/contrib_admin/admin_inline.py",
+   "exit": 2
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"TabularInline\" django/contrib/admin/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat django/contrib/admin/contrib_admin/admin_inline.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -A 20 \"ManyToManyField\" django/contrib/admin/options.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '/if formfield and db_field.name not in self.raw_id_fields:/,/formfield.widget = widgets.RelatedFieldWidgetWrapper(/' django/contrib/admin/options.py'",
+   "exit": 2
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/if formfield and db_field.name not in self.raw_id_fields:/,/formfield.widget = widgets.RelatedFieldWidgetWrapper(/' django/contrib/admin/options.py'",
+   "exit": 2
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '/can_add_related=related_modeladmin.has_add_permission(request),/ {\n    /can_add_related=related_modeladmin.has_add_permission(request)/ {\n        s/can_add_related=related_modeladmin.has_add_permission(request),/can_add_related=related_modeladmin.has_add_permission(request) and request.user.has_perm(\"admin.add_related_model\", \"app_label\", \"model_name\"),/\n    }\n}' django/contrib/admin/options.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/contrib/admin/options.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The fix is to enforce that write permissions (add, change, delete)\n# must be explicitly granted to the user via request.user.has_perm()\n# in addition to the model's permission check.\n\n# 1. Modify can_add_related\ncontent = content.replace(\n    \"can_add_related=related_modeladmin.has_add_permission(request),\",\n    \"can_add_related=related_modeladmin.has_add_permission(request) and request.user.has_perm('admin.add_related_model', 'app_label', 'model_name'),\"\n)\n\n# 2. Modify can_change_related\ncontent = content.replace(\n    \"can_change_related=related_modeladmin.has_change_permission(request),\",\n    \"can_change_related=related_modeladmin.has_change_permission(request) and request.user.has_perm('admin.change_related_model', 'app_label', 'model_name'),\"\n)\n\n# 3. Modify can_delete_related\ncontent = content.replace(\n    \"can_delete_related=related_modeladmin.has_delete_permission(request),\",\n    \"can_delete_related=related_modeladmin.has_delete_permission(request) and request.user.has_perm('admin.delete_related_model', 'app_label', 'model_name'),\"\n)\n\n# 4. Modify can_view_related\ncontent = content.replace(\n    \"can_view_related=related_modeladmin.has_view_permission(request),\",\n    \"can_view_related=related_modeladmin.has_view_permission(request) and request.user.has_perm('admin.view_related_model', 'app_label', 'model_name'),\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 37334,
+ "completion_tokens": 4323,
+ "context_truncated": false,
+ "context_words": 830,
+ "submitted": true,
+ "patch_bytes": 1649,
+ "wall_s": 124.9
+}

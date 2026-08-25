@@ -1,0 +1,60 @@
+{
+ "instance_id": "astropy__astropy-14365",
+ "condition": "B",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"Unrecognized QDP line\" astropy/io/ascii/qdp.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat astropy/io/ascii/qdp.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nimport re\nastropy.io.ascii.qdp._command_re = r\"READ [TS]ERR(\\s+[0-9]+)+\"\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport re\nimport astropy.io.ascii.qdp\n\n# Original regex definition for _command_re\noriginal_code = \"\"\"_command_re = r\"READ [TS]ERR(\\s+[0-9]+)+\"\"\"\"\n\n# Modify the regex to use re.IGNORECASE flag or adjust the pattern.\n# Since the regex is used with re.compile later, I'll modify the pattern itself\n# to be case-insensitive by using (?i) at the start, or by changing the definition\n# to use re.IGNORECASE when compiling.\n\n# Looking at the usage: _type_re = rf\"^\\s*((?P<command>{_command_re})|(?P<new>{_new_re})|(?P<data>{_data_re})?\\s*(\\!(?P<comment>.*))?\\s*$\n# The compilation happens later. I will change the definition of _command_re to use (?i)\n# and update the compilation line if necessary, but for now, just changing the pattern seems best.\n\n# Let's change the pattern to be case-insensitive by wrapping it in (?i)\n# and updating the definition.\n\nwith open(\"astropy/io/ascii/qdp.py\", \"r\") as f:\n    content = f.read()\n\nnew_content = content.replace(\n    \"_command_re = r\\\"READ [TS]ERR(\\\\s+[0-9]+)+\\\"\",\n    \"_command_re = r\\\"(?i)READ [TS]ERR(\\\\s+[0-9]+)+\\\"\"\n)\n\nwith open(\"astropy/io/ascii/qdp.py\", \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/_command_re = r\"READ [TS]ERR(\\s+[0-9]+)+\\\"/_command_re = r\"(?i)READ [TS]ERR(\\s+[0-9]+)+\\\"\"/g' astropy/io/ascii/qdp.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/ascii/qdp.py\"\noriginal_regex = r\"_command_re = r\\\"READ [TS]ERR(\\s+[0-9]+)+\\\\\"\"\nreplacement_regex = r\"_command_re = r\\\"(?i)READ [TS]ERR(\\s+[0-9]+)+\\\"\"\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\nnew_content = content.replace(original_regex, replacement_regex)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/ascii/qdp.py\"\n# Read the file content\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The original line is: _command_re = r\"READ [TS]ERR(\\s+[0-9]+)+\"\n# We replace it with the case-insensitive version: _command_re = r\"(?i)READ [TS]ERR(\\s+[0-9]+)+\"\nnew_content = content.replace(\n    \"_command_re = r\\\"READ [TS]ERR(\\s+[0-9]+)+\\\"\",\n    \"_command_re = r\\\"(?i)READ [TS]ERR(\\s+[0-9]+)+\\\"\"\n)\n\n# Write the modified content back\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 -c \"from astropy.table import Table; print(Table.read('test.qdp',format='ascii.qdp'))\"",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 23089,
+ "completion_tokens": 1616,
+ "submitted": true,
+ "patch_bytes": 476,
+ "wall_s": 46.4
+}

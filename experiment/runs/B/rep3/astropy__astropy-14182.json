@@ -1,0 +1,65 @@
+{
+ "instance_id": "astropy__astropy-14182",
+ "condition": "B",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"header_rows\" astropy/io/ascii/",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat astropy/io/ascii/rst.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nfrom astropy.io.ascii.fixedwidth import FixedWidth\nfrom astropy.io.ascii.rst import RST\n\n# Monkey-patching RST to accept header_rows in write\ndef patched_write(self, lines, header_rows=None):\n    # Call super write, passing header_rows if available, assuming super handles it or we pass it through\n    # Since super().write signature is unknown, I'll try to pass it through if it exists.\n    # Based on other formats, header_rows should be passed to the base class write method.\n    return super(RST, self).write(lines, header_rows=header_rows)\n\nRST.write = patched_write\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nfrom astropy.io.ascii.fixedwidth import FixedWidth\nfrom astropy.io.ascii.rst import RST\n\n# Modify RST.write to accept header_rows and pass it to super().write\ndef patched_write(self, lines, header_rows=None):\n    return super(RST, self).write(lines, header_rows=header_rows)\n\nRST.write = patched_write\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nfrom astropy.io.ascii.fixedwidth import FixedWidth\nfrom astropy.io.ascii.rst import RST\n\n# Modify RST.write to accept header_rows and pass it to super().write\ndef patched_write(self, lines, header_rows=None):\n    return super(RST, self).write(lines, header_rows=header_rows)\n\nRST.write = patched_write\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/ascii/rst.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The original write method is:\n# def write(self, lines):\n#     lines = super().write(lines)\n#     lines = [lines[1]] + lines + [lines[1]]\n#     return lines\n\n# We replace it with:\n# def write(self, lines, header_rows=None):\n#     lines = super(RST, self).write(lines, header_rows=header_rows)\n#     lines = [lines[1]] + lines + [lines[1]]\n#     return lines\n\n# Using sed to replace the function definition block. This is the most direct way to edit a function body.\nsed -i.bak '/def write(self, lines):/,/return lines/c\\def write(self, lines, header_rows=None):\\n    lines = super(RST, self).write(lines, header_rows=header_rows)\\n    lines = [lines[1]] + lines + [lines[1]]\\n    return lines' astropy/io/ascii/rst.py\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/ascii/rst.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The original write method block to find:\nold_method_pattern = r\"def write\\(self, lines\\):\\s*lines\\s*=\\s*super\\(\\s*\\.\\s*write\\(lines\\)\\s*\\n\\s*lines\\s*=\\s*\\[lines\\[1\\]\\]\\s*\\+\\s*lines\\s*\\+\\s*\\[lines\\[1\\]\\]\\s*\\n\\s*return\\s*lines\"\n\n# The replacement method block:\nnew_method_content = \"\"\"\n    def write(self, lines, header_rows=None):\n        lines = super(RST, self).write(lines, header_rows=header_rows)\n        lines = [lines[1]] + lines + [lines[1]]\n        return lines\n\"\"\"\n\n# Use re.sub to replace the old method with the new one.\nimport re\nnew_content = re.sub(old_method_pattern, new_method_content, content, flags=re.DOTALL)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/io/ascii/rst.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# We look for the function definition and replace the body lines.\n# This pattern captures the function signature and the body lines.\n# We must ensure the signature change (adding header_rows=None) is reflected.\nimport re\n\n# Pattern to match the entire function definition including body\n# This is highly dependent on formatting, so I'll target the lines directly.\nold_func_block_pattern = r\"(def write\\(self, lines\\):\\s*.*?return lines)\"\n\n# Replacement function that includes the signature change and body update\nnew_func_block = \"\"\"\n    def write(self, lines, header_rows=None):\n        lines = super(RST, self).write(lines, header_rows=header_rows)\n        lines = [lines[1]] + lines + [lines[1]]\n        return lines\n\"\"\"\n\n# Use re.sub to replace the entire block.\nnew_content = re.sub(old_func_block_pattern, new_func_block, content, flags=re.DOTALL)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 9,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 47123,
+ "completion_tokens": 2987,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 553,
+ "wall_s": 84.9
+}

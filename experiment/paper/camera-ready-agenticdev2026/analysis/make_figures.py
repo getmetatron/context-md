@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate Figures 2-5 as vector PDFs at the caption's type size.
+r"""Regenerate Figures 1-5 as vector PDFs at the caption's type size.
 
 Reviewer 22B: "Figures are hard to read. Please ensure that the text in the
 figure is of the same size as the text of the caption."  The originals were
@@ -131,10 +131,15 @@ def fig5():
             rows.append(dict(arm=arm, iid=e["instance_id"], pt=e["prompt_tokens"],
                              ct=e["completion_tokens"]))
     df = pd.DataFrame(rows)
+    assert len(df) == 4 * 88, f"ceiling logs: {len(df)}, expected 352"
+    assert df.groupby("arm").size().eq(88).all(), "ceiling arm does not contain 88 episodes"
     res = {}
     for l in open(ROOT/"runs"/"opus_ext"/"eval_summary.jsonl"):
         r = json.loads(l); res[(r["run_id"], r["instance_id"])] = r["resolved"]
-    df["resolved"] = [res.get((f"eval-opus-ext-{a}", i), False) for a, i in zip(df.arm, df.iid)]
+    expected = {(f"eval-opus-ext-{a}", i) for a, i in zip(df.arm, df.iid)}
+    missing = expected - set(res)
+    assert not missing, f"missing {len(missing)} ceiling verdict(s): {sorted(missing)[:5]}"
+    df["resolved"] = [res[(f"eval-opus-ext-{a}", i)] for a, i in zip(df.arm, df.iid)]
     arms = ["B", "E", "FILE", "SHARD"]
     lab = {"B": "no context", "E": "injected", "FILE": "monolith", "SHARD": "sharded"}
     rate = [100*df[df.arm == a].resolved.mean() for a in arms]
@@ -153,12 +158,6 @@ def fig5():
         ax.tick_params(axis="x", labelrotation=38, length=0)
         for lb in ax.get_xticklabels(): lb.set_ha("right")
     save(fig, "fig5-ceiling")
-
-if __name__ == "__main__":
-    OUT.mkdir(exist_ok=True)
-    t = frame()
-    fig2(t); fig3(t); fig4(); fig5()
-
 
 # ------------------------------------------------- Fig 1: architecture diagram
 def fig1():
@@ -211,3 +210,9 @@ def fig1():
     ax.text(54, 4.7, "context diff commits with the code change",
             ha="center", style="italic", fontsize=7.6)
     save(fig, "fig1-architecture")
+
+
+if __name__ == "__main__":
+    OUT.mkdir(exist_ok=True)
+    t = frame()
+    fig1(); fig2(t); fig3(t); fig4(); fig5()

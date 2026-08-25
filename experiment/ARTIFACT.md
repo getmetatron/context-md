@@ -5,8 +5,8 @@ contains the frozen
 pre-registration (`PREREGISTRATION.md`, git tag `prereg-v1`), the experiment
 harness, blind seed-authoring audit trails (`seeds/AUDIT.md`), all episode
 predictions and promotion logs (`runs/`), all evaluation verdicts
-(`runs/eval_summary.jsonl`), and a one-command reproduction of every number
-in the paper.
+(`runs/eval_summary.jsonl`), and one-command reproduction of the paper's reported numbers
+(Tier 1 and Tier 1b together).
 
 ## Pre-registration provenance
 
@@ -25,6 +25,25 @@ Every confirmatory run in `runs/` postdates this commit; the pilots
 (`FINDINGS-01..05`) predate it and are excluded from confirmatory analysis.
 Post-freeze deviations are recorded in `DEVIATIONS.md`, as required by
 `PREREGISTRATION.md` §12.
+
+### Provenance caveat for the delivery study (Paper 2)
+
+The delivery study's protocol text (`PREREGISTRATION-PAPER2.md`) is included here,
+but its freeze tag `prereg2-v1` is **not part of this public repository** and
+cannot be independently verified from this artifact. Two limitations follow, and
+both are stated rather than glossed:
+
+1. The tag exists only in the authors' private experiment repository. It is not
+   published, because that repository's history contains unrelated private work.
+2. It is a **lightweight** tag, so it carries no tagger timestamp of its own —
+   unlike `prereg-v1`, which is annotated and independently dated.
+
+What can be checked from the released data: the tagged commit is dated
+2026-07-15, and every containerized evaluation verdict for the delivery arms in
+`runs/eval_summary.jsonl` is timestamped 2026-07-19 or later — four or more days
+afterwards. That is corroboration, not proof. Treat Paper 1's provenance
+(`prereg-v1`, annotated, public, verifiable here) as strong and Paper 2's as
+weaker.
 
 ## Tier 1 — Reproduce the paper's numbers (~1 minute, no network)
 
@@ -47,7 +66,7 @@ counts, and the Holm-adjusted frontier p-value:
 
     python paper/camera-ready-agenticdev2026/analysis/verify_claims.py
 
-Expected output ends with: `all camera-ready claims verified`.
+Expected output ends with: `all checked camera-ready claims verified`.
 
     python paper/camera-ready-agenticdev2026/analysis/seed_leakage.py   # leakage audit alone
     python paper/camera-ready-agenticdev2026/analysis/make_figures.py   # regenerate Figures 1-5
@@ -60,7 +79,11 @@ Expected output ends with: `all camera-ready claims verified`.
 | Tier 2 | Ollama with `gemma4:e4b` for the local executor; `ANTHROPIC_API_KEY` for a frontier episode; Docker for official SWE-bench evaluation. |
 | Tier 3 | as Tier 2, at full-arm scale. |
 
-Every number printed in the paper is reproducible at Tier 1 / Tier 1b. Tiers 2
+The values reported in Sections 10.2--10.6, Tables 3--4 and Figures 2--5 are
+recomputed at Tier 1 / Tier 1b from the committed data. Both entry points fail
+if an expected outcome is unsupported: completed runs require their prediction
+and evaluation records, while the two pre-record aborts require matching nonzero
+runner outcomes in `runs/batch_frontier2.log`. Tiers 2
 and 3 re-run agents and therefore require model access; frontier episodes are not
 bit-reproducible (see Reproducibility notes).
 
@@ -95,8 +118,11 @@ overwritten.
   episodes closely but quantized-inference determinism across hardware is not
   guaranteed.
 - **Frontier executor:** API models are not bit-reproducible; the paper's
-  design absorbs this with repetitions. All frontier transcripts are committed
-  under `runs/` for audit.
+  design absorbs this with repetitions. All completed frontier episode
+  transcripts are committed under `runs/` for audit. Two planned no-context
+  attempts terminated before producing an episode record; their nonzero runner
+  outcomes are retained in `runs/batch_frontier2.log` and scored unresolved in
+  the frozen full-denominator analysis.
 - **Evaluation** uses the *official* SWE-bench images
   (`--namespace swebench`); locally built images have recipe drift (see
   `harness/README.md`).
@@ -109,12 +135,12 @@ overwritten.
     FINDINGS-01..05.md      feasibility pilots and design checks (pre-freeze)
     DEVIATIONS.md           post-freeze deviations for prereg-v1 (PREREGISTRATION.md §12)
     DEVIATIONS-2.md         post-freeze deviations for prereg2-v1 (delivery study)
-    PREREGISTRATION-PAPER2.md  frozen protocol for the delivery study (tag prereg2-v1)
+    PREREGISTRATION-PAPER2.md  protocol for the delivery study (see provenance caveat below)
     FINDINGS-01..08.md      feasibility pilots and design checks (pre-freeze)
     RESULTS-01..06.md       confirmatory results as they accrued
     seeds/                  blind-authored context files + authoring audit (AUDIT.md, AUDIT-P2.md)
     harness/                condition runner, batch orchestrator, promotion rubric, frozen prompts
-    runs/                   predictions, episode logs, promotion decisions, eval verdicts, analysis CSVs
+    runs/                   predictions, episode logs, runner outcomes, promotion decisions, eval verdicts, analysis CSVs
     analysis/               power simulation, reproduce_paper.py, analyze_p2.py
     paper/camera-ready-agenticdev2026/
                             camera-ready source; analysis/ holds the blind-seed

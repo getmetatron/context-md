@@ -1,0 +1,52 @@
+{
+ "instance_id": "django__django-15280",
+ "condition": "E",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"deferred fields\" django/db/models/querysets.py",
+   "exit": 2
+  },
+  {
+   "turn": 1,
+   "cmd": "ls -l django/db/models/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"Prefetch\" django/db/models/",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat django/db/models/query.py | grep -A 10 \"Prefetch\"",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '/def __getstate__(self):/,/return obj_dict/' django/db/models/query.py 's/obj_dict = self.__dict__.copy()/obj_dict = self.__dict__.copy(); if hasattr(self, \"queryset\") and self.queryset: obj_dict[\"queryset\"] = copy.deepcopy(self.queryset)/'",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport copy\nfile_path = \"django/db/models/query.py\"\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Find the __getstate__ method and modify it\n# Original: obj_dict = self.__dict__.copy()\n# New: obj_dict = self.__dict__.copy(); if hasattr(self, \"queryset\") and self.queryset: obj_dict[\"queryset\"] = copy.deepcopy(self.queryset)\n\nnew_content = content.replace(\n    \"obj_dict = self.__dict__.copy()\",\n    \"obj_dict = self.__dict__.copy(); if hasattr(self, \\\"queryset\\\") and self.queryset: obj_dict[\\\"queryset\\\"] = copy.deepcopy(self.queryset)\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 28761,
+ "completion_tokens": 1345,
+ "context_truncated": false,
+ "context_words": 830,
+ "submitted": true,
+ "patch_bytes": 594,
+ "wall_s": 37.6
+}

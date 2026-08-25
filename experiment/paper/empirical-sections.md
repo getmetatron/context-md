@@ -3,6 +3,11 @@
      Sources: PREREGISTRATION.md (frozen, tag prereg-v1), FINDINGS-01..05, RESULTS-01/02.
      Neutral academic voice; numbers verified against runs/ artifacts. -->
 
+> **Historical draft, retained for provenance.** This file predates the pooled
+> analysis and camera-ready corrections. It contains preliminary counts and claim
+> language that are no longer current. Do not cite it; use
+> `paper/camera-ready-agenticdev2026/main.tex` and `DEVIATIONS.md` instead.
+
 ## N. Empirical Evaluation
 
 We evaluate the Repository Context Layer's central behavioral claim — that repository-carried context measurably changes agent behavior, and that lessons learned in one task transfer to different tasks sharing an underlying constraint — in a pre-registered experiment on SWE-bench Verified. The full protocol, including hypotheses, metrics, analysis plan, and a power simulation, was frozen and externally timestamped before any confirmatory run (git tag `prereg-v1`; pilot runs used for feasibility are excluded from all confirmatory analysis and released alongside).
@@ -44,4 +49,4 @@ We evaluate the Repository Context Layer's central behavioral claim — that rep
 
 ### N.3 Threats to Validity
 
-*Construct.* Gold-file localization is a proxy; it measures working in the right place, not fixing the bug. We report resolve alongside and note the oracle arm moved both. *Internal.* The orchestrating researcher session had instance exposure; it was excluded from seed authorship (fresh blind sessions authored all seeds, audit-logged) and from lesson selection (mechanical rubric). Training contamination affects both arms of every within-model comparison symmetrically and, if anything, compresses deltas toward zero. *External.* Three repositories, one benchmark, one scaffold; the transfer pairs target constraint-shaped bugs by construction, and effects may differ for tasks with no operating-constraint component. *Statistical.* The resolve improvement at the local tier is marginal (p = 0.066) at 12 pairs; the pre-planned Tier-2 expansion (~40 pairs) addresses power. A reviewer pooling the RQ1 and RQ2 families into one correction family would read the blind-seed localization effect at p = 0.082; we report both framings.
+*Construct.* Gold-file localization is a proxy; it measures working in the right place, not fixing the bug. We report resolve alongside and note the oracle arm moved both. *Internal.* The orchestrating researcher session had instance exposure; it was excluded from seed authorship (fresh blind sessions authored all seeds, audit-logged) and from lesson selection (mechanical rubric). Training contamination affects both arms of every within-model comparison symmetrically and, if anything, compresses deltas toward zero. *External.* Three repositories, one benchmark, one scaffold; the transfer pairs target constraint-shaped bugs by construction, and effects may differ for tasks with no operating-constraint component. *Statistical.* The resolve improvement at the local tier is marginal (p = 0.066) at 12 pairs; the pre-planned Tier-2 expansion (~40 pairs) addresses power. A reviewer pooling the RQ1 and RQ2 families into one correction family would read the blind-seed localization effect at exact p = 0.0812 (reported as 0.081); we report both framings.

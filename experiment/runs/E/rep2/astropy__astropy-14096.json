@@ -1,0 +1,57 @@
+{
+ "instance_id": "astropy__astropy-14096",
+ "condition": "E",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -C 10 \"__getattr__\" astropy/coordinates/sky_coordinate.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -i 's/f\"'{self.__class__.__name__}' object has no attribute '{attr}'\"/f\"'{type(self).__name__}' object has no attribute '{attr}'\"/g' astropy/coordinates/sky_coordinate.py",
+   "exit": 2
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nimport re\nfile_path = \"astropy/coordinates/sky_coordinate.py\"\n# Original pattern: f\"'{self.__class__.__name__}' object has no attribute '{attr}'\"\n# Replacement pattern: f\"'{type(self).__name__}' object has no attribute '{attr}'\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Use regex to find and replace the specific string literal pattern\n# We need to escape the f-string structure for regex matching.\npattern = r\"AttributeError: 'self\\.__class__\\.__name__'\\ object has no attribute '.*?'\"\nreplacement = r\"AttributeError: 'type(self).__name__'\\ object has no attribute '\\2'\"\n\n# Since the original code uses f-strings, a direct string replacement on the source code is safer than complex regex matching on the literal string.\n# I will search for the exact line containing the error message construction.\n# The line is: raise AttributeError(f\"'{self.__class__.__name__}' object has no attribute '{attr}'\")\n\nnew_content = re.sub(\n    r\"raise AttributeError\\(f\\\"'{self\\.__class__\\.__name__}' object has no attribute '{attr}'\\\"\\)\",\n    r\"raise AttributeError(f\\\"'{type(self).__name__}' object has no attribute '{attr}'\\\")\",\n    content\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "submit"
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/raise AttributeError(f\"'\\''self.__class__.__name__'\\'' object has no attribute '\\''{attr}'\\'')/raise AttributeError(f\"'\\''type(self).__name__'\\'' object has no attribute '\\''{attr}'\\'')/g' astropy/coordinates/sky_coordinate.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport re\nfile_path = \"astropy/coordinates/sky_coordinate.py\"\n# The line to change is: raise AttributeError(f\"'{self.__class__.__name__}' object has no attribute '{attr}'\")\n# We replace self.__class__.__name__ with type(self).__name__\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Regex to match the literal string construction of the error message\n# We match the entire line structure containing the f-string.\npattern = r\"raise AttributeError\\(f\\\"'\\''self\\.__class__\\.__name__'\\'' object has no attribute '\\''{attr}'\\'')\\\"\"\nreplacement = r\"raise AttributeError(f\\\"'\\''type(self).__name__'\\'' object has no attribute '\\''{attr}'\\'')\\\"\"\n\nnew_content = re.sub(pattern, replacement, content)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/coordinates/sky_coordinate.py\"\noriginal_snippet = \"raise AttributeError(f\\\"'{self.__class__.__name__}' object has no attribute '{attr}'\\\")\"\nreplacement_snippet = \"raise AttributeError(f\\\"'{type(self).__name__}' object has no attribute '{attr}'\\\")\"\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\nnew_content = content.replace(original_snippet, replacement_snippet)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 29307,
+ "completion_tokens": 1779,
+ "context_truncated": false,
+ "context_words": 637,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "wall_s": 55.0
+}

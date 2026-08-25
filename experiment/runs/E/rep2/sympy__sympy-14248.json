@@ -1,0 +1,62 @@
+{
+ "instance_id": "sympy__sympy-14248",
+ "condition": "E",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"MatrixSymbol\" sympy/printing/",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -n \"A - B\" sympy/printing/latex.py",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"Sub\" sympy/printing/latex.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat sympy/printing/latex.py | grep -C 10 _print_Subs",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -n \"Add\" sympy/printing/latex.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "cat sympy/printing/latex.py | grep -A 20 _print_Add",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i '/elif _coeff_isneg(term):/ s/term = -term\\n                term_tex = self._print(term)/term_tex = self._print(sympy.Abs(term))/g' sympy/printing/latex.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sympy/printing/latex.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target section:\n# elif _coeff_isneg(term):\n#     tex += \" - \"\n#     term = -term\n# else:\n#     tex += \" + \"\n# term_tex = self._print(term)\n\n# Replacement logic: When negative, print \" - \" and then print the absolute value of the term.\nnew_content = content.replace(\n    \"elif _coeff_isneg(term):\\n                tex += \\\" - \\\"\\n                term = -term\\n            else:\\n                tex += \\\" + \\\"\\n            term_tex = self._print(term)\",\n    \"elif _coeff_isneg(term):\\n                tex += \\\" - \\\"\\n                term_tex = self._print(sympy.Abs(term))\\n            else:\\n                tex += \\\" + \\\"\\n            term_tex = self._print(term)\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 37531,
+ "completion_tokens": 1910,
+ "context_truncated": false,
+ "context_words": 715,
+ "submitted": true,
+ "patch_bytes": 487,
+ "wall_s": 61.9
+}

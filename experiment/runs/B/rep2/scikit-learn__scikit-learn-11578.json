@@ -1,0 +1,55 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-11578",
+ "condition": "B",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"logistic.py\" sklearn/linear_model/logistic.py",
+   "exit": 1
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -i '922s/log_reg = LogisticRegression(fit_intercept=fit_intercept)/log_reg = LogisticRegression(fit_intercept=fit_intercept, multi_class=multi_class)/' sklearn/linear_model/logistic.py",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i '922s/log_reg = LogisticRegression(fit_intercept=fit_intercept)/log_reg = LogisticRegression(fit_intercept=fit_intercept, multi_class=multi_class)/' sklearn/linear_model/logistic.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sklearn/linear_model/logistic.py\"\nwith open(file_path, 'r') as f:\n    lines = f.readlines()\n\nnew_lines = []\nin_scoring_path = False\nfor line in lines:\n    if \"def _log_reg_scoring_path(\" in line and \"multi_class\" in line:\n        in_scoring_path = True\n        new_lines.append(line)\n        continue\n    \n    if in_scoring_path and \"log_reg = LogisticRegression(fit_intercept=fit_intercept)\" in line:\n        new_lines.append(\"        log_reg = LogisticRegression(fit_intercept=fit_intercept, multi_class=multi_class)\\n\")\n        continue\n    \n    if \"scores.append(scoring(log_reg, X_test, y_test))\" in line and \"log_reg = LogisticRegression\" not in line:\n        # This is a heuristic to stop modifying, assuming the change was made above\n        pass\n    \n    new_lines.append(line)\n\nwith open(file_path, 'w') as f:\n    f.writelines(new_lines)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '922s/log_reg = LogisticRegression(fit_intercept=fit_intercept)/log_reg = LogisticRegression(fit_intercept=fit_intercept, multi_class=multi_class)/' sklearn/linear_model/logistic.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sklearn/linear_model/logistic.py\"\ntarget_line_content = \"log_reg = LogisticRegression(fit_intercept=fit_intercept)\"\n\nwith open(file_path, 'r') as f:\n    lines = f.readlines()\n\nnew_lines = []\nmodified = False\nfor i, line in enumerate(lines):\n    if target_line_content in line and not modified:\n        new_line = line.replace(target_line_content, \"log_reg = LogisticRegression(fit_intercept=fit_intercept, multi_class=multi_class)\")\n        new_lines.append(new_line)\n        modified = True\n    else:\n        new_lines.append(line)\n\nwith open(file_path, 'w') as f:\n    f.writelines(new_lines)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 20829,
+ "completion_tokens": 1168,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 640,
+ "wall_s": 32.5
+}

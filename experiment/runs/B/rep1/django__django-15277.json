@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-15277",
+ "condition": "B",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -n \"class CharField(CharFieldBase):\" django/db/models/fields.py",
+   "exit": 2
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"class CharField\" . | head -n 5",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat django/forms/fields.py | grep -A 10 \"class CharField\"",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "The description suggests:\n`if self.max_length is not None: self.validators.append(validators.MaxLengthValidator(self.max_length))`\n\nI will apply this minimal change in `django/forms/fields.py`.",
+   "exit": 127
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/if max_length is not None:.*self.validators.append(validators.MaxLengthValidator(int(max_length)))/if self.max_length is not None:\\n            self.validators.append(validators.MaxLengthValidator(self.max_length))/g' django/forms/fields.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/if max_length is not None:/r /if self.max_length is not None:\\n            self.validators.append(validators.MaxLengthValidator(self.max_length))/g' django/forms/fields.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/forms/fields.py\"\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# Original block to replace (must match exactly what was seen):\nold_snippet = \"\"\"        if max_length is not None:\n            self.validators.append(validators.MaxLengthValidator(int(max_length)))\"\"\"\n\n# New block to insert:\nnew_snippet = \"\"\"        if self.max_length is not None:\n            self.validators.append(validators.MaxLengthValidator(self.max_length))\"\"\"\n\n# Perform replacement\nnew_content = content.replace(old_snippet, new_snippet)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 15266,
+ "completion_tokens": 1321,
+ "submitted": true,
+ "patch_bytes": 713,
+ "wall_s": 34.0
+}

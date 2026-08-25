@@ -1,0 +1,50 @@
+{
+ "instance_id": "astropy__astropy-13236",
+ "condition": "B",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"data.view(NdarrayMixin)\" .",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat astropy/table/table.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -n \"isinstance(data, np.ndarray) and len(data.dtype) > 1\" astropy/table/table.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "head -n 1300 astropy/table/table.py | tail -n 50",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '1245s/data = data.view(NdarrayMixin)/warnings.warn(\"Structured np.ndarray detected. Please wrap data in Column explicitly. In a future version (5.2), this auto-transformation will be removed and structured arrays will be added as Columns.\", FutureWarning); data = data.view(NdarrayMixin)/' astropy/table/table.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport re\nimport warnings\n\nfile_path = \"astropy/table/table.py\"\n\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# Regex to find the line containing the assignment, assuming it's the target line 1245\n# We look for the pattern: data = data.view(NdarrayMixin)\npattern = r\"(data = data\\.view\\(NdarrayMixin\\))\"\n\n# The replacement string includes the warning call before the original assignment.\n# We must ensure 'warnings' is available in the scope where this code runs, which it is via imports.\nreplacement = r\"warnings.warn(\\\"Structured np.ndarray detected. Please wrap data in Column explicitly. In a future version (5.2), this auto-transformation will be removed and structured arrays will be added as Columns.\\\", FutureWarning);\\1\"\n\nnew_content = re.sub(pattern, replacement, content)\n\nwith open(file_path, \"w\") as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 16596,
+ "completion_tokens": 2356,
+ "submitted": true,
+ "patch_bytes": 775,
+ "wall_s": 64.6
+}

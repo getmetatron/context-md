@@ -163,6 +163,27 @@ def main():
     df, _ = load_episodes(gold, seed_toks, file_toks)
 
     print(f"episodes: {len(df)}  (expected {267*3*4})")
+
+    # --- structural integrity gates -----------------------------------------
+    # These check the SHAPE of the released data, not expected result values:
+    # every arm must contribute the full frozen 267 x 3 reps, or any downstream
+    # comparison is silently computed on a partial sample (this previously
+    # produced n=0 deltas for the B and E arms while still printing p-values).
+    n_expected = len(frozen) * len(REPS)
+    per_arm = df.groupby("arm").size().to_dict()
+    for arm in ARMS:
+        got = per_arm.get(arm, 0)
+        assert got == n_expected, (
+            f"arm {arm}: {got} episodes, expected {n_expected} "
+            f"({len(frozen)} frozen instances x {len(REPS)} reps). "
+            "Per-episode records are missing from the release.")
+    assert len(df) == n_expected * len(ARMS), (
+        f"total {len(df)} episodes, expected {n_expected * len(ARMS)}")
+    assert set(df.iid) <= set(frozen), "episodes outside the frozen instance list"
+    assert df.groupby(["arm", "rep"]).iid.nunique().eq(len(frozen)).all(), \
+        "an arm/rep cell does not cover the frozen instance list exactly"
+    print(f"  integrity: {len(ARMS)} arms x {n_expected} episodes, "
+          f"all within the frozen {len(frozen)}-instance list  [OK]")
     print(df.groupby(["arm"]).agg(n=("iid", "size"), gold_hit=("gold_hit", "mean"),
                                   submitted=("submitted", "mean"),
                                   consulted=("consulted", "mean"),

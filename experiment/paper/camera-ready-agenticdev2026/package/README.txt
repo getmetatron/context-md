@@ -11,7 +11,10 @@ Contents -- this directory is self-contained and needs no parent files:
                     does not depend on the TeX distribution's acmart version
   figures/*.pdf     the five figures, vector
 
+This verifies local source completeness only. ACM TAPS validity has not yet been
+established; follow the workshop's author-kit instructions for the actual upload.
+
 OUTSTANDING BEFORE SUBMISSION (see FINAL-CAMERA-READY-CHECK.md one level up):
-  1. ACM rights metadata (\setcopyright, \acmDOI, \acmISBN) from the eRights email
-  2. Archival DOI for the replication package (\artifactdoi)
-  3. \city{} and \country{} on the author affiliations
+  1. Complete and incorporate the blinded 40-episode consultation hand audit
+  2. ACM rights metadata (\setcopyright, \acmDOI, \acmISBN) from the eRights email
+  3. Archival DOI for the replication package (\artifactdoi)

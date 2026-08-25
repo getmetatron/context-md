@@ -1,0 +1,77 @@
+{
+ "instance_id": "django__django-11964",
+ "condition": "E",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"TextChoices\" django/db/models/fields/",
+   "exit": 1
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"choices\" django/db/models/fields/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"__get__\" django/db/models/fields/",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"value\" django/db/models/fields/",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "python3 - <<'EOF'\nimport enum\nfrom django.db import models\nfrom django.db.models.fields import related_descriptors\n\ndef fix_get_value(self, instance, cls=None):\n    # Check if the value retrieved is an Enum member and if it has a value attribute\n    value = super(related_descriptors.RelatedDescriptor, self).__get__(instance, cls)\n    if value is not None and isinstance(value, enum.Enum):\n        # Attempt to return the actual value if it's an Enum member\n        return value.value\n    return value\n\nrelated_descriptors.RelatedDescriptor.__get__ = fix_get_value\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nimport enum\nfrom django.db.models.fields import related_descriptors\n\ndef patch_related_descriptor_get(self, instance, cls=None):\n    # Check if the value retrieved is an Enum member and if it has a value attribute\n    value = super(related_descriptors.RelatedDescriptor, self).__get__(instance, cls)\n    if value is not None and isinstance(value, enum.Enum):\n        # Attempt to return the actual value if it's an Enum member\n        return value.value\n    return value\n\n# We must patch the method on the class itself to ensure it's available when needed.\n# This is safer than executing code that triggers full module loading.\nrelated_descriptors.RelatedDescriptor.__get__ = patch_related_descriptor_get\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "grep -r \"get_prep_value\" django/db/models/fields/",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nimport enum\nfrom django.db.models.fields import related_descriptors\n\ndef patch_field_get(self, instance, cls=None):\n    # Check if the value retrieved is an Enum member and if it has a value attribute\n    value = super(related_descriptors.RelatedDescriptor, self).__get__(instance, cls)\n    if value is not None and isinstance(value, enum.Enum):\n        # Attempt to return the actual value if it's an Enum member\n        return value.value\n    return value\n\n# Since the test failure points to retrieval, and related_descriptors seems to be involved\n# in field access, I will re-apply the patch to related_descriptors.RelatedDescriptor.__get__\n# as it's the most likely place to intercept the final value read.\nrelated_descriptors.RelatedDescriptor.__get__ = patch_field_get\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "python3 - <<'EOF'\nimport enum\nfrom django.db.models.fields import BaseField\n\ndef check_choices(self):\n    # Check if choices are provided and if they are Enum members\n    if self.choices and isinstance(self.choices, tuple):\n        # Check if the first choice is an Enum member\n        first_choice = self.choices[0]\n        if isinstance(first_choice, enum.Enum):\n            # If it is, we assume all choices are Enum members and we need to store the value\n            # This is a heuristic fix based on the observed failure pattern.\n            # We will modify the choices tuple to contain only the values.\n            self.choices = tuple(c.value for c in self.choices)\n            # We also need to update the internal representation if possible, but for now,\n            # modifying the tuple is the smallest change.\n            return super(BaseField, self)._check_choices()\n    return super(BaseField, self)._check_choices()\n\n# Monkey patch the method in the base field class if possible, or the field class itself.\n# Since we don't know the base class, I'll try to patch the method in __init__.py's scope.\n# This is highly speculative but necessary given the constraints.\n# I will modify the method in __init__.py directly.\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "sed -i '/if is_value(self.choices, accept_promise=False):/a \\        if isinstance(self.choices, tuple) and all(isinstance(c, enum.Enum) for c in self.choices):\\n            self.choices = tuple(c.value for c in self.choices)' django/db/models/fields/__init__.py",
+   "exit": 1
+  },
+  {
+   "turn": 10,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/models/fields/__init__.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Inject logic into _check_choices to handle Enum choices by extracting .value\n# This assumes that if choices are provided and are Enum members, we should use their values.\nnew_content = content.replace(\n    \"        if is_value(self.choices, accept_promise=False):\",\n    \"\"\"        if is_value(self.choices, accept_promise=False):\n            if isinstance(self.choices, tuple) and all(isinstance(c, enum.Enum) for c in self.choices):\n                self.choices = tuple(c.value for c in self.choices)\n            else:\n                raise ValueError(\"choices' must be an iterable (e.g., a list or tuple).\")\"\"\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 80405,
+ "completion_tokens": 2804,
+ "context_truncated": false,
+ "context_words": 830,
+ "submitted": true,
+ "patch_bytes": 845,
+ "wall_s": 86.8
+}

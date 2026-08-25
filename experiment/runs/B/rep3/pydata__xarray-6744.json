@@ -1,0 +1,55 @@
+{
+ "instance_id": "pydata__xarray-6744",
+ "condition": "B",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"DataArrayRolling\" xarray/",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat xarray/core/rolling.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"DataArrayRolling\" xarray/core/dataarray.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -A 20 \"DataArrayRolling\" xarray/core/rolling.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -A 20 \"__iter__\" xarray/core/rolling.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/    def __iter__(self) -> Iterator[tuple[RollingKey, DataArray]]:/,/            yield (label, window)/ s/.*$/    def __iter__(self) -> Iterator[tuple[RollingKey, DataArray]]:\\n        if self.ndim > 1:\\n            raise ValueError(\"__iter__ is only supported for 1d-rolling\")\\n        window_size = self.window[0]\\n        dim_name = self.dim[0]\\n        if self.center:\\n            half_window = (window_size - 1) // 2\\n            for i in range(half_window, len(self.obj.coords[dim_name])):\\n                start = i - half_window\\n                stop = i + half_window + 1\\n                window = self.obj.isel({dim_name: slice(start, stop)})\\n                counts = window.count(dim=dim_name)\\n                window = window.where(counts >= self.min_periods)\\n                yield (self.obj.coords[dim_name].values[i], window)\\n        else:\\n            stops = np.arange(1, len(self.window_labels) + 1)\\n            starts = stops - int(self.window[0])\\n            starts[: int(self.window[0])] = 0\\n            for (label, start, stop) in zip(self.window_labels, starts, stops):\\n                window = self.obj.isel({dim_name: slice(start, stop)})\\n                counts = window.count(dim=dim_name)\\n                window = window.where(counts >= self.min_periods)\\n                yield (label, window)\\n/' xarray/core/rolling.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"xarray/core/rolling.py\"\nnew_iter_body = \"\"\"\n    def __iter__(self) -> Iterator[tuple[RollingKey, DataArray]]:\n        if self.ndim > 1:\n            raise ValueError(\"__iter__ is only supported for 1d-rolling\")\n        window_size = self.window[0]\n        dim_name = self.dim[0]\n        if self.center:\n            half_window = (window_size - 1) // 2\n            for i in range(half_window, len(self.obj.coords[dim_name])):\n                start = i - half_window\n                stop = i + half_window + 1\n                window = self.obj.isel({dim_name: slice(start, stop)})\n                counts = window.count(dim=dim_name)\n                window = window.where(counts >= self.min_periods)\n                yield (self.obj.coords[dim_name].values[i], window)\n        else:\n            stops = np.arange(1, len(self.window_labels) + 1)\n            starts = stops - int(self.window[0])\n            starts[: int(self.window[0])] = 0\n            for (label, start, stop) in zip(self.window_labels, starts, stops):\n                window = self.obj.isel({dim_name: slice(start, stop)})\n                counts = window.count(dim=dim_name)\n                window = window.where(counts >= self.min_periods)\n                yield (label, window)\n\"\"\"\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Find the start of __iter__ and replace everything until the next method definition or end of file.\n# This is still heuristic, but necessary. We look for the method signature and replace until the next method.\nstart_marker = \"    def __iter__(self) -> Iterator[tuple[RollingKey, DataArray]]:\"\nend_marker_pattern = r\"    def construct\\(\"\n\nif start_marker in content:\n    # Find the index where the method starts\n    start_index = content.find(start_marker)\n    \n    # Find the end of the method block (before 'construct' or end of file)\n    end_index = content.find(end_marker_pattern)\n    if end_index == -1:\n        end_index = len(content)\n    \n    # Extract the content before the method\n    prefix = content[:start_index]\n    # Extract the content after the method\n    suffix = content[end_index:]\n    \n    # Reconstruct the file content\n    new_content = prefix + new_iter_body + suffix\n\n    with open(file_path, 'w') as f:\n        f.write(new_content)\nelse:\n    print(\"Error: Could not find the __iter__ method signature.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 25650,
+ "completion_tokens": 3171,
+ "submitted": true,
+ "patch_bytes": 33332,
+ "wall_s": 96.8
+}

@@ -1,0 +1,89 @@
+{
+ "instance_id": "django__django-11885",
+ "condition": "B",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"fast delete queries\" .",
+   "exit": 1
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"on_delete=models.CASCADE\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"Collector\" .",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "cat django/db/models/deletion.py",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -A 10 \"add_field_update\" django/db/models/deletion.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfrom django.db.models.deletion import Collector\n\ndef add_field_update(self, field, value, objs):\n    \"\"\"\n    Schedule a field update. 'objs' must be a homogeneous iterable\n    collection of model instances (e.g. a QuerySet).\n    \"\"\"\n    if not objs:\n        return\n    model = objs[0].__class__\n    self.field_updates.setdefault(\n        model, {}).setdefault(\n        (field, value), set()).update(objs)\n    \n    # New logic to track PKs for fast deletion combination\n    if hasattr(field, 'remote_field') and field.remote_field.one_to_many:\n        pk_values = {obj.pk for obj in objs if obj.pk is not None}\n        if pk_values:\n            self.fast_deletes.append({\n                'model': field.remote_field.model,\n                'pk_values': pk_values,\n                'field': field.name\n            })\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": null
+  },
+  {
+   "turn": 7,
+   "cmd": "sed -i '/if not objs:/a \\\n        # Track PKs for potential fast deletion combination\\\n        if hasattr(field, \"remote_field\") and field.remote_field.one_to_many:\\\n            pk_values = {obj.pk for obj in objs if obj.pk is not None}\\\n            if pk_values:\\\n                self.fast_deletes.append({\\\n                    \"model\": field.remote_field.model,\\\n                    \"pk_values\": pk_values,\\\n                    \"field\": field.name\\\n                })' django/db/models/deletion.py",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i '/if not objs:/a \\\n        # Track PKs for potential fast deletion combination\\\n        if hasattr(field, \"remote_field\") and field.remote_field.one_to_many:\\\n            pk_values = {obj.pk for obj in objs if obj.pk is not None}\\\n            if pk_values:\\\n                self.fast_deletes.append({\\\n                    \"model\": field.remote_field.model,\\\n                    \"pk_values\": pk_values,\\\n                    \"field\": field.name\\\n                })' django/db/models/deletion.py",
+   "exit": 1
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/models/deletion.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The logic to inject after 'if not objs:'\ninjection = \"\"\"\n        # Track PKs for potential fast deletion combination\n        if hasattr(field, \"remote_field\") and field.remote_field.one_to_many:\n            pk_values = {obj.pk for obj in objs if obj.pk is not None}\n            if pk_values:\n                self.fast_deletes.append({\n                    \"model\": field.remote_field.model,\n                    \"pk_values\": pk_values,\n                    \"field\": field.name\n                })\n\"\"\"\n\n# Find the block containing 'if not objs:' and inject the logic after it.\n# This is a heuristic replacement based on the previous successful context.\nnew_content = content.replace(\n    \"        if not objs:\\n            return\",\n    \"        if not objs:\\n            return\\n\" + injection\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "grep -A 20 \"fast_deletes\" django/db/models/deletion.py",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "python3 - <<'EOF'\nfrom django.db.models.deletion import Collector\n\n# ... (rest of the class definition) ...\n\n    def can_fast_delete(self, objs, from_field=None):\n        \"\"\"\n        Determine if the objects in the given queryset-like or single object\n        can be fast-deleted. This can be done if there are no cascades, no\n        foreign keys pointing to the objects being deleted, and no signals\n        are attached to the model.\n        \"\"\"\n        if not objs:\n            return False\n\n        model = objs[0].__class__\n        if self._has_signal_listeners(model):\n            return False\n\n        # Check for foreign keys pointing to this model that might prevent fast delete\n        # (This check is simplified for this fix)\n        # In a real scenario, this would check for constraints.\n        \n        # If we reach here, we assume fast delete is possible for now.\n        return True\n\n    def combine_fast_deletes(self):\n        \"\"\"\n        Combines all collected fast delete operations into a list of OR-based\n        DELETE statements to reduce database roundtrips.\n        \"\"\"\n        if not self.fast_deletes:\n            return []\n\n        combined_queries = []\n        for item in self.fast_deletes:\n            model = item['model']\n            pk_values = item['pk_values']\n            field = item['field']\n            \n            # Construct the OR condition: WHERE field IN (pk1, pk2, ...)\n            # For the prompt's example, we need OR logic across different fields/tables.\n            # Here we combine multiple PK sets for the same field/model into one OR clause.\n            \n            # For simplicity, we generate a single query structure per model/field combination\n            # that needs ORing, mimicking the desired effect.\n            \n            # Example: DELETE FROM table WHERE field = pk1 OR field = pk2\n            or_conditions = \" OR \".join([f\"{field} = {pk}\" for pk in pk_values])\n            \n            # We assume the table name is model._meta.db_table\n            table_name = model._meta.db_table\n            query = f\"DELETE FROM {table_name} WHERE {or_conditions}\"\n            combined_queries.append(query)\n            \n        return combined_queries\n\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 12,
+   "cmd": "sed -i '/    def can_fast_delete(self, objs, from_field=None):/a \\\n    def combine_fast_deletes(self):\\\n        \"\"\"\\\n        Combines all collected fast delete operations into a list of OR-based\\\n        DELETE statements to reduce database roundtrips.\\\n        \"\"\"\\\n        if not self.fast_deletes:\\\n            return []\\\n\\\n        combined_queries = []\\\n        for item in self.fast_deletes:\\\n            model = item[\"model\"]\\\n            pk_values = item[\"pk_values\"]\\\n            field = item[\"field\"]\\\n            \\\n            # Construct the OR condition: WHERE field IN (pk1, pk2, ...)\n            or_conditions = \" OR \".join([f\"{field} = {pk}\" for pk in pk_values])\\\n            \\\n            # We assume the table name is model._meta.db_table\n            table_name = model._meta.db_table\\\n            query = f\"DELETE FROM {table_name} WHERE {or_conditions}\"\\\n            combined_queries.append(query)\\\n            \\\n        return combined_queries' django/db/models/deletion.py",
+   "exit": 1
+  },
+  {
+   "turn": 13,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/db/models/deletion.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The method to append\nnew_method = \"\"\"\n    def combine_fast_deletes(self):\n        \\\"\\\"\\\"\n        Combines all collected fast delete operations into a list of OR-based\n        DELETE statements to reduce database roundtrips.\n        \\\"\\\"\\\"\n        if not self.fast_deletes:\n            return []\n\n        combined_queries = []\n        for item in self.fast_deletes:\n            model = item[\"model\"]\n            pk_values = item[\"pk_values\"]\n            field = item[\"field\"]\n            \n            # Construct the OR condition: WHERE field = pk1 OR field = pk2\n            or_conditions = \" OR \".join([f\"{field} = {pk}\" for pk in pk_values])\n            \n            # We assume the table name is model._meta.db_table\n            table_name = model._meta.db_table\n            query = f\"DELETE FROM {table_name} WHERE {or_conditions}\"\n            combined_queries.append(query)\n            \n        return combined_queries\n\"\"\"\n\n# Append the new method to the end of the file content\nnew_content = content + \"\\n\" + new_method\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 14,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 85526,
+ "completion_tokens": 5304,
+ "submitted": true,
+ "patch_bytes": 2702,
+ "wall_s": 158.5
+}

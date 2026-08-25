@@ -1,0 +1,57 @@
+{
+ "instance_id": "astropy__astropy-7166",
+ "condition": "E",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"InheritDocstrings\" astropy/utils/",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat astropy/utils/misc.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"inspect.isfunction(attr)\" astropy/utils/misc.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport inspect\nimport types\n\ndef fix_inheritdocstrings(filepath):\n    with open(filepath, 'r') as f:\n        content = f.read()\n\n    # The goal is to change 'inspect.isfunction(attr)' to check for functions OR properties.\n    # A property is an instance of the property type.\n    # We look for the definition of __new__ inside InheritDocstrings.\n    \n    # This replacement is highly targeted based on the description.\n    # We replace the check that only looks for functions.\n    \n    new_content = content.replace(\n        \"if not inspect.isfunction(attr):\",\n        \"if not (inspect.isfunction(attr) or isinstance(attr, property)):\",\n        1\n    )\n    \n    # If the above simple replacement fails due to surrounding code, \n    # I will rely on the fact that properties are descriptors.\n    if new_content == content:\n        # Fallback: check for descriptor status which covers properties\n        new_content = content.replace(\n            \"if not inspect.isfunction(attr):\",\n            \"if not (inspect.isfunction(attr) or inspect.isdatadescriptor(attr)):\",\n            1\n        )\n\n    with open(filepath, 'w') as f:\n        f.write(new_content)\n\nfix_inheritdocstrings('astropy/utils/misc.py')\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/def __new__(mcs, name, bases, attrs):/,/    if not inspect.isfunction(attr):/ {\n    /if not inspect.isfunction(attr):/ s/if not inspect.isfunction(attr):/if not (inspect.isfunction(attr) or isinstance(attr, property)):/\n}' astropy/utils/misc.py",
+   "exit": 1
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfilepath = 'astropy/utils/misc.py'\nwith open(filepath, 'r') as f:\n    lines = f.readlines()\n\nnew_lines = []\nin_new = False\nfor line in lines:\n    if \"def __new__(mcs, name, bases, attrs):\" in line:\n        in_new = True\n        new_lines.append(line)\n        continue\n    \n    if in_new and \"if not inspect.isfunction(attr):\" in line:\n        # Replace the check for functions only with a check for functions OR properties\n        new_lines.append(\"        if not (inspect.isfunction(attr) or isinstance(attr, property)):\\n\")\n        continue\n    \n    if \"    if not inspect.isfunction(attr):\" in line:\n        # Handle potential indentation variations\n        new_lines.append(\"    if not (inspect.isfunction(attr) or isinstance(attr, property)):\\n\")\n        continue\n        \n    if \"    if not inspect.isfunction(attr):\" not in line and \"if not inspect.isfunction(attr):\" not in line and \"if not inspect.isfunction(attr):\" not in line:\n        # Stop tracking if we are clearly outside the __new__ method body\n        if \"def __new__(mcs, name, bases, attrs):\" not in line and \"return\" not in line and \"with\" not in line:\n             # This is a heuristic to stop, might need refinement but better than nothing\n             pass\n\n    new_lines.append(line)\n\nwith open(filepath, 'w') as f:\n    f.writelines(new_lines)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 25751,
+ "completion_tokens": 1809,
+ "context_truncated": false,
+ "context_words": 637,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "wall_s": 40.1
+}

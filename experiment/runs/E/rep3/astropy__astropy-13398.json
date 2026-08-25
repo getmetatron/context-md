@@ -1,0 +1,77 @@
+{
+ "instance_id": "astropy__astropy-13398",
+ "condition": "E",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "ls -F astropy/coordinates/",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"ITRS\" astropy/coordinates/transformations.py",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"ITRS\" astropy/coordinates/baseframe.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "grep -r \"ITRS\" astropy/coordinates/matrix_utilities.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "cat astropy/coordinates/baseframe.py | grep -i \"ITRS\"",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "grep -r \"FunctionTransformWithFiniteDifference\" astropy/coordinates/transformations.py",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "cat astropy/coordinates/transformations.py",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nimport numpy as np\nfrom astropy import units as u\nfrom astropy.coordinates.matrix_utilities import rotation_matrix, matrix_transpose\nfrom astropy.coordinates.baseframe import frame_transform_graph\nfrom astropy.coordinates.transformations import FunctionTransformWithFiniteDifference\nfrom astropy.coordinates.altaz import AltAz\nfrom astropy.coordinates.hadec import HADec\nfrom astropy.coordinates.itrs import ITRS\n\ndef itrs_to_observed_mat(observed_frame):\n    \"\"\"\n    Calculates the transformation matrix from ITRS to the observed frame (AltAz or HADec).\n    This function mimics the logic from the user's proposal.\n    \"\"\"\n    if isinstance(observed_frame, AltAz):\n        lon, lat, _ = observed_frame.location.to_geodetic('WGS84')\n        elong = lon.to_value(u.radian)\n        elat = lat.to_value(u.radian)\n        # AltAz frame is left handed\n        minus_x = np.eye(3)\n        minus_x[0][0] = -1.0\n        mat = (minus_x @ rotation_matrix(np.pi/2 - elat, 'y', unit=u.radian) @ rotation_matrix(elong, 'z', unit=u.radian))\n    elif isinstance(observed_frame, HADec):\n        lon, lat, _ = observed_frame.location.to_geodetic('WGS84')\n        elong = lon.to_value(u.radian)\n        # HADec frame is left handed\n        minus_y = np.eye(3)\n        minus_y[1][1] = -1.0\n        mat = (minus_y @ rotation_matrix(elong, 'z', unit=u.radian))\n    else:\n        raise TypeError(\"observed_frame must be AltAz or HADec\")\n    return mat\n\ndef itrs_to_observed(itrs_coo, observed_frame):\n    \"\"\"\n    Transforms ITRS coordinates to the observed frame, treating ITRS as time invariant.\n    \"\"\"\n    # 1. Form the Topocentric ITRS position\n    topocentric_itrs_repr = (itrs_coo.cartesian - observed_frame.location.get_itrs().cartesian)\n    \n    # 2. Transform to the observed frame's Cartesian basis\n    rep = topocentric_itrs_repr.transform(FunctionTransformWithFiniteDifference, ITRS, observed_frame)\n    \n    # 3. Realize the frame\n    return observed_frame.realize_frame(rep)\n\ndef observed_to_itrs(observed_coo, itrs_frame):\n    \"\"\"\n    Transforms observed coordinates back to ITRS.\n    \"\"\"\n    # 1. Form the Topocentric ITRS position\n    # We need the matrix inverse of the ITRS->Observed transform\n    mat_inv = itrs_to_observed_mat(observed_coo)\n    topocentric_itrs_repr = observed_coo.cartesian.transform(matrix_transpose(mat_inv))\n    \n    # 2. Form the Geocentric ITRS position\n    rep = topocentric_itrs_repr + observed_coo.location.get_itrs().cartesian\n    \n    # 3. Realize the frame\n    return itrs_frame.realize_frame(rep)\n\nEOF",
+   "exit": 1
+  },
+  {
+   "turn": 8,
+   "cmd": "sed -i '$' '/^\"\"\"/,$! { :a; N; /\"\"\"/!ba; s/\"\"\"/\"\"\"\\n\\n# --- Added ITRS <-> Observed Transformations ---\\n\\nimport numpy as np\\nfrom astropy import units as u\\nfrom astropy.coordinates.matrix_utilities import rotation_matrix, matrix_transpose\\nfrom astropy.coordinates.baseframe import frame_transform_graph\\nfrom astropy.coordinates.transformations import FunctionTransformWithFiniteDifference\\nfrom astropy.coordinates.altaz import AltAz\\nfrom astropy.coordinates.hadec import HADec\\nfrom astropy.coordinates.itrs import ITRS\\n\\ndef itrs_to_observed_mat(observed_frame):\\n    \"\"\"\\n    Calculates the transformation matrix from ITRS to the observed frame (AltAz or HADec).\\n    This function mimics the logic from the user\\'s proposal.\\n    \"\"\"\\n    if isinstance(observed_frame, AltAz):\\n        lon, lat, _ = observed_frame.location.to_geodetic(\\'WGS84\\')\\n        elong = lon.to_value(u.radian)\\n        elat = lat.to_value(u.radian)\\n        # AltAz frame is left handed\\n        minus_x = np.eye(3)\\n        minus_x[0][0] = -1.0\\n        mat = (minus_x @ rotation_matrix(np.pi/2 - elat, \\'y\\', unit=u.radian) @ rotation_matrix(elong, \\'z\\', unit=u.radian))\\n    elif isinstance(observed_frame, HADec):\\n        lon, lat, _ = observed_frame.location.to_geodetic(\\'WGS84\\')\\n        elong = lon.to_value(u.radian)\\n        # HADec frame is left handed\\n        minus_y = np.eye(3)\\n        minus_y[1][1] = -1.0\\n        mat = (minus_y @ rotation_matrix(elong, \\'z\\', unit=u.radian))\\n    else:\\n        raise TypeError(\\\"observed_frame must be AltAz or HADec\\\")\\n    return mat\\n\\ndef itrs_to_observed(itrs_coo, observed_frame):\\n    \"\"\"\\n    Transforms ITRS coordinates to the observed frame, treating ITRS as time invariant.\\n    \"\"\"\\n    # 1. Form the Topocentric ITRS position\\n    topocentric_itrs_repr = (itrs_coo.cartesian - observed_frame.location.get_itrs().cartesian)\\n    \\n    # 2. Transform to the observed frame\\'s Cartesian basis\\n    rep = topocentric_itrs_repr.transform(FunctionTransformWithFiniteDifference, ITRS, observed_frame)\\n    \\n    # 3. Realize the frame\\n    return observed_frame.realize_frame(rep)\\n\\ndef observed_to_itrs(observed_coo, itrs_frame):\\n    \"\"\"\\n    Transforms observed coordinates back to ITRS.\\n    \"\"\"\\n    # 1. Form the Topocentric ITRS position\\n    # We need the matrix inverse of the ITRS->Observed transform\\n    mat_inv = itrs_to_observed_mat(observed_coo)\\n    topocentric_itrs_repr = observed_coo.cartesian.transform(matrix_transpose(mat_inv))\\n    \\n    # 2. Form the Geocentric ITRS position\\n    rep = topocentric_itrs_repr + observed_coo.location.get_itrs().cartesian\\n    \\n    # 3. Realize the frame\\n    return itrs_frame.realize_frame(rep)\\n\\n# --- End of Added ITRS <-> Observed Transformations ---\\n' astropy/coordinates/transformations.py",
+   "exit": 2
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/coordinates/transformations.py\"\nnew_code = \"\"\"\n# --- Added ITRS <-> Observed Transformations ---\n\nimport numpy as np\nfrom astropy import units as u\nfrom astropy.coordinates.matrix_utilities import rotation_matrix, matrix_transpose\nfrom astropy.coordinates.baseframe import frame_transform_graph\nfrom astropy.coordinates.transformations import FunctionTransformWithFiniteDifference\nfrom astropy.coordinates.altaz import AltAz\nfrom astropy.coordinates.hadec import HADec\nfrom astropy.coordinates.itrs import ITRS\n\ndef itrs_to_observed_mat(observed_frame):\n    \\\"\\\"\\\"\n    Calculates the transformation matrix from ITRS to the observed frame (AltAz or HADec).\n    This function mimics the logic from the user's proposal.\n    \\\"\\\"\\\"\n    if isinstance(observed_frame, AltAz):\n        lon, lat, _ = observed_frame.location.to_geodetic('WGS84')\n        elong = lon.to_value(u.radian)\n        elat = lat.to_value(u.radian)\n        # AltAz frame is left handed\n        minus_x = np.eye(3)\n        minus_x[0][0] = -1.0\n        mat = (minus_x @ rotation_matrix(np.pi/2 - elat, 'y', unit=u.radian) @ rotation_matrix(elong, 'z', unit=u.radian))\n    elif isinstance(observed_frame, HADec):\n        lon, lat, _ = observed_frame.location.to_geodetic('WGS84')\n        elong = lon.to_value(u.radian)\n        # HADec frame is left handed\n        minus_y = np.eye(3)\n        minus_y[1][1] = -1.0\n        mat = (minus_y @ rotation_matrix(elong, 'z', unit=u.radian))\n    else:\n        raise TypeError(\"observed_frame must be AltAz or HADec\")\n    return mat\n\ndef itrs_to_observed(itrs_coo, observed_frame):\n    \\\"\\\"\\\"\n    Transforms ITRS coordinates to the observed frame, treating ITRS as time invariant.\n    \\\"\\\"\\\"\n    # 1. Form the Topocentric ITRS position\n    topocentric_itrs_repr = (itrs_coo.cartesian - observed_frame.location.get_itrs().cartesian)\n    \n    # 2. Transform to the observed frame's Cartesian basis\n    rep = topocentric_itrs_repr.transform(FunctionTransformWithFiniteDifference, ITRS, observed_frame)\n    \n    # 3. Realize the frame\n    return observed_frame.realize_frame(rep)\n\ndef observed_to_itrs(observed_coo, itrs_frame):\n    \\\"\\\"\\\"\n    Transforms observed coordinates back to ITRS.\n    \\\"\\\"\\\"\n    # 1. Form the Topocentric ITRS position\n    # We need the matrix inverse of the ITRS->Observed transform\n    mat_inv = itrs_to_observed_mat(observed_coo)\n    topocentric_itrs_repr = observed_coo.cartesian.transform(matrix_transpose(mat_inv))\n    \n    # 2. Form the Geocentric ITRS position\n    rep = topocentric_itrs_repr + observed_coo.location.get_itrs().cartesian\n    \n    # 3. Realize the frame\n    return itrs_frame.realize_frame(rep)\n\n# --- End of Added ITRS <-> Observed Transformations ---\n\"\"\"\n\nwith open(file_path, \"a\") as f:\n    f.write(new_code)\nprint(\"Successfully appended ITRS transformation functions to transformations.py\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"astropy/coordinates/transformations.py\"\nimports_to_add = \"\"\"\nfrom astropy.coordinates.altaz import AltAz\nfrom astropy.coordinates.hadec import HADec\nfrom astropy.coordinates.itrs import ITRS\nimport numpy as np\n\"\"\"\n\nwith open(file_path, \"r\") as f:\n    content = f.read()\n\n# Check if imports are already present to avoid duplication\nif \"from astropy.coordinates.altaz import AltAz\" not in content:\n    # Find the end of the existing imports section (or just prepend if safer)\n    # For simplicity and safety, I will prepend the necessary imports block.\n    new_content = imports_to_add + \"\\n\" + content\n    \n    with open(file_path, \"w\") as f:\n        f.write(new_content)\n    print(\"Prepended necessary imports to transformations.py.\")\nelse:\n    print(\"Necessary imports already appear to be present.\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 11,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 57059,
+ "completion_tokens": 4030,
+ "context_truncated": false,
+ "context_words": 637,
+ "submitted": true,
+ "patch_bytes": 3217,
+ "wall_s": 101.1
+}

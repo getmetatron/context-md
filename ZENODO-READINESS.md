@@ -1,101 +1,95 @@
 # Zenodo archival-readiness audit
 
-Audit of `kerbelp/context-md` as the replication artifact for *Context
-Inheritance: A Git-Native Architecture and Pre-Registered Study of Repository
-Context for AI Coding Agents* (AgenticDev 2026). Every value below was read from
-the repository or produced by running the documented commands from a **clean
-clone**; nothing is assumed.
+Replication artifact for *Context Inheritance: A Git-Native Architecture and
+Pre-Registered Study of Repository Context for AI Coding Agents* (AgenticDev
+2026). Every value below was read from the repository or produced by running the
+documented commands; nothing is assumed.
+
+> **READY FOR ZENODO: NO.** One artifact blocker remains: the registered
+> consultation audit awaits human labels. ACM author-kit metadata belongs to the
+> paper workflow, and the archival DOI is produced by the eventual Zenodo deposit;
+> neither is a prerequisite for depositing the artifact. This audit describes the
+> repository state committed alongside this file; the final release tag does not yet exist.
+
+## Correction to the previous version of this audit
+
+The earlier revision of this file reported "runs complete: **PASS**". That was
+**wrong**. Only 1,602 of the 3,204 delivery-study episodes had been released:
+the B and E arms carried 10 per-episode records per repetition instead of 267,
+and those 10 were Paper-1 instances outside the frozen list. `analyze_p2.py`
+consequently computed the B/E contrasts on `n=0` while still printing
+`raw p=0.0001`, so the defect looked like a result rather than a failure. The
+1,602 missing records are now included and the delivery numbers reproduce.
+The lesson is recorded here rather than quietly fixed: a PASS that was never
+executed end to end is worse than an open FAIL.
 
 ## Repository metadata
 
 | check | result |
 |---|---|
-| `.zenodo.json` present and valid JSON | **PASS** — parses; `upload_type: software`, `access_right: open` |
-| creators / ORCIDs verified | **PASS** — 4 creators, 4 ORCIDs, taken from the camera-ready `\orcid{}` fields, affiliation Metatron Research, Tel Aviv, Israel |
-| license verified | **PASS** — `"license": "mit"`, matching `LICENSE` (MIT, © 2026 Pavel Kerbel) |
-| no proceedings metadata | **PASS** — no ACM DOI, ISBN or rights fields; the record describes the artifact, not the paper |
+| `.zenodo.json` valid JSON | **PASS** |
+| creators / ORCIDs verified | **PASS** — 4 creators, 4 ORCIDs from the camera-ready `\orcid{}` fields |
+| license verified | **PASS** — `mit`, matching `LICENSE` |
+| no proceedings metadata invented | **PASS** — no ACM DOI, ISBN or rights fields |
 
 ## Reproducibility
 
 | check | result |
 |---|---|
 | pre-registration present | **PASS** — `experiment/PREREGISTRATION.md` |
-| pre-registration tag/commit verified | **PASS** — tag `prereg-v1` (annotated) → commit `056156679a896f0697198bb240c92110aa2df048`, 2026-07-09 13:05:27 +0300; resolvable in this repository, contains the protocol, and is an ancestor of HEAD |
-| runs complete | **PASS** — 408 `predictions.jsonl`, all arms the paper reports (A, A2, B, BT2, C, C2, C_oracle, D, D_oracle, D_oracleT2, E, ET2, FILE, SHARD, opus_ext) |
-| evaluation verdicts complete | **PASS** — 380 containerized verdict files + 2 `eval_summary.jsonl` |
+| Paper 1 tag/commit verified | **PASS** — `prereg-v1`, annotated, commit `0561566…`, 2026-07-09, ancestor of HEAD, resolvable here |
+| Paper 2 tag provenance | **DISCLOSED LIMITATION** — `prereg2-v1` is **not public** and is a *lightweight* tag (no tagger timestamp). Corroboration only: tagged commit 2026-07-15, all delivery evaluations timestamped 2026-07-19/20. Stated in `ARTIFACT.md` and `DEVIATIONS.md`; the tag is **not** pushed, because that repository's history is private. |
+| runs complete | **PASS (newly true)** — 3,204 delivery episodes, 801/arm, enforced by assertions in `analyze_p2.py` |
+| outcome records complete | **PASS** — 4,713 unique containerized verdicts plus 2 planned frontier attempts whose nonzero runner outcomes are released and scored unresolved |
 | promotion decisions/logs | **PASS** — 371 `promotions.jsonl` |
-| authoring transcripts complete | **UNCERTAIN — see note** |
-| analysis scripts complete | **PASS** — `analysis/` (4) + camera-ready `analysis/` (3: leakage audit, claim verification, figure generation) |
-| offline reproduction | **PASS** — `make reproduce-paper PY=…` → `15/15 claims reproduced` from a clean clone, in a fresh venv built **only** from `requirements-artifact.txt` |
-| claim verification | **PASS** — `verify_claims.py` → `all camera-ready claims verified`, same environment |
-| no undeclared parent-directory dependencies | **PASS** — no path escapes the checkout in any analysis or harness script |
-
-**Note on authoring transcripts.** The paper's Data Availability statement no
-longer promises "seed-authoring transcripts": no verbatim transcripts of the
-blind-authoring sessions were retained. What exists is `seeds/AUDIT.md` (and
-`AUDIT-P2.md`), an audit record written at authoring time documenting the
-procedure, the inputs given to each author, the prohibitions imposed, the
-self-reported consulted-file lists and a leakage scan. That is weaker evidence
-than a transcript, and it is marked uncertain here rather than PASS so a reader
-is not misled. The camera-ready wording was corrected to match.
+| authoring transcripts | **UNCERTAIN** — no verbatim seed-authoring transcripts were retained; only `seeds/AUDIT.md`. Paper and public docs now say "audit record", not "transcripts". |
+| analysis scripts complete | **PASS** — incl. `count_episodes.py` and the two consultation-audit scripts |
+| offline reproduction | **PASS** — `make reproduce-paper` → 15/15 in a fresh venv from `requirements-artifact.txt` alone |
+| claim verification | **PASS** — `verify_claims.py` covers every Table 3 cell, both delivery contrasts, the token-test family, leakage Jaccard values, ceiling-arm rates/costs, and strict outcome completeness, including the two logged pre-record aborts |
+| figure regeneration | **PASS** — one command emits **5** figures (Fig 1 was previously defined after `__main__` and never ran) |
+| declared dependencies sufficient | **PASS** — `matplotlib` added; clean-env install verified |
 
 ## Research transparency
 
 | check | result |
 |---|---|
-| `DEVIATIONS.md` | **PASS** — created; required by `PREREGISTRATION.md` §12 and previously missing |
-| exploratory / post-hoc analyses identified | **PASS** — §5 and §6 of `DEVIATIONS.md` |
-| blind-seed leakage analysis included | **PASS** — `seed_leakage.py`, `RESULTS-07-seed-leakage.md`, and Table 4 of the paper |
-
-`DEVIATIONS.md` does **not** claim a clean protocol. It records three material
-deviations — a permutation test where §7 specified mixed-effects/McNemar; the
-registered constraint-violation metric never implemented; and the frontier tier
-running 16 pairs against the §8 target of ≥25 — plus registered work never
-executed (conditions F and G, RQ3/H3). `PREREGISTRATION.md` and the `prereg-v1`
-tag were not modified.
+| `DEVIATIONS.md` | **PASS** |
+| exploratory / post-hoc identified | **PASS** |
+| leakage analysis included | **PASS** |
+| deviations disclosed in the paper | **PASS (new)** — Threats now carries the six material items, including the two pre-record frontier aborts |
+| episode/evaluation inventory | **PASS** — `count_episodes.py` reports repository records but explicitly does not present them as a confirmatory sample size; the misleading global manuscript count was removed |
+| **registered 40-episode consultation audit** | **BLOCKED** — sample drawn (seed 42, 1,602-episode frame, deterministic), blinded file and analyzer built and tested; **awaiting human labels**. `PREREGISTRATION-PAPER2` promises this with Cohen's kappa, so the artifact is incomplete until it is done. |
 
 ## Repository hygiene
 
 | check | result |
 |---|---|
-| `.DS_Store` removed | **PASS** — untracked; already covered by `.gitignore` |
-| other editor/build artifacts | **PASS** — no tracked `__pycache__`, `.pyc`, `.swp`, `.idea`, `.vscode`, `Thumbs.db` |
-| secret scan | **PASS** — see below |
-| no required untracked files | **PASS** — a clean clone reproduces every reported number |
-
-**Secret scan.** No dedicated scanner (`gitleaks`, `trufflehog`,
-`detect-secrets`) is installed on this machine, so this was pattern-based plus
-manual inspection across **all tracked files**: provider key formats
-(`sk-ant-`, `sk-`, `ghp_`, `gho_`, `github_pat_`, `AIza`, `xox[baprs]-`,
-AWS `AKIA`/`ASIA`), PEM private keys, bearer tokens, assigned
-`API_KEY`/`SECRET`/`PASSWORD`/`ACCESS_TOKEN` values, `Set-Cookie` and
-`Authorization:` headers, and tracked `.env`/`.pem`/`.key`/credential files —
-**zero matches in every category**. Email addresses appearing in tracked files
-are the four authors' published paper addresses plus a public mailing-list
-address inside an upstream gold patch. The only non-public-looking endpoint is
-`http://localhost:11434/api/chat`, the documented local Ollama server. The
-harness previously read an absolute path to a local `.env`; it now reads
-`ANTHROPIC_API_KEY` from the environment.
-
-**Known, accepted disclosure:** 21 files under `runs/` and `pilot/logs/` contain
-absolute `/Users/pavel/...` paths inside raw episode logs and Python tracebacks.
-These were already public before this release. They were **not** scrubbed:
-rewriting raw experimental logs to tidy cosmetics would damage the evidence the
-package exists to provide. Nothing beyond a username and directory layout is
-exposed.
+| `.DS_Store` / editor artifacts | **PASS** |
+| secret scan | **PASS** — pattern + manual across all tracked files; no dedicated scanner installed on the build machine |
+| new B/E records scanned | **PASS** — no credentials, no absolute-path disclosures |
+| no required untracked files | **PASS after the commit containing this audit** |
 
 ## Release
 
 | | |
 |---|---|
-| audited tree | `89a27308386e5c5c3ece358219b6468a3e8ef411` — the commit this audit was run against. This report was added in the commit immediately after, which is the one the tag should be created on; the report changes no code, data or metadata. |
-| proposed final tag | `v1.0-agenticdev2026-artifact` |
-| archived size | ~13 MB compressed (`git archive` tarball); ~90 MB checked out, 4,886 tracked files |
-| existing tag `camera-ready-agenticdev2026` | **superseded** — predates the metadata, deviations log and ARTIFACT.md corrections; must not be used as the Zenodo snapshot |
-| **READY FOR ZENODO** | **YES**, once the tag above is created |
+| audited state | the commit containing this audit; verify it again before tagging |
+| proposed final tag | `v1.0-agenticdev2026-artifact` — **not created** |
+| superseded tag | `camera-ready-agenticdev2026` — predates these fixes; must not be archived |
+| archived size | ~13 MB compressed before this change; the 1,602 new records add ~11 MB uncompressed |
+| **READY FOR ZENODO** | **NO** — see blockers |
 
-The GitHub release has **not** been created, and no Zenodo record has been
-created. Intended order: enable the repository in Zenodo → create the release
-from the new tag → let Zenodo archive it → take the **version** DOI (not the
-concept DOI) → insert it into the camera-ready `\artifactdoi` macro, which
-updates both the Data Availability statement and the artifact reference.
+## Exact safe release and deposit steps (after the blockers clear)
+
+1. Complete the consultation audit; run `consultation_audit_analyze.py`; update
+   `RESULTS-06` and the paper with kappa **or** a stated undefined-kappa result.
+2. Push the audited `main`. Delete the stale public `anonymous-review` branch.
+3. Tag `v1.0-agenticdev2026-artifact` (annotated) and push the tag only.
+4. Enable the repository in Zenodo, then create the GitHub release **from that
+   tag**. Zenodo archives that exact release.
+5. Take the **version** DOI (not the concept DOI) and set `\artifactdoi` in
+   `main.tex`; it updates the Data Availability Statement and the artifact
+   reference together.
+6. Insert the ACM eRights values into `\setcopyright`, `\acmDOI`, `\acmISBN`.
+7. Rebuild, re-run both checkers, rebuild the submission ZIP, and upload to
+   HotCRP/TAPS.

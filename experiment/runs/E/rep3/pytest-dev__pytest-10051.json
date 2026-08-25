@@ -1,0 +1,72 @@
+{
+ "instance_id": "pytest-dev__pytest-10051",
+ "condition": "E",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -C 10 \"caplog.clear\" src/_pytest/logging.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "python3 - <<'EOF'\nimport logging\nfrom typing import Generator, Optional, List, Any\n\n# Mocking necessary classes/attributes for context understanding, assuming they exist in the file\nclass LogCaptureFixture:\n    def __init__(self, node, _ispytest):\n        self.node = node\n        self._ispytest = _ispytest\n        self.records: List[logging.LogRecord] = []\n        self._messages: List[str] = []\n        self._text: str = \"\"\n\n    def get_records(self) -> List[logging.LogRecord]:\n        return self.records\n\n    def get_messages(self) -> List[str]:\n        return self._messages\n\n    def clear(self):\n        self.records.clear()\n        self._messages.clear()\n        self._text = \"\"\n\n    def _finalize(self):\n        pass\n\n# Re-examining the structure based on the provided snippet context.\n# The issue is likely in how get_records interacts with clear.\n\n# I will look for the definition of LogCaptureFixture and modify its clear method\n# or ensure get_records returns a reference that is modified by clear.\n\n# Since I cannot see the full class definition, I will assume the fix involves\n# making sure clear() modifies the underlying list referenced by get_records().\n# If get_records returns self.records, then clear() must call self.records.clear().\n\n# I will search for the definition of LogCaptureFixture in the file.\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i 's/def clear(self):/def clear(self):\\n        self.records.clear()/' src/_pytest/logging.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '/def clear(self):/,/    self._text = \"\"/ s/    self._text = \"\"/    self.records.clear()\n    self._messages.clear()\n    self._text = \"\"/' src/_pytest/logging.py",
+   "exit": 1
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '/def clear(self):/,/    self._text = \"\"/ {\n    /self.records/ {\n        s/    self.records = []/    self.records = []\\n    self.records.clear()/'\n    }\n}' src/_pytest/logging.py",
+   "exit": 2
+  },
+  {
+   "turn": 5,
+   "cmd": "And I will replace the body of `clear` to explicitly call `self.records.clear()`.",
+   "exit": 127
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i 's/def clear(self):/def clear(self):\\n        self.records.clear()/' src/_pytest/logging.py",
+   "exit": 1
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"src/_pytest/logging.py\"\ncontent = []\nin_clear = False\nfor line in open(file_path, 'r'):\n    if line.strip() == \"def clear(self):\":\n        content.append(line)\n        in_clear = True\n        continue\n    \n    if in_clear:\n        # Check if we are exiting the function block (e.g., hitting another def or class end)\n        if line.strip().startswith(\"def \") or line.strip().startswith(\"class \"):\n            content.append(line)\n            in_clear = False\n            continue\n        \n        # If we are inside clear(), we inject the fix before the existing content.\n        # We assume the original content is minimal and just needs the record clear.\n        if \"self.records.clear()\" not in line:\n            content.append(\"        self.records.clear()\\n\")\n        content.append(line)\n    else:\n        content.append(line)\n\nwith open(file_path, 'w') as f:\n    f.writelines(content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"src/_pytest/logging.py\"\ncontent = []\nin_clear = False\nfound_clear = False\n\nwith open(file_path, 'r') as f:\n    lines = f.readlines()\n\nnew_lines = []\nfor i, line in enumerate(lines):\n    if line.strip() == \"def clear(self):\":\n        new_lines.append(line)\n        new_lines.append(\"        self.records.clear()\\n\") # Inject fix immediately after definition\n        found_clear = True\n        in_clear = True\n        continue\n    \n    if found_clear and in_clear:\n        # Stop injecting when we hit the next logical block boundary (e.g., another method definition)\n        if line.strip().startswith(\"def \") or line.strip().startswith(\"class \"):\n            in_clear = False\n        \n        new_lines.append(line)\n    else:\n        new_lines.append(line)\n\nwith open(file_path, 'w') as f:\n    f.writelines(new_lines)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 42141,
+ "completion_tokens": 2608,
+ "context_truncated": false,
+ "context_words": 602,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "wall_s": 69.2
+}

@@ -1,0 +1,42 @@
+{
+ "instance_id": "django__django-14725",
+ "condition": "E",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"ModelFormSet\" django/forms/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -A 20 \"modelformset_factory\" django/forms/models.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i '/def modelformset_factory(model, form=ModelForm, formfield_callback=None,/,/return FormSet/ s/modelformset_factory(model, form=form, fields=fields, exclude=exclude,/\\1, read_only_creation=False,/)",
+   "exit": 2
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"django/forms/models.py\"\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# 1. Modify function signature to accept read_only_creation=False\n# Original: def modelformset_factory(model, form=ModelForm, formfield_callback=None,\n# New:      def modelformset_factory(model, form=ModelForm, formfield_callback=None, ..., read_only_creation=False):\ncontent = re.sub(\n    r\"(def modelformset_factory\\(model, form=ModelForm, formfield_callback=None,.*read_only_creation=True\\):)\",\n    r\"\\1, read_only_creation=False)\",\n    content,\n    count=1,\n    flags=re.DOTALL\n)\n\n# 2. Modify the call to formset_factory to pass the new argument\n# Original: FormSet = formset_factory(form, formset, extra=extra, min_num=min_num, max_num=max_num,\n# New:      FormSet = formset_factory(form, formset, extra=extra, min_num=min_num, max_num=max_num, read_only_creation=read_only_creation,)\ncontent = re.sub(\n    r\"(FormSet = formset_factory\\(form, formset, extra=extra, min_num=min_num, max_num=max_num,)\",\n    r\"\\1, read_only_creation=read_only_creation,\",\n    content,\n    count=1\n)\n\n# 3. Inject the logic override after the formset_factory call, before FormSet.model = model\n# This logic needs to check the value of read_only_creation and override __init__ if true.\ninjection_code = \"\"\"\n    if read_only_creation:\n        def new_init(self, *args, **kwargs):\n            super(FormSet, self).__init__(*args, **kwargs)\n            self.extra = 0\n        FormSet.__init__ = new_init\n\"\"\"\ncontent = content.replace(\"FormSet.model = model\", injection_code + \"\\nFormSet.model = model\")\n\n\nwith open(file_path, 'w') as f:\n    f.write(content)\nprint(\"Successfully updated modelformset_factory in django/forms/models.py\")\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 16646,
+ "completion_tokens": 1951,
+ "context_truncated": false,
+ "context_words": 830,
+ "submitted": true,
+ "patch_bytes": 1300,
+ "wall_s": 54.8
+}

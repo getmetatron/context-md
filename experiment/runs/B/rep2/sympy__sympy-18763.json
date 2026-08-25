@@ -1,0 +1,70 @@
+{
+ "instance_id": "sympy__sympy-18763",
+ "condition": "B",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"Subs\" sympy",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"Subs\" sympy/printing/latex.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "cat sympy/printing/latex.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '/def _print_Subs(self, subs):/,$ { /_print_Subs/ { :a; n; /return/!ba; } } sympy/printing/latex.py",
+   "exit": 2
+  },
+  {
+   "turn": 4,
+   "cmd": "grep -A 20 \"def _print_Subs(self, subs):\" sympy/printing/latex.py",
+   "exit": 0
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i '/def _print_Subs(self, subs):/,/return r'\\left. %s \\right|_{\\substack{ %s }}' sympy/printing/latex.py' -e 's/return r'\\left. %s \\right|_{\\substack{ %s }}'/'\\left. (%s) \\right|_{\\substack{ %s }}'/g' -e 's/return r'\\left. %s \\right|_{\\substack{ %s }}'/'\\left. \\left( %s \\right) \\right|_{\\substack{ %s }}'/g'",
+   "exit": 2
+  },
+  {
+   "turn": 6,
+   "cmd": "sed -i 's/return r'\\left. %s \\right|_{\\substack{ %s }}'/'return r'\\left. \\left(%s\\right) \\right|_{\\substack{ %s }}'/g' sympy/printing/latex.py",
+   "exit": 2
+  },
+  {
+   "turn": 7,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sympy/printing/latex.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Original line structure:\n# return r'\\left. %s \\right|_{\\substack{ %s }}' % (latex_expr, latex_subs)\n# Target structure:\n# return r'\\left. \\left(%s\\right) \\right|_{\\substack{ %s }}' % (latex_expr, latex_subs)\n\n# We replace the first %s placeholder's surrounding context to add parentheses.\n# This assumes the replacement happens exactly where the first %s is used.\nnew_content = content.replace(\n    \"return r'\\\\left. %s \\\\right|_{\\substack{ %s }}' % (latex_expr, latex_subs)\",\n    \"return r'\\\\left. \\\\left(%s\\\\right) \\\\right|_{\\substack{ %s }}' % (latex_expr, latex_subs)\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 8,
+   "cmd": "submit"
+  },
+  {
+   "turn": 9,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sympy/printing/latex.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# The original line is:\n# return r'\\left. %s \\right|_{\\substack{ %s }}' % (latex_expr, latex_subs)\n# We need to wrap the first %s placeholder's content with parentheses.\n\n# Using a regex-like replacement approach within string replacement for robustness.\n# We look for the literal string that contains the first %s placeholder.\n# The replacement adds \\left( and \\right) around the first %s placeholder.\nold_pattern = r\"return r'\\left. %s \\right|_{\\substack{ %s }}' % (latex_expr, latex_subs)\"\nnew_pattern = r\"return r'\\left. \\left(%s\\right) \\right|_{\\substack{ %s }}' % (latex_expr, latex_subs)\"\n\nnew_content = content.replace(old_pattern, new_pattern)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 10,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 35148,
+ "completion_tokens": 1445,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "wall_s": 43.3
+}

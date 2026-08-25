@@ -1,0 +1,40 @@
+{
+ "instance_id": "django__django-13512",
+ "condition": "B",
+ "rep": 3,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 3,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"JSONField\" .",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "grep -r \"json.dumps\" .",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i 's/json.dumps(value, cls=self.encoder)/json.dumps(value, cls=self.encoder, ensure_ascii=False)/g' django/forms/fields.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/forms/fields.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Target lines in django/forms/fields.py that use json.dumps\n# I need to replace instances like:\n# json.dumps(value, cls=self.encoder)\n# json.dumps(initial, sort_keys=True, cls=self.encoder)\n# json.dumps(self.to_python(data), sort_keys=True, cls=self.encoder)\n\n# Since I cannot reliably parse the context, I will use a targeted replacement for the most likely call structure.\n# I will assume the structure is always json.dumps(..., cls=self.encoder) and add ensure_ascii=False.\n\nnew_content = content.replace(\n    \"json.dumps(value, cls=self.encoder)\",\n    \"json.dumps(value, cls=self.encoder, ensure_ascii=False)\"\n).replace(\n    \"json.dumps(initial, sort_keys=True, cls=self.encoder)\",\n    \"json.dumps(initial, sort_keys=True, cls=self.encoder, ensure_ascii=False)\"\n).replace(\n    \"json.dumps(self.to_python(data), sort_keys=True, cls=self.encoder)\",\n    \"json.dumps(self.to_python(data), sort_keys=True, cls=self.encoder, ensure_ascii=False)\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 10648,
+ "completion_tokens": 1101,
+ "submitted": true,
+ "patch_bytes": 1092,
+ "wall_s": 32.2
+}

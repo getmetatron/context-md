@@ -1,0 +1,42 @@
+{
+ "instance_id": "pytest-dev__pytest-5631",
+ "condition": "E",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -C 10 \"num_mock_patch_args\" src/_pytest/compat.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -i 's/        return len(\\n            [p for p in patchings if not p.attribute_name and p.new in sentinels]\\n        )/        return len(\\n            [p for p in patchings if not p.attribute_name and (isinstance(p.new, (list, tuple, np.ndarray)) and all(isinstance(x, (list, tuple, np.ndarray)) for x in p.new)) or p.new in sentinels]\\n        )/' src/_pytest/compat.py",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i 's/        return len(\\n            [p for p in patchings if not p.attribute_name and p.new in sentinels]\\n        )/        return len(\\n            [p for p in patchings if not p.attribute_name and (p.new in sentinels or (hasattr(p.new, \"__array__\") and np.all(p.new == sentinels)))]\\n        )/' src/_pytest/compat.py",
+   "exit": 1
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"src/_pytest/compat.py\"\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Original line structure:\n# return len(\n#     [p for p in patchings if not p.attribute_name and p.new in sentinels]\n# )\n\n# Target replacement structure:\n# return len(\n#     [p for p in patchings if not p.attribute_name and (p.new in sentinels or (hasattr(p.new, \"__array__\") and np.all(p.new == sentinels)))]\n# )\n\n# Using a regex that captures the surrounding context to ensure correct replacement.\n# This regex targets the entire return statement block.\npattern = r\"(return len\\(\\s*\\[p for p in patchings if not p.attribute_name and p\\.new in sentinels\\]\\s*\\)\\s*)\"\nreplacement = r\"        return len(\\n            [p for p in patchings if not p.attribute_name and (p.new in sentinels or (hasattr(p.new, \\\"__array__\\\") and np.all(p.new == sentinels)))]\\n        )\"\n\nnew_content = re.sub(pattern, replacement, content)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 19732,
+ "completion_tokens": 2374,
+ "context_truncated": false,
+ "context_words": 602,
+ "submitted": true,
+ "patch_bytes": 799,
+ "wall_s": 69.2
+}

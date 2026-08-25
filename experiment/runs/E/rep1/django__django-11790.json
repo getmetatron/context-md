@@ -1,0 +1,57 @@
+{
+ "instance_id": "django__django-11790",
+ "condition": "E",
+ "rep": 1,
+ "executor": "local",
+ "context_mode": "seeded",
+ "oracle": false,
+ "seed": 1,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"AuthenticationForm\" django/contrib/auth/forms.py",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "cat django/contrib/auth/forms.py",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "sed -i '/class AuthenticationForm(forms.Form):/,/    username = forms.CharField(./ s/    username = forms.CharField\\(\\s*label=.*,\\s*required=True,\\s*widget=forms.TextInput(attrs={\\'autocomplete\\': \\'username\\'})\\s*\\)/    username = forms.CharField(label=_(\"Username\"), required=True, widget=forms.TextInput(attrs={'autocomplete': 'username', 'maxlength': '255'}))/g' django/contrib/auth/forms.py",
+   "exit": 2
+  },
+  {
+   "turn": 3,
+   "cmd": "python3 - <<'EOF'\nimport re\n\nfile_path = \"django/contrib/auth/forms.py\"\ncontent = \"\"\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Regex to find the definition of username field in AuthenticationForm\n# It looks for: username = forms.CharField(label=..., required=True, widget=forms.TextInput(attrs={'autocomplete': 'username'}))\npattern = re.compile(r\"(username\\s*=\\s*forms\\.CharField\\(\\s*label=.*,\\s*required=True,\\s*widget=forms\\.TextInput\\(attrs=\\{.*\\'autocomplete\\': \\'username\\'\\}\\)\\s*\\))\", re.DOTALL)\n\n# Replacement string to add 'maxlength': '255'\nreplacement = r\"\\1\\n            widget=forms.TextInput(attrs={'autocomplete': 'username', 'maxlength': '255'})\"\n\nnew_content = pattern.sub(replacement, content)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 4,
+   "cmd": "submit"
+  },
+  {
+   "turn": 5,
+   "cmd": "sed -i 's/widget=forms.TextInput(attrs={\\'autocomplete\\': \\'username\\'})/' widget=forms.TextInput(attrs={\\'autocomplete\\': \\'username\\', \\'maxlength\\': \\'255\\'})' django/contrib/auth/forms.py",
+   "exit": 2
+  },
+  {
+   "turn": 6,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"django/contrib/auth/forms.py\"\nnew_content = \"\"\nin_auth_form = False\nfound_username_field = False\n\nwith open(file_path, 'r') as f:\n    lines = f.readlines()\n\nfor line in lines:\n    if \"class AuthenticationForm(forms.Form):\" in line:\n        in_auth_form = True\n        new_content += line\n        continue\n    \n    if in_auth_form and \"username =\" in line and \"forms.CharField\" in line and not found_username_field:\n        # This is the line defining the username field.\n        # We need to inject 'maxlength': '255' into the attrs dictionary.\n        # Original structure seems to be: widget=forms.TextInput(attrs={'autocomplete': 'username'})\n        \n        # Simple replacement assuming the structure is consistent enough for this fix.\n        # We replace the closing brace of attrs with the new content.\n        modified_line = line.replace(\"attrs={'autocomplete': 'username'}\", \"attrs={'autocomplete': 'username', 'maxlength': '255'}\")\n        new_content += modified_line\n        found_username_field = True\n    else:\n        new_content += line\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 7,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 27194,
+ "completion_tokens": 1256,
+ "context_truncated": false,
+ "context_words": 830,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "wall_s": 37.2
+}

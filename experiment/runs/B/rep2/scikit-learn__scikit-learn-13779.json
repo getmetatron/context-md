@@ -1,0 +1,50 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-13779",
+ "condition": "B",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -r \"VotingClassifier\" .",
+   "exit": 0
+  },
+  {
+   "turn": 1,
+   "cmd": "ls -l sklearn/ensemble/",
+   "exit": 0
+  },
+  {
+   "turn": 2,
+   "cmd": "grep -r \"sample_weight\" sklearn/ensemble/voting.py",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "sed -i '/def fit(self, X, y, sample_weight=None):/,/return super().fit(X, y, sample_weight)/ s/        sample_weight : array-like, shape \\(n_samples,\\) or None/        sample_weight : array-like, shape \\(n_samples,\\) or None\\n        if sample_weight is not None and any(e is None for e in self.estimators_): raise ValueError(\"Cannot fit with sample_weight if any estimator is None.\")/",
+   "exit": 2
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i '/def fit(self, X, y, sample_weight=None):/,/return super().fit(X, y, sample_weight)/ {\n    /sample_weight=None/ {\n        N; s/\\n/ \\n        if sample_weight is not None and any(e is None for e in self.estimators_): raise ValueError(\"Cannot fit with sample_weight if any estimator is None.\")\\n        /\n    }\n}' sklearn/ensemble/voting.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sklearn/ensemble/voting.py\"\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Check for the signature and inject the validation logic.\n# We look for the start of the fit method that accepts sample_weight.\n# The check should be: if sample_weight is not None and any(e is None for e in self.estimators_): raise ValueError(...)\n\n# This replacement is highly specific to the structure found in the grep output.\n# I'll search for the line defining the method and insert the check immediately after.\nnew_content = content.replace(\n    \"def fit(self, X, y, sample_weight=None):\",\n    \"def fit(self, X, y, sample_weight=None):\\n        if sample_weight is not None and any(e is None for e in self.estimators_): raise ValueError(\\\"Cannot fit with sample_weight if any estimator is None.\\\")\\n\"\n)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 16650,
+ "completion_tokens": 1664,
+ "submitted": true,
+ "patch_bytes": 1291,
+ "wall_s": 43.6
+}

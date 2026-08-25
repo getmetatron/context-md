@@ -1,0 +1,50 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-26194",
+ "condition": "B",
+ "rep": 2,
+ "executor": "local",
+ "context_mode": "none",
+ "oracle": false,
+ "seed": 2,
+ "turns": [
+  {
+   "turn": 0,
+   "cmd": "grep -C 10 1086 sklearn/metrics/_ranking.py",
+   "exit": 1
+  },
+  {
+   "turn": 1,
+   "cmd": "sed -i '/# L1086/ {\n    :a\n    n\n    /thresholds = np.append(thresholds, 1.0) / {\n        s/thresholds = np.append(thresholds, 1.0)/thresholds = np.append(thresholds, np.clip(1.0, 0.0, 1.0))/\n    }\n}' sklearn/metrics/_ranking.py",
+   "exit": 1
+  },
+  {
+   "turn": 2,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sklearn/metrics/_ranking.py\"\nwith open(file_path, 'r') as f:\n    lines = f.readlines()\n\nnew_lines = []\nin_roc_curve_logic = False\nfor i, line in enumerate(lines):\n    if \"roc_curve\" in line and \"thresholds\" in line and \"np.append\" in line:\n        in_roc_curve_logic = True\n    \n    if in_roc_curve_logic and \"thresholds = np.append(thresholds, 1.0)\" in line:\n        # This is the line to modify. We clip 1.0 to ensure it's <= 1.\n        new_lines.append(\"        thresholds = np.append(thresholds, np.clip(1.0, 0.0, 1.0))\\n\")\n        in_roc_curve_logic = False # Assume modification is done for this block\n    else:\n        new_lines.append(line)\n\nwith open(file_path, 'w') as f:\n    f.writelines(new_lines)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 3,
+   "cmd": "submit"
+  },
+  {
+   "turn": 4,
+   "cmd": "sed -i 's/thresholds = np.append(thresholds, 1.0)/thresholds = np.append(thresholds, np.clip(1.0, 0.0, 1.0))/' sklearn/metrics/_ranking.py",
+   "exit": 1
+  },
+  {
+   "turn": 5,
+   "cmd": "python3 - <<'EOF'\nfile_path = \"sklearn/metrics/_ranking.py\"\nwith open(file_path, 'r') as f:\n    lines = f.readlines()\n\nnew_lines = []\nmodified = False\nfor line in lines:\n    # Check for the specific line pattern that needs modification\n    if \"thresholds = np.append(thresholds, 1.0)\" in line and not modified:\n        # Replace the hardcoded 1.0 with the clipped version\n        new_lines.append(\"        thresholds = np.append(thresholds, np.clip(1.0, 0.0, 1.0))\\n\")\n        modified = True\n    else:\n        new_lines.append(line)\n\nwith open(file_path, 'w') as f:\n    f.writelines(new_lines)\nEOF",
+   "exit": 0
+  },
+  {
+   "turn": 6,
+   "cmd": "submit"
+  }
+ ],
+ "prompt_tokens": 9947,
+ "completion_tokens": 1442,
+ "empty_submit_nudged": true,
+ "submitted": true,
+ "patch_bytes": 0,
+ "wall_s": 35.1
+}
