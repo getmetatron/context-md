@@ -96,9 +96,20 @@ Interpretation: at the local 8B tier, no file-delivery mechanism moves resolve.
 This matches the Paper 1 pooled resolve null and is the registered expectation.
 The gold-hit story (H2/H3) stands independently of this secondary.
 
+## Consultation-detector verification
+
+The fixed 40-episode sample (seed 42 from the 1,602 FILE/SHARD episodes) received
+author verification on 2026-08-26. For `consulted`, `deep_read`, and
+`read_before_edit`, the author-confirmed labels and detector each gave 38 positive
+and 2 negative episodes: raw agreement 40/40, confusion matrix 38/0/0/2, no
+unclear rows and no disagreements. Mechanical Cohen's kappa is 1.000, but only
+two negatives were sampled, making kappa unstable. The review was AI-assisted
+and not blinded to the detector comparison, so these statistics are descriptive
+confirmation rather than independent inter-rater reliability. This workflow
+deviation is recorded in `DEVIATIONS-2.md`.
+
 ## Other pending
 
-- 40-episode hand-audit with Cohen's kappa: paper-time item.
 - Registered extension: SWE-bench-Live stratum; Opus extension tier (ROADMAP).
 
 ## H4 — exploratory (post-treatment conditioning; no causal claim)

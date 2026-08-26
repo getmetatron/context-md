@@ -33,3 +33,17 @@ silently skipped in the first eval pass. Re-evaluated under
 `eval-P2-{B,E}-rep{1..3}` (harness/eval_p2_be.py), restricted to the frozen
 267-instance list, duplicates dropped. Operational; resolve is a registered
 secondary with no confirmatory claim at this tier.
+
+## 2026-08-26 — Consultation audit author-confirmed after AI-assisted review
+
+The preregistration called for a 40-episode random hand audit reported with
+Cohen's kappa, and the intended procedure blinded the human labeler to the
+detector key. The fixed sample was drawn as registered (uniformly without
+replacement from the 1,602 frozen FILE/SHARD episodes, seed 42), but the final
+author confirmation was not blinded: an AI assistant first prepared row-specific
+evidence and proposed labels, the detector comparison was then visible, and Pavel
+Kerbel reviewed and accepted every judgment. We therefore report this as an
+AI-assisted human verification, not an independent blinded rating. Raw agreement
+was 40/40 for each construct (38 positive, 2 negative); mechanically computed
+kappa was 1.000 but is descriptive, not an unbiased inter-rater reliability
+estimate, and is unstable because only two negatives were sampled.

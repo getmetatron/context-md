@@ -188,5 +188,31 @@ for (a, b), (obs, p, n), ph, exp_delta in zip(
     check(f"  {a}<{b} Holm p", ph, 2/10001, 1e-12)
     check(f"  {a}<{b} paired n", n, 801, 0)
 
+print("\nConsultation-detector author verification (§10.4)")
+import consultation_audit_analyze as CA  # noqa: E402
+
+_audit_dir = ROOT/"audit" if (ROOT/"audit").exists() else ROOT/"private"
+_audit = pd.read_csv(_audit_dir/"consultation-hand-audit-40.csv")
+_key = pd.read_csv(_audit_dir/"consultation-hand-audit-40.key.csv")
+_expected_ids = {f"A{i:02d}" for i in range(1, 41)}
+assert set(_audit.audit_id) == _expected_ids
+assert set(_key.audit_id) == _expected_ids
+_audit = _audit.merge(_key, on="audit_id", validate="one_to_one")
+_unclear = _audit.manual_unclear.apply(CA.to01)
+check("  audit rows", len(_audit), 40, 0)
+check("  unclear rows", sum(v == 1 for v in _unclear), 0, 0)
+for name, mcol, acol in CA.METRICS:
+    _m = _audit[mcol].apply(CA.to01).to_numpy()
+    _a = _audit[acol].apply(CA.to01).to_numpy()
+    assert None not in _m and None not in _a
+    _kap, _note = CA.cohens_kappa(_m, _a)
+    assert _note is None and _kap is not None
+    _cm = CA.confusion(_m, _a)
+    check(f"  {name}: author positives", _m.sum(), 38, 0)
+    check(f"  {name}: detector positives", _a.sum(), 38, 0)
+    check(f"  {name}: raw agreement (%)", 100*(_m == _a).mean(), 100, 0)
+    check(f"  {name}: kappa (descriptive)", _kap, 1, 0)
+    check(f"  {name}: both negative", _cm["both_negative"], 2, 0)
+
 print(f"\n{'FAILED: ' + ', '.join(fails) if fails else 'all checked camera-ready claims verified'}\n")
 sys.exit(1 if fails else 0)

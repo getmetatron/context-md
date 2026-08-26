@@ -5,11 +5,12 @@ Pre-Registered Study of Repository Context for AI Coding Agents* (AgenticDev
 2026). Every value below was read from the repository or produced by running the
 documented commands; nothing is assumed.
 
-> **READY FOR ZENODO: NO.** One artifact blocker remains: the registered
-> consultation audit awaits human labels. ACM author-kit metadata belongs to the
-> paper workflow, and the archival DOI is produced by the eventual Zenodo deposit;
-> neither is a prerequisite for depositing the artifact. This audit describes the
-> repository state committed alongside this file; the final release tag does not yet exist.
+> **READY FOR ZENODO CONTENT FREEZE: YES.** The registered consultation audit now
+> has an author-confirmed record and its AI-assisted, non-blinded procedure is
+> disclosed. ACM author-kit metadata belongs to the paper workflow, and the
+> archival DOI is produced by the eventual Zenodo deposit; neither is a
+> prerequisite for depositing the artifact. The final release commit and tag do
+> not yet exist, so the release steps below still must be executed and verified.
 
 ## Correction to the previous version of this audit
 
@@ -58,7 +59,7 @@ executed end to end is worse than an open FAIL.
 | leakage analysis included | **PASS** |
 | deviations disclosed in the paper | **PASS (new)** — Threats now carries the six material items, including the two pre-record frontier aborts |
 | episode/evaluation inventory | **PASS** — `count_episodes.py` reports repository records but explicitly does not present them as a confirmatory sample size; the misleading global manuscript count was removed |
-| **registered 40-episode consultation audit** | **BLOCKED** — sample drawn (seed 42, 1,602-episode frame, deterministic), blinded file and analyzer built and tested; **awaiting human labels**. `PREREGISTRATION-PAPER2` promises this with Cohen's kappa, so the artifact is incomplete until it is done. |
+| **registered 40-episode consultation audit** | **PASS with disclosed deviation** — fixed sample (seed 42, 1,602-episode frame); author-confirmed 40/40 agreement on consultation, deep read, and read-before-edit (38 positive, 2 negative; mechanical kappa 1.000). The review was AI-assisted and non-blinded, so raw agreement is descriptive confirmation rather than independent reliability. Completed CSV, key, row evidence, and attestation are released under `experiment/audit/`; the workflow deviation is in `DEVIATIONS-2.md`. |
 
 ## Repository hygiene
 
@@ -77,19 +78,17 @@ executed end to end is worse than an open FAIL.
 | proposed final tag | `v1.0-agenticdev2026-artifact` — **not created** |
 | superseded tag | `camera-ready-agenticdev2026` — predates these fixes; must not be archived |
 | archived size | ~13 MB compressed before this change; the 1,602 new records add ~11 MB uncompressed |
-| **READY FOR ZENODO** | **NO** — see blockers |
+| **READY FOR ZENODO** | **YES after the release commit passes the checks below** |
 
-## Exact safe release and deposit steps (after the blockers clear)
+## Exact safe release and deposit steps
 
-1. Complete the consultation audit; run `consultation_audit_analyze.py`; update
-   `RESULTS-06` and the paper with kappa **or** a stated undefined-kappa result.
-2. Push the audited `main`. Delete the stale public `anonymous-review` branch.
-3. Tag `v1.0-agenticdev2026-artifact` (annotated) and push the tag only.
-4. Enable the repository in Zenodo, then create the GitHub release **from that
+1. Push the audited `main`. Delete the stale public `anonymous-review` branch.
+2. Tag `v1.0-agenticdev2026-artifact` (annotated) and push the tag only.
+3. Enable the repository in Zenodo, then create the GitHub release **from that
    tag**. Zenodo archives that exact release.
-5. Take the **version** DOI (not the concept DOI) and set `\artifactdoi` in
+4. Take the **version** DOI (not the concept DOI) and set `\artifactdoi` in
    `main.tex`; it updates the Data Availability Statement and the artifact
    reference together.
-6. Insert the ACM eRights values into `\setcopyright`, `\acmDOI`, `\acmISBN`.
-7. Rebuild, re-run both checkers, rebuild the submission ZIP, and upload to
+5. Insert the ACM eRights values into `\setcopyright`, `\acmDOI`, `\acmISBN`.
+6. Rebuild, re-run both checkers, rebuild the submission ZIP, and upload to
    HotCRP/TAPS.

@@ -6,7 +6,8 @@ pre-registration (`PREREGISTRATION.md`, git tag `prereg-v1`), the experiment
 harness, blind seed-authoring audit trails (`seeds/AUDIT.md`), all episode
 predictions and promotion logs (`runs/`), all evaluation verdicts
 (`runs/eval_summary.jsonl`), and one-command reproduction of the paper's reported numbers
-(Tier 1 and Tier 1b together).
+(Tier 1 and Tier 1b together). The completed consultation-detector sample, key,
+row-level evidence, and author-verification record are under `audit/`.
 
 ## Pre-registration provenance
 
@@ -70,6 +71,15 @@ Expected output ends with: `all checked camera-ready claims verified`.
 
     python paper/camera-ready-agenticdev2026/analysis/seed_leakage.py   # leakage audit alone
     python paper/camera-ready-agenticdev2026/analysis/make_figures.py   # regenerate Figures 1-5
+    python analysis/consultation_audit_analyze.py \
+      --audit audit/consultation-hand-audit-40.csv \
+      --key audit/consultation-hand-audit-40.key.csv                    # detector verification
+
+The consultation audit gives 40/40 raw agreement for consultation, deep read,
+and read-before-edit (38 positive, 2 negative; mechanical kappa 1.000). Its
+AI-assisted, non-blinded author-confirmation procedure is disclosed in
+`audit/CONSULTATION-HUMAN-VERIFICATION.md` and `DEVIATIONS-2.md`; this is
+descriptive confirmation, not independent inter-rater reliability.
 
 ## What runs offline, and what needs external access
 
@@ -138,6 +148,7 @@ overwritten.
     PREREGISTRATION-PAPER2.md  protocol for the delivery study (see provenance caveat below)
     FINDINGS-01..08.md      feasibility pilots and design checks (pre-freeze)
     RESULTS-01..06.md       confirmatory results as they accrued
+    audit/                  completed consultation-detector sample, key, evidence and author verification
     seeds/                  blind-authored context files + authoring audit (AUDIT.md, AUDIT-P2.md)
     harness/                condition runner, batch orchestrator, promotion rubric, frozen prompts
     runs/                   predictions, episode logs, runner outcomes, promotion decisions, eval verdicts, analysis CSVs

@@ -19,11 +19,13 @@ The checked empirical values are recomputed from the frozen run artifacts in
 `../../runs/`:
 
     python ../../analysis/reproduce_paper.py     # 15 claims from the study
-    python analysis/verify_claims.py             # camera-ready additions
+    python analysis/verify_claims.py             # camera-ready additions, including consultation audit
     python analysis/make_figures.py              # regenerates Figures 1-5
 
 `analysis/seed_leakage.py` runs the blind-seed leakage audit reported in the
-threats section; `analysis/RESULTS-07-seed-leakage.md` records its output.
+threats section; `analysis/RESULTS-07-seed-leakage.md` records its output. The
+fixed consultation-detector sample, key, row evidence, and author-verification
+record are under `../../audit/`.
 
 See `../../ARTIFACT.md` for the artifact runbook and `../../PREREGISTRATION.md`
 (git tag `prereg-v1`) for the frozen protocol.
@@ -32,6 +34,8 @@ See `../../ARTIFACT.md` for the artifact runbook and `../../PREREGISTRATION.md`
 
 The ACM rights statement, DOI and ISBN are not yet inserted; they are supplied by
 ACM through the author kit. The Data Availability statement likewise carries a
-placeholder until the replication package receives its archival DOI. The frozen
-40-episode consultation audit also awaits human labels and must be incorporated
-before archival release.
+placeholder until the replication package receives its archival DOI. The fixed
+40-episode consultation audit is complete as an author-verified, AI-assisted,
+non-blinded check: 40/40 raw agreement for all three constructs (38 positive, 2
+negative; mechanical kappa 1.000). The paper and artifact disclose why this is
+descriptive confirmation rather than independent reliability evidence.
