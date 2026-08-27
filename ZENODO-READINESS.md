@@ -6,8 +6,9 @@ Pre-Registered Study of Repository Context for AI Coding Agents* (AgenticDev
 documented commands; nothing is assumed.
 
 > **READY FOR ZENODO CONTENT FREEZE: YES.** The registered consultation audit now
-> has an author-confirmed record and its AI-assisted, non-blinded procedure is
-> disclosed. ACM author-kit metadata belongs to the paper workflow, and the
+> has an author-confirmed record. The manual author review and its AI-prepared,
+> non-blinded evidence workflow are disclosed. ACM author-kit metadata belongs
+> to the paper workflow, and the
 > archival DOI is produced by the eventual Zenodo deposit; neither is a
 > prerequisite for depositing the artifact. The final release commit and tag do
 > not yet exist, so the release steps below still must be executed and verified.
@@ -59,7 +60,7 @@ executed end to end is worse than an open FAIL.
 | leakage analysis included | **PASS** |
 | deviations disclosed in the paper | **PASS (new)** — Threats now carries the six material items, including the two pre-record frontier aborts |
 | episode/evaluation inventory | **PASS** — `count_episodes.py` reports repository records but explicitly does not present them as a confirmatory sample size; the misleading global manuscript count was removed |
-| **registered 40-episode consultation audit** | **PASS with disclosed deviation** — fixed sample (seed 42, 1,602-episode frame); author-confirmed 40/40 agreement on consultation, deep read, and read-before-edit (38 positive, 2 negative; mechanical kappa 1.000). The review was AI-assisted and non-blinded, so raw agreement is descriptive confirmation rather than independent reliability. Completed CSV, key, row evidence, and attestation are released under `experiment/audit/`; the workflow deviation is in `DEVIATIONS-2.md`. |
+| **registered 40-episode consultation audit** | **PASS with disclosed deviation** — fixed sample (seed 42, 1,602-episode frame); an author manually reviewed every row against transcript evidence and confirmed 40/40 agreement on consultation, deep read, and read-before-edit (38 positive, 2 negative; mechanical kappa 1.000). The evidence packet and candidate labels were AI-prepared, and the author was not blinded to the detector output, so raw agreement is descriptive confirmation rather than independent reliability. Completed CSV, key, row evidence, and attestation are released under `experiment/audit/`; the workflow deviation is in `DEVIATIONS-2.md`. |
 
 ## Repository hygiene
 

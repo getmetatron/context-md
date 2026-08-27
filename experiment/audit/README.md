@@ -3,10 +3,11 @@
 This directory releases the fixed 40-episode audit sample, the detector key, and
 the author-verification record promised by `PREREGISTRATION-PAPER2.md`.
 
-The procedure was AI-assisted and non-blinded: AI prepared row-specific evidence
-and proposed labels, and Pavel Kerbel reviewed and confirmed every row after the
-detector comparison was visible. It is therefore reported as descriptive author
-verification, not as independent blinded inter-rater reliability.
+Pavel Kerbel manually reviewed every row against row-specific transcript evidence
+and confirmed every label. The evidence packet and candidate labels were
+AI-prepared, and the detector comparison was visible during review. It is
+therefore reported as descriptive author verification, not as independent blinded
+inter-rater reliability.
 
 Recompute the agreement statistics from `experiment/`:
 

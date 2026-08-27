@@ -76,10 +76,12 @@ Expected output ends with: `all checked camera-ready claims verified`.
       --key audit/consultation-hand-audit-40.key.csv                    # detector verification
 
 The consultation audit gives 40/40 raw agreement for consultation, deep read,
-and read-before-edit (38 positive, 2 negative; mechanical kappa 1.000). Its
-AI-assisted, non-blinded author-confirmation procedure is disclosed in
-`audit/CONSULTATION-HUMAN-VERIFICATION.md` and `DEVIATIONS-2.md`; this is
-descriptive confirmation, not independent inter-rater reliability.
+and read-before-edit (38 positive, 2 negative; mechanical kappa 1.000). An author
+manually reviewed every row against transcript evidence. The evidence packet and
+candidate labels were AI-prepared, and the author was not blinded to the detector
+output, as disclosed in `audit/CONSULTATION-HUMAN-VERIFICATION.md` and
+`DEVIATIONS-2.md`; this is descriptive confirmation, not independent inter-rater
+reliability.
 
 ## What runs offline, and what needs external access
 

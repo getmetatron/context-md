@@ -34,8 +34,10 @@ See `../../ARTIFACT.md` for the artifact runbook and `../../PREREGISTRATION.md`
 
 The ACM rights statement, DOI and ISBN are not yet inserted; they are supplied by
 ACM through the author kit. The Data Availability statement likewise carries a
-placeholder until the replication package receives its archival DOI. The fixed
-40-episode consultation audit is complete as an author-verified, AI-assisted,
-non-blinded check: 40/40 raw agreement for all three constructs (38 positive, 2
-negative; mechanical kappa 1.000). The paper and artifact disclose why this is
-descriptive confirmation rather than independent reliability evidence.
+placeholder until the replication package receives its archival DOI. An author
+manually reviewed every row in the fixed 40-episode consultation audit and
+confirmed 40/40 agreement for all three constructs (38 positive, 2 negative;
+mechanical kappa 1.000). The paper and artifact disclose that the evidence packet
+and candidate labels were AI-prepared and the author was not blinded to the
+detector output, so this is descriptive confirmation rather than independent
+reliability evidence.
