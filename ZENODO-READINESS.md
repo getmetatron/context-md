@@ -10,8 +10,8 @@ documented commands; nothing is assumed.
 > non-blinded evidence workflow are disclosed. ACM author-kit metadata belongs
 > to the paper workflow, and the
 > archival DOI is produced by the eventual Zenodo deposit; neither is a
-> prerequisite for depositing the artifact. The final release commit and tag do
-> not yet exist, so the release steps below still must be executed and verified.
+> prerequisite for depositing the artifact. The annotated release tag named
+> below identifies the content freeze containing this audit.
 
 ## Correction to the previous version of this audit
 
@@ -75,11 +75,11 @@ executed end to end is worse than an open FAIL.
 
 | | |
 |---|---|
-| audited state | the commit containing this audit; verify it again before tagging |
-| proposed final tag | `v1.0-agenticdev2026-artifact` — **not created** |
+| audited state | the release commit containing this audit |
+| final tag | `v1.0-agenticdev2026-artifact` (annotated) |
 | superseded tag | `camera-ready-agenticdev2026` — predates these fixes; must not be archived |
 | archived size | ~13 MB compressed before this change; the 1,602 new records add ~11 MB uncompressed |
-| **READY FOR ZENODO** | **YES after the release commit passes the checks below** |
+| **READY FOR ZENODO** | **YES — release checks passed before tagging** |
 
 ## Exact safe release and deposit steps
 
