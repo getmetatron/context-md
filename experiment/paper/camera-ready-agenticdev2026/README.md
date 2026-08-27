@@ -13,7 +13,8 @@ full paper at AgenticDev '26 (Munich, 12--16 October 2026).
 `context-inheritance-agenticdev-2026-camera-ready.pdf` for submission.
 
 `package/` is the self-contained publication source: `main.tex`, `acmart.cls`
-(ACM Primary Article Template v2.20) and `figures/`. It builds from a clean
+(ACM Primary Article Template v2.20), `references.bib`, the generated
+`main.bbl`, `ACM-Reference-Format.bst`, and `figures/`. It builds from a clean
 directory with no dependency on the rest of this tree. This establishes local
 source completeness, not ACM TAPS acceptance.
 `context-inheritance-agenticdev-2026-camera-ready-source.zip` is the upload-ready
