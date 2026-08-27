@@ -6,7 +6,11 @@ full paper at the AgenticDev 2026 Workshop (Munich, 12 October 2026).
 
 ## Build
 
-    tectonic main.tex        # -> main.pdf
+    tectonic main.tex
+    cp main.pdf context-inheritance-agenticdev-2026-camera-ready.pdf
+
+`main.pdf` is the direct TeX build output. Upload the descriptively named copy
+`context-inheritance-agenticdev-2026-camera-ready.pdf` for submission.
 
 `package/` is the self-contained publication source: `main.tex`, `acmart.cls`
 (ACM Primary Article Template v2.20) and `figures/`. It builds from a clean
