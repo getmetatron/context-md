@@ -6,7 +6,9 @@ Build:  tectonic main.tex        (or: pdflatex main.tex, run twice)
 Output: main.pdf
 
 Contents -- this directory is self-contained and needs no parent files:
-  main.tex          paper source (bibliography is inline; no .bib/.bst needed)
+  main.tex          paper source. The bibliography is written directly in
+                    main.tex (thebibliography environment); BibTeX is not used,
+                    so no .bib, .bst, or generated .bbl file exists or applies.
   acmart.cls        ACM Primary Article Template v2.20, included so the build
                     does not depend on the TeX distribution's acmart version
   figures/*.pdf     the five figures, vector
