@@ -1,5 +1,7 @@
 # context.md
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22122044.svg)](https://doi.org/10.5281/zenodo.22122044)
+
 A proposed standard for AI project context: one markdown file, versioned with the code, that agents read before planning and append to after working — under human review.
 
 > Git stores what changed. `context.md` stores what the project knows.
