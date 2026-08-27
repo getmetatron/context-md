@@ -1,8 +1,8 @@
 # Context Inheritance — AgenticDev 2026 camera-ready
 
 Source for the paper *Context Inheritance: A Git-Native Architecture and
-Pre-Registered Study of Repository Context for AI Coding Agents*, accepted as a
-full paper at the AgenticDev 2026 Workshop (Munich, 12 October 2026).
+Pre-registered Study of Repository Context for AI Coding Agents*, accepted as a
+full paper at AgenticDev '26 (Munich, 12--16 October 2026).
 
 ## Build
 
@@ -16,6 +16,8 @@ full paper at the AgenticDev 2026 Workshop (Munich, 12 October 2026).
 (ACM Primary Article Template v2.20) and `figures/`. It builds from a clean
 directory with no dependency on the rest of this tree. This establishes local
 source completeness, not ACM TAPS acceptance.
+`context-inheritance-agenticdev-2026-camera-ready-source.zip` is the upload-ready
+archive of that directory.
 
 ## Reproducing the numbers
 
@@ -36,9 +38,12 @@ See `../../ARTIFACT.md` for the artifact runbook and `../../PREREGISTRATION.md`
 
 ## Publication metadata
 
-The ACM rights statement, proceedings DOI and ISBN are not yet inserted; they are
-supplied by ACM through the author kit. The Data Availability statement cites the
-replication artifact's version DOI, `10.5281/zenodo.22122045`. An author
+The exact ACM eRights metadata is inserted: CC BY 4.0, paper DOI
+`10.1145/3843282.3844425`, and ISBN `979-8-4007-2985-0/2026/10`. The Data
+Availability statement separately cites the replication artifact's immutable
+version DOI, `10.5281/zenodo.22122045`. The source also includes the author-kit
+submission ID and received/accepted dates, uses `microtype`, and marks Pavel as
+corresponding author. An author
 manually reviewed every row in the fixed 40-episode consultation audit and
 confirmed 40/40 agreement for all three constructs (38 positive, 2 negative;
 mechanical kappa 1.000). The paper and artifact disclose that the evidence packet

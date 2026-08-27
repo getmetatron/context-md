@@ -1,5 +1,5 @@
 Camera-ready source -- AgenticDev 2026, submission #22
-"Context Inheritance: A Git-Native Architecture and Pre-Registered Study of
+"Context Inheritance: A Git-Native Architecture and Pre-registered Study of
 Repository Context for AI Coding Agents"
 
 Build:  tectonic main.tex        (or: pdflatex main.tex, run twice)
@@ -14,6 +14,9 @@ Contents -- this directory is self-contained and needs no parent files:
 This verifies local source completeness only. ACM TAPS validity has not yet been
 established; follow the workshop's author-kit instructions for the actual upload.
 
-OUTSTANDING BEFORE SUBMISSION:
-  1. ACM rights metadata (\setcopyright, \acmDOI, \acmISBN) from the eRights email
-  2. Archival DOI for the replication package (\artifactdoi)
+Publication metadata included from the ACM eRights confirmation:
+  CC BY 4.0; DOI 10.1145/3843282.3844425;
+  ISBN 979-8-4007-2985-0/2026/10.
+
+The paper's Data Availability statement cites the replication package's
+immutable version DOI, 10.5281/zenodo.22122045.
