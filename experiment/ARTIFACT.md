@@ -9,6 +9,9 @@ predictions and promotion logs (`runs/`), all evaluation verdicts
 (Tier 1 and Tier 1b together). The completed consultation-detector sample, key,
 row-level evidence, and author-verification record are under `audit/`.
 
+Archived release: [version 1.0.0](https://doi.org/10.5281/zenodo.22122045),
+corresponding to annotated git tag `v1.0-agenticdev2026-artifact`.
+
 ## Pre-registration provenance
 
 The protocol was frozen and tagged before any confirmatory run. Verify directly:

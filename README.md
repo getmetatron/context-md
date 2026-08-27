@@ -4,7 +4,7 @@ A proposed standard for AI project context: one markdown file, versioned with th
 
 > Git stores what changed. `context.md` stores what the project knows.
 
-📋 [Spec](SPEC.md) · 📝 [Full example](context.md.example) · 📄 [Whitepaper (PDF)](whitepaper/context-md-manifesto.pdf) · 🎓 [Paper (preprint, PDF)](whitepaper/repository-context-layer-paper.pdf)
+📋 [Spec](SPEC.md) · 📝 [Full example](context.md.example) · 📄 [Whitepaper (PDF)](whitepaper/context-md-manifesto.pdf) · 🎓 [Paper (preprint, PDF)](whitepaper/repository-context-layer-paper.pdf) · 📦 [Archived artifact (DOI)](https://doi.org/10.5281/zenodo.22122045)
 
 <p align="center">
   <img src="whitepaper/repository-context-layer-figure1.png" alt="The Repository Context Layer: a git-native context store an agent consults before planning and updates after executing, under human review. It sits alongside a repository's existing artifacts (README, docs, ADRs, src); the agent consults it and proposes reviewed updates." width="100%" />

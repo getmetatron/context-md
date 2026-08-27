@@ -77,8 +77,11 @@ executed end to end is worse than an open FAIL.
 |---|---|
 | audited state | the release commit containing this audit |
 | final tag | `v1.0-agenticdev2026-artifact` (annotated) |
+| GitHub release | `AgenticDev 2026 replication artifact v1.0.0` |
+| Zenodo version DOI | `10.5281/zenodo.22122045` — cited by the paper |
+| Zenodo concept DOI | `10.5281/zenodo.22122044` — not used for this version citation |
 | superseded tag | `camera-ready-agenticdev2026` — predates these fixes; must not be archived |
-| archived size | ~13 MB compressed before this change; the 1,602 new records add ~11 MB uncompressed |
+| archived file | `getmetatron/context-md-v1.0-agenticdev2026-artifact.zip`, 20,120,829 bytes, MD5 `b073e16b5d9f42d70c3b47d91216017d` |
 | **READY FOR ZENODO** | **YES — release checks passed before tagging** |
 
 ## Exact safe release and deposit steps
