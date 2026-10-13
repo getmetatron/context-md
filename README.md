@@ -1,12 +1,13 @@
 # context.md
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22122044.svg)](https://doi.org/10.5281/zenodo.22122044)
+[![ACM paper DOI](https://img.shields.io/badge/ACM_paper-10.1145%2F3843282.3844425-2b7de9.svg)](https://doi.org/10.1145/3843282.3844425)
 
 A proposed standard for AI project context: one markdown file, versioned with the code, that agents read before planning and append to after working — under human review.
 
 > Git stores what changed. `context.md` stores what the project knows.
 
-📋 [Spec](SPEC.md) · 📝 [Full example](context.md.example) · 📄 [Whitepaper (PDF)](whitepaper/context-md-manifesto.pdf) · 🎓 [Paper (preprint, PDF)](whitepaper/repository-context-layer-paper.pdf) · 📦 [Archived artifact (DOI)](https://doi.org/10.5281/zenodo.22122045)
+📋 [Spec](SPEC.md) · 📝 [Full example](context.md.example) · 📄 [Whitepaper (PDF)](whitepaper/context-md-manifesto.pdf) · 🎓 [ACM paper](https://doi.org/10.1145/3843282.3844425) ([author PDF](whitepaper/repository-context-layer-paper.pdf)) · 📦 [Archived artifact (DOI)](https://doi.org/10.5281/zenodo.22122045) · [Cite](#citation)
 
 <p align="center">
   <img src="whitepaper/repository-context-layer-figure1.png" alt="The Repository Context Layer: a git-native context store an agent consults before planning and updates after executing, under human review. It sits alongside a repository's existing artifacts (README, docs, ADRs, src); the agent consults it and proposes reviewed updates." width="100%" />
@@ -93,6 +94,12 @@ READMEs describe how to use a project, not how to change it. ADRs are write-once
 The standard covers discovery and lifecycle, not content. Anything beyond the three headers — decision logs, pattern catalogs, per-directory context — is convention layered on top. Under-specified and adopted beats complete and ignored.
 
 [Metatron](https://github.com/kerbelp/metatron) is one reference implementation: decisions kept as git-backed markdown, served to agents at consult time, feedback routed into the ledger. The abstraction is the point, though — any tool, or none at all, can implement it.
+
+## Citation
+
+If you use the Repository Context Layer or the context-inheritance findings in research, please cite **Pavel Kerbel, Milana Kerbel, Vitali Abramov, and Liat Abramov (2026), Context Inheritance**, AgenticDev '26, 12–20. [ACM paper](https://doi.org/10.1145/3843282.3844425) · [Copyable BibTeX](CITATION.bib). GitHub's **Cite this repository** button offers the same paper via [CITATION.cff](CITATION.cff).
+
+If you reuse the archived experiment materials, also cite the [version 1.0.0 replication package](https://doi.org/10.5281/zenodo.22122045); its Zenodo DOI identifies the artifact separately from the paper.
 
 ---
 
