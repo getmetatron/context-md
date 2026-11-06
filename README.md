@@ -19,4 +19,4 @@ minute; every phase is bounded. Study model draws never inherit this retry rule.
 The coordinator must receive and verify all three attempt archives afterward.
 This does not authenticate Claude or enable any research task. Subscription-only
 authentication and disabled paid extra usage must be verified locally later.
-This Mac remains the study's native-runtime coordinator; GitHub carries the queue.
+The existing local research coordinator hosts the native runtime; GitHub carries the queue.
